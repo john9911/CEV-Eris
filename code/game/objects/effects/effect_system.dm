@@ -107,9 +107,9 @@ steam.start() -- spawns the effect
 	var/turf/T = src.loc
 	if (istype(T, /turf))
 		T.hotspot_expose(1000,100)
-		
-/obj/effect/sparks/initialize()
-	..()
+
+/obj/effect/sparks/Initialize()
+	. = ..()
 	schedule_task_in(10 SECONDS, /proc/qdel, list(src))
 
 /obj/effect/sparks/Destroy()
@@ -199,7 +199,7 @@ steam.start() -- spawns the effect
 	if (M.internal != null)
 		if(M.wear_mask && (M.wear_mask.item_flags & AIRTIGHT))
 			return 0
-		if(istype(M,/mob/living/carbon/human))
+		if(ishuman(M))
 			var/mob/living/carbon/human/H = M
 			if(H.head && (H.head.item_flags & AIRTIGHT))
 				return 0
@@ -479,10 +479,10 @@ steam.start() -- spawns the effect
 			s.start()
 
 			for(var/mob/M in viewers(5, location))
-				M << "<span class='warning'>The solution violently explodes.</span>"
+				M << SPAN_WARNING("The solution violently explodes.")
 			for(var/mob/M in viewers(1, location))
 				if (prob (50 * amount))
-					M << "<span class='warning'>The explosion knocks you down.</span>"
+					M << SPAN_WARNING("The explosion knocks you down.")
 					M.Weaken(rand(1,5))
 			return
 		else
@@ -505,12 +505,12 @@ steam.start() -- spawns the effect
 				flash = (amount/4) * flashing_factor
 
 			for(var/mob/M in viewers(8, location))
-				M << "<span class='warning'>The solution violently explodes.</span>"
+				M << SPAN_WARNING("The solution violently explodes.")
 
 			explosion(
-				location, 
-				round(min(devst, BOMBCAP_DVSTN_RADIUS)), 
-				round(min(heavy, BOMBCAP_HEAVY_RADIUS)), 
-				round(min(light, BOMBCAP_LIGHT_RADIUS)), 
+				location,
+				round(min(devst, BOMBCAP_DVSTN_RADIUS)),
+				round(min(heavy, BOMBCAP_HEAVY_RADIUS)),
+				round(min(light, BOMBCAP_LIGHT_RADIUS)),
 				round(min(flash, BOMBCAP_FLASH_RADIUS))
 				)

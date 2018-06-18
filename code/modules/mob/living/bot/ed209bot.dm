@@ -27,14 +27,14 @@
 	..()
 
 /mob/living/bot/secbot/ed209/explode()
-	visible_message("<span class='warning'>[src] blows apart!</span>")
+	visible_message(SPAN_WARNING("[src] blows apart!"))
 	playsound(loc, "robot_talk_heavy", 100, 2, 0)
 	var/turf/Tsec = get_turf(src)
 
 	new /obj/item/weapon/secbot_assembly/ed209_assembly(Tsec)
 
 	var/obj/item/weapon/gun/energy/taser/G = new /obj/item/weapon/gun/energy/taser(Tsec)
-	G.power_supply.charge = 0
+	G.cell.charge = 0
 	if(prob(50))
 		new /obj/item/robot_parts/l_leg(Tsec)
 	if(prob(50))
@@ -77,10 +77,10 @@
 	created_name = "ED-209 Security Robot"
 	var/lasercolor = ""
 
-/obj/item/weapon/secbot_assembly/ed209_assembly/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
+/obj/item/weapon/secbot_assembly/ed209_assembly/attackby(obj/item/I, mob/user)
 	..()
 
-	if(istype(W, /obj/item/weapon/pen))
+	if(istype(I, /obj/item/weapon/pen))
 		var/t = sanitizeSafe(input(user, "Enter new robot name", name, created_name), MAX_NAME_LEN)
 		if(!t)
 			return
@@ -89,13 +89,43 @@
 		created_name = t
 		return
 
+	var/list/usable_qualities = list()
+	if(build_step == 3)
+		usable_qualities.Add(QUALITY_WELDING)
+	if(build_step == 8)
+		usable_qualities.Add(QUALITY_SCREW_DRIVING)
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_WELDING)
+			if(build_step == 3)
+				if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("You welded the vest to [src].")
+					build_step++
+					name = "shielded frame assembly"
+					return
+			return
+
+		if(QUALITY_SCREW_DRIVING)
+			if(build_step == 8)
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("Taser gun attached.")
+					build_step++
+					name = "armed [name]"
+					return
+			return
+
+		if(ABORT_CHECK)
+			return
+
 	switch(build_step)
 		if(0, 1)
-			if(istype(W, /obj/item/robot_parts/l_leg) || istype(W, /obj/item/robot_parts/r_leg))
+			if(istype(I, /obj/item/robot_parts/l_leg) || istype(I, /obj/item/robot_parts/r_leg))
 				user.drop_item()
-				qdel(W)
+				qdel(I)
 				build_step++
-				user << "<span class='notice'>You add the robot leg to [src].</span>"
+				user << SPAN_NOTICE("You add the robot leg to [src].")
 				playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 				name = "legs/frame assembly"
 				if(build_step == 1)
@@ -106,89 +136,71 @@
 					icon_state = "ed209_legs"
 
 		if(2)
-			if(istype(W, /obj/item/clothing/suit/storage/vest))
+			if(istype(I, /obj/item/clothing/suit/storage/vest))
 				user.drop_item()
-				qdel(W)
+				qdel(I)
 				build_step++
-				user << "<span class='notice'>You add the armor to [src].</span>"
+				user << SPAN_NOTICE("You add the armor to [src].")
 				playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 				name = "vest/legs/frame assembly"
 				item_state = "ed209_shell"
 				icon_state = "ed209_shell"
 
-		if(3)
-			if(istype(W, /obj/item/weapon/weldingtool))
-				var/obj/item/weapon/weldingtool/WT = W
-				if(WT.remove_fuel(0, user))
-					build_step++
-					name = "shielded frame assembly"
-					user << "<span class='notice'>You welded the vest to [src].</span>"
 		if(4)
-			if(istype(W, /obj/item/clothing/head/helmet))
+			if(istype(I, /obj/item/clothing/head/helmet))
 				user.drop_item()
-				qdel(W)
+				qdel(I)
 				build_step++
-				user << "<span class='notice'>You add the helmet to [src].</span>"
+				user << SPAN_NOTICE("You add the helmet to [src].")
 				playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 				name = "covered and shielded frame assembly"
 				item_state = "ed209_hat"
 				icon_state = "ed209_hat"
 
 		if(5)
-			if(isprox(W))
+			if(is_proximity_sensor(I))
 				user.drop_item()
-				qdel(W)
+				qdel(I)
 				build_step++
-				user << "<span class='notice'>You add the prox sensor to [src].</span>"
+				user << SPAN_NOTICE("You add the prox sensor to [src].")
 				playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 				name = "covered, shielded and sensored frame assembly"
 				item_state = "ed209_prox"
 				icon_state = "ed209_prox"
 
 		if(6)
-			if(istype(W, /obj/item/stack/cable_coil))
-				var/obj/item/stack/cable_coil/C = W
+			if(istype(I, /obj/item/stack/cable_coil))
+				var/obj/item/stack/cable_coil/C = I
 				if (C.get_amount() < 1)
-					user << "<span class='warning'>You need one coil of wire to wire [src].</span>"
+					user << SPAN_WARNING("You need one coil of wire to wire [src].")
 					return
-				user << "<span class='notice'>You start to wire [src].</span>"
+				user << SPAN_NOTICE("You start to wire [src].")
 				if(do_after(user, 40, src) && build_step == 6)
 					if(C.use(1))
 						build_step++
-						user << "<span class='notice'>You wire the ED-209 assembly.</span>"
+						user << SPAN_NOTICE("You wire the ED-209 assembly.")
 						playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 						name = "wired ED-209 assembly"
 				return
 
 		if(7)
-			if(istype(W, /obj/item/weapon/gun/energy/taser))
+			if(istype(I, /obj/item/weapon/gun/energy/taser))
 				name = "taser ED-209 assembly"
 				build_step++
-				user << "<span class='notice'>You add [W] to [src].</span>"
+				user << SPAN_NOTICE("You add [I] to [src].")
 				playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 				item_state = "ed209_taser"
 				icon_state = "ed209_taser"
 				user.drop_item()
-				qdel(W)
-
-		if(8)
-			if(istype(W, /obj/item/weapon/screwdriver))
-				playsound(src.loc, 'sound/items/Screwdriver.ogg', 100, 1)
-				var/turf/T = get_turf(user)
-				user << "<span class='notice'>Now attaching the gun to the frame...</span>"
-				sleep(40)
-				if(get_turf(user) == T && build_step == 8)
-					build_step++
-					name = "armed [name]"
-					user << "<span class='notice'>Taser gun attached.</span>"
+				qdel(I)
 
 		if(9)
-			if(istype(W, /obj/item/weapon/cell))
+			if(istype(I, /obj/item/weapon/cell/large))
 				build_step++
-				user << "<span class='notice'>You complete the ED-209.</span>"
+				user << SPAN_NOTICE("You complete the ED-209.")
 				var/turf/T = get_turf(src)
 				new /mob/living/bot/secbot/ed209(T,created_name,lasercolor)
 				user.drop_item()
-				qdel(W)
+				qdel(I)
 				user.drop_from_inventory(src)
 				qdel(src)

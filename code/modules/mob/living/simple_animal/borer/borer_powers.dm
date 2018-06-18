@@ -32,8 +32,8 @@
 		src << "You wiggle out of [host]'s ear and plop to the ground."
 		if(host.mind)
 			if(!host.stat)
-				host << "<span class='danger'>Something slimy wiggles out of your ear and plops to the ground!</span>"
-			host << "<span class='danger'>As though waking from a dream, you shake off the insidious mind control of the brain worm. Your thoughts are your own again.</span>"
+				host << SPAN_DANGER("Something slimy wiggles out of your ear and plops to the ground!")
+			host << SPAN_DANGER("As though waking from a dream, you shake off the insidious mind control of the brain worm. Your thoughts are your own again.")
 
 		detatch()
 		leave_host()
@@ -70,14 +70,14 @@
 		src << "You cannot infest someone who is already infested!"
 		return
 
-	if(istype(M,/mob/living/carbon/human))
+	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
 
-		var/obj/item/organ/external/E = H.organs_by_name["head"]
+		var/obj/item/organ/external/E = H.organs_by_name[BP_HEAD]
 		if(!E || E.is_stump())
 			src << "\The [H] does not have a head!"
 
-		if(!H.species.has_organ["brain"])
+		if(!H.species.has_organ[O_BRAIN])
 			src << "\The [H] does not seem to have an ear canal to breach."
 			return
 
@@ -108,17 +108,20 @@
 		src.loc = M
 
 		//Update their traitor status.
-		if(host.mind)
-			borers.add_antagonist_mind(host.mind, 1, borers.faction_role_text, borers.faction_welcome)
+		/*if(host.mind && src.mind)
+			var/list/L = get_player_antags(src.mind, ROLE_BORER)
+			var/datum/antagonist/borer/borer
+			if(L.len)
+				borer = L[1]*/
 
-		if(istype(M,/mob/living/carbon/human))
+		if(ishuman(M))
 			var/mob/living/carbon/human/H = M
-			var/obj/item/organ/I = H.internal_organs_by_name["brain"]
+			var/obj/item/organ/I = H.internal_organs_by_name[O_BRAIN]
 			if(!I) // No brain organ, so the borer moves in and replaces it permanently.
 				replace_brain()
 			else
 				// If they're in normally, implant removal can get them out.
-				var/obj/item/organ/external/head = H.get_organ("head")
+				var/obj/item/organ/external/head = H.get_organ(BP_HEAD)
 				head.implants += src
 
 		return
@@ -163,7 +166,7 @@
 
 	src << "<span class = 'danger'>You settle into the empty brainpan and begin to expand, fusing inextricably with the dead flesh of [H].</span>"
 
-	H.add_language("Cortical Link")
+	H.add_language(LANGUAGE_CORTICAL)
 
 	if(host.stat == 2)
 		H.verbs |= /mob/living/carbon/human/proc/jumpstart
@@ -173,19 +176,18 @@
 	H.verbs |= /mob/living/carbon/proc/spawn_larvae
 
 	if(H.client)
-		H.ghostize(0)
+		H.daemonize()
 
 	if(src.mind)
-		src.mind.special_role = "Borer Husk"
 		src.mind.transfer_to(host)
 
 	H.ChangeToHusk()
 
 	var/obj/item/organ/borer/B = new(H)
-	H.internal_organs_by_name["brain"] = B
+	H.internal_organs_by_name[O_BRAIN] = B
 	H.internal_organs |= B
 
-	var/obj/item/organ/external/affecting = H.get_organ("head")
+	var/obj/item/organ/external/affecting = H.get_organ(BP_HEAD)
 	affecting.implants -= src
 
 	var/s2h_id = src.computer_id
@@ -294,7 +296,7 @@
 
 			src << "\red <B>You plunge your probosci deep into the cortex of the host brain, interfacing directly with their nervous system.</B>"
 			host << "\red <B>You feel a strange shifting sensation behind your eyes as an alien consciousness displaces yours.</B>"
-			host.add_language("Cortical Link")
+			host.add_language(LANGUAGE_CORTICAL)
 
 			// host -> brain
 			var/h2b_id = host.computer_id
@@ -347,7 +349,7 @@
 		return
 
 	verbs -= /mob/living/carbon/human/proc/jumpstart
-	visible_message("<span class='warning'>With a hideous, rattling moan, [src] shudders back to life!</span>")
+	visible_message(SPAN_WARNING("With a hideous, rattling moan, [src] shudders back to life!"))
 
 	rejuvenate()
 	restore_blood()

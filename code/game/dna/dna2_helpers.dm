@@ -125,27 +125,19 @@
 
 // Simpler. Don't specify UI in order for the mob to use its own.
 /mob/proc/UpdateAppearance(var/list/UI=null)
-	if(istype(src, /mob/living/carbon/human))
+	if(ishuman(src))
 		if(UI!=null)
 			src.dna.UI=UI
 			src.dna.UpdateUI()
 		dna.check_integrity()
 		var/mob/living/carbon/human/H = src
-		H.r_hair   = dna.GetUIValueRange(DNA_UI_HAIR_R,    255)
-		H.g_hair   = dna.GetUIValueRange(DNA_UI_HAIR_G,    255)
-		H.b_hair   = dna.GetUIValueRange(DNA_UI_HAIR_B,    255)
+		H.hair_color   = rgb(dna.GetUIValueRange(DNA_UI_HAIR_R, 255), dna.GetUIValueRange(DNA_UI_HAIR_G, 255), dna.GetUIValueRange(DNA_UI_HAIR_B, 255))
 
-		H.r_facial = dna.GetUIValueRange(DNA_UI_BEARD_R,   255)
-		H.g_facial = dna.GetUIValueRange(DNA_UI_BEARD_G,   255)
-		H.b_facial = dna.GetUIValueRange(DNA_UI_BEARD_B,   255)
+		H.facial_color = rgb(dna.GetUIValueRange(DNA_UI_BEARD_R, 255), dna.GetUIValueRange(DNA_UI_BEARD_G, 255), dna.GetUIValueRange(DNA_UI_BEARD_B, 255))
 
-		H.r_skin   = dna.GetUIValueRange(DNA_UI_SKIN_R,    255)
-		H.g_skin   = dna.GetUIValueRange(DNA_UI_SKIN_G,    255)
-		H.b_skin   = dna.GetUIValueRange(DNA_UI_SKIN_B,    255)
+		H.skin_color   = rgb(dna.GetUIValueRange(DNA_UI_SKIN_R, 255), dna.GetUIValueRange(DNA_UI_SKIN_G, 255), dna.GetUIValueRange(DNA_UI_SKIN_B, 255))
 
-		H.r_eyes   = dna.GetUIValueRange(DNA_UI_EYES_R,    255)
-		H.g_eyes   = dna.GetUIValueRange(DNA_UI_EYES_G,    255)
-		H.b_eyes   = dna.GetUIValueRange(DNA_UI_EYES_B,    255)
+		H.eyes_color   = rgb(dna.GetUIValueRange(DNA_UI_EYES_R, 255), dna.GetUIValueRange(DNA_UI_EYES_G, 255), dna.GetUIValueRange(DNA_UI_EYES_B, 255))
 		H.update_eyes()
 
 		H.s_tone   = 35 - dna.GetUIValueRange(DNA_UI_SKIN_TONE, 220) // Value can be negative.
@@ -154,6 +146,21 @@
 			H.gender = FEMALE
 		else
 			H.gender = MALE
+
+		//Body build
+		var/bodybuild = "Default"
+		var/list/body_builds = male_body_builds
+
+		if(H.gender == FEMALE)
+			body_builds = female_body_builds
+
+		var/bodybuildind = dna.GetUIValueRange(DNA_UI_BODYBUILD,body_builds.len)
+
+		if(body_builds.len < bodybuildind)
+			bodybuildind = body_builds.len
+
+		bodybuild = body_builds[bodybuildind]
+		H.body_build = get_body_build(H.gender, bodybuild)
 
 		//Hair
 		var/hair = dna.GetUIValueRange(DNA_UI_HAIR_STYLE,hair_styles_list.len)

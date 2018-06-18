@@ -30,7 +30,8 @@ FLOOR SAFES
 	tumbler_2_open = rand(0, 72)
 
 
-/obj/structure/safe/initialize()
+/obj/structure/safe/Initialize()
+	. = ..()
 	for(var/obj/item/I in loc)
 		if(space >= maxspace)
 			return
@@ -145,14 +146,13 @@ FLOOR SAFES
 /obj/structure/safe/attackby(obj/item/I as obj, mob/user as mob)
 	if(open)
 		if(I.w_class + space <= maxspace)
-			space += I.w_class
-			user.drop_item()
-			I.loc = src
-			user << "<span class='notice'>You put [I] in [src].</span>"
-			updateUsrDialog()
+			if(user.unEquip(I, src))
+				space += I.w_class
+				user << SPAN_NOTICE("You put [I] in [src].")
+				updateUsrDialog()
 			return
 		else
-			user << "<span class='notice'>[I] won't fit in [src].</span>"
+			user << SPAN_NOTICE("[I] won't fit in [src].")
 			return
 	else
 		if(istype(I, /obj/item/clothing/accessory/stethoscope))
@@ -171,8 +171,8 @@ obj/structure/safe/ex_act(severity)
 	level = 1	//underfloor
 	layer = 2.5
 
-/obj/structure/safe/floor/initialize()
-	..()
+/obj/structure/safe/floor/Initialize()
+	. = ..()
 	var/turf/T = loc
 	if(istype(T) && !T.is_plating())
 		hide(1)

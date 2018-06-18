@@ -2,7 +2,7 @@
 	name = "rock"
 	icon = 'icons/obj/mining.dmi'
 	icon_state = "ore2"
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	var/datum/geosample/geologic_data
 	var/material
 
@@ -10,7 +10,7 @@
 	name = "pitchblende"
 	icon_state = "ore_uranium"
 	origin_tech = list(TECH_MATERIAL = 5)
-	material = "uranium"
+	material = MATERIAL_URANIUM
 
 /obj/item/weapon/ore/iron
 	name = "hematite"
@@ -36,7 +36,7 @@
 	..()
 	var/mob/living/carbon/human/H = hit_atom
 	if(istype(H) && H.has_eyes() && prob(85))
-		H << "<span class='danger'>Some of \the [src] gets in your eyes!</span>"
+		H << SPAN_DANGER("Some of \the [src] gets in your eyes!")
 		H.eye_blind += 5
 		H.eye_blurry += 10
 		spawn(1)
@@ -53,29 +53,29 @@
 	name = "native silver ore"
 	icon_state = "ore_silver"
 	origin_tech = list(TECH_MATERIAL = 3)
-	material = "silver"
+	material = MATERIAL_SILVER
 
 /obj/item/weapon/ore/gold
 	name = "native gold ore"
 	icon_state = "ore_gold"
 	origin_tech = list(TECH_MATERIAL = 4)
-	material = "gold"
+	material = MATERIAL_GOLD
 
 /obj/item/weapon/ore/diamond
 	name = "diamonds"
 	icon_state = "ore_diamond"
 	origin_tech = list(TECH_MATERIAL = 6)
-	material = "diamond"
+	material = MATERIAL_DIAMOND
 
 /obj/item/weapon/ore/osmium
 	name = "raw platinum"
 	icon_state = "ore_platinum"
-	material = "platinum"
+	material = MATERIAL_PLATINUM
 
 /obj/item/weapon/ore/hydrogen
 	name = "raw hydrogen"
 	icon_state = "ore_hydrogen"
-	material = "mhydrogen"
+	material = MATERIAL_MHYDROGEN
 
 /obj/item/weapon/ore/slag
 	name = "Slag"

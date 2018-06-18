@@ -3,14 +3,10 @@
 	real_name = "cortical borer"
 	desc = "A small, quivering sluglike creature."
 	speak_emote = list("chirrups")
-	emote_hear = list("chirrups")
 	response_help  = "pokes"
 	response_disarm = "prods"
 	response_harm   = "stomps on"
 	icon_state = "brainslug"
-	item_state = "brainslug"
-	icon_living = "brainslug"
-	icon_dead = "brainslug_dead"
 	speed = 5
 	a_intent = I_HURT
 	stop_automated_movement = 1
@@ -37,13 +33,15 @@
 
 /mob/living/simple_animal/borer/Login()
 	..()
-	if(mind)
-		borers.add_antagonist(mind)
+	if(!roundstart && mind && !mind.antagonist.len)
+		var/a_type = antag_types[ROLE_BORER_REPRODUCED]
+		var/datum/antagonist/A = new a_type
+		A.create_antagonist(mind,update = FALSE)
 
 /mob/living/simple_animal/borer/New()
 	..()
 
-	add_language("Cortical Link")
+	add_language(LANGUAGE_CORTICAL)
 	verbs += /mob/living/proc/ventcrawl
 	verbs += /mob/living/proc/hide
 
@@ -92,8 +90,8 @@
 	..()
 	statpanel("Status")
 
-	if(emergency_shuttle)
-		var/eta_status = emergency_shuttle.get_status_panel_eta()
+	if(evacuation_controller)
+		var/eta_status = evacuation_controller.get_status_panel_eta()
 		if(eta_status)
 			stat(null, eta_status)
 
@@ -104,14 +102,14 @@
 
 	if(!host || !controlling) return
 
-	if(istype(host,/mob/living/carbon/human))
+	if(ishuman(host))
 		var/mob/living/carbon/human/H = host
-		var/obj/item/organ/external/head = H.get_organ("head")
+		var/obj/item/organ/external/head = H.get_organ(BP_HEAD)
 		head.implants -= src
 
 	controlling = 0
 
-	host.remove_language("Cortical Link")
+	host.remove_language(LANGUAGE_CORTICAL)
 	host.verbs -= /mob/living/carbon/proc/release_control
 	host.verbs -= /mob/living/carbon/proc/punish_host
 	host.verbs -= /mob/living/carbon/proc/spawn_larvae
@@ -156,7 +154,7 @@
 	if(!host) return
 
 	if(host.mind)
-		borers.remove_antagonist(host.mind)
+		clear_antagonist_type(host.mind, ROLE_BORER)
 
 	src.loc = get_turf(host)
 

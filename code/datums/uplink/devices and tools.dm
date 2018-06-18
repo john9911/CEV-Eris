@@ -13,7 +13,7 @@
 	name = "Operations Funding"
 	item_cost = 2
 	path = /obj/item/weapon/storage/secure/briefcase/money
-	desc = "A briefcase with 10,000 untraceable thalers for funding your sneaky activities."
+	desc = "A briefcase with 10,000 untraceable credits for funding your sneaky activities."
 
 /datum/uplink_item/item/tools/clerical
 	name = "Morphic Clerical Kit"
@@ -48,7 +48,7 @@
 /datum/uplink_item/item/tools/hacking_tool
 	name = "Door Hacking Tool"
 	item_cost = 6
-	path = /obj/item/device/multitool/hacktool
+	path = /obj/item/weapon/tool/multitool/hacktool
 	desc = "Appears and functions as a standard multitool until the mode is toggled by applying a screwdriver appropriately. \
 			When in hacking mode this device will grant full access to any standard airlock within 20 to 40 seconds. \
 			This device will also be able to immediately access the last 6 to 8 hacked airlocks."
@@ -75,7 +75,7 @@
 
 /datum/uplink_item/item/tools/teleporter/New()
 	..()
-	antag_roles = list(MODE_MERCENARY)
+	antag_roles = list(ROLE_MERCENARY)
 
 /datum/uplink_item/item/tools/ai_module
 	name = "Hacked AI Upload Module"

@@ -37,7 +37,7 @@
 /obj/machinery/atmospherics/portables_connector/hide(var/i)
 	update_underlays()
 
-/obj/machinery/atmospherics/portables_connector/process()
+/obj/machinery/atmospherics/portables_connector/Process()
 	..()
 	if(!on)
 		return
@@ -72,16 +72,16 @@
 
 	node = null
 
-	..()
+	. = ..()
 
-/obj/machinery/atmospherics/portables_connector/initialize()
+/obj/machinery/atmospherics/portables_connector/atmos_init()
 	if(node) return
 
 	var/node_connect = dir
 
-	for(var/obj/machinery/atmospherics/target in get_step(src,node_connect))
-		if(target.initialize_directions & get_dir(target,src))
-			if (check_connect_types(target,src))
+	for(var/obj/machinery/atmospherics/target in get_step(src, node_connect))
+		if(target.initialize_directions & get_dir(target, src))
+			if (check_connect_types(target, src))
 				node = target
 				break
 
@@ -130,26 +130,25 @@
 	return null
 
 
-/obj/machinery/atmospherics/portables_connector/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if (!istype(W, /obj/item/weapon/wrench))
+/obj/machinery/atmospherics/portables_connector/attackby(var/obj/item/I, var/mob/user)
+	if(!(QUALITY_BOLT_TURNING in I.tool_qualities))
 		return ..()
 	if (connected_device)
-		user << "<span class='warning'>You cannot unwrench \the [src], dettach \the [connected_device] first.</span>"
+		user << SPAN_WARNING("You cannot unwrench \the [src], dettach \the [connected_device] first.")
 		return 1
 	if (locate(/obj/machinery/portable_atmospherics, src.loc))
 		return 1
 	var/datum/gas_mixture/int_air = return_air()
 	var/datum/gas_mixture/env_air = loc.return_air()
 	if ((int_air.return_pressure()-env_air.return_pressure()) > 2*ONE_ATMOSPHERE)
-		user << "<span class='warning'>You cannot unwrench \the [src], it too exerted due to internal pressure.</span>"
+		user << SPAN_WARNING("You cannot unwrench \the [src], it too exerted due to internal pressure.")
 		add_fingerprint(user)
 		return 1
-	playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-	user << "<span class='notice'>You begin to unfasten \the [src]...</span>"
-	if (do_after(user, 40, src))
+	user << SPAN_NOTICE("You begin to unfasten \the [src]...")
+	if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_BOLT_TURNING, FAILCHANCE_EASY, required_stat = STAT_PRD))
 		user.visible_message( \
-			"<span class='notice'>\The [user] unfastens \the [src].</span>", \
-			"<span class='notice'>You have unfastened \the [src].</span>", \
+			SPAN_NOTICE("\The [user] unfastens \the [src]."), \
+			SPAN_NOTICE("You have unfastened \the [src]."), \
 			"You hear a ratchet.")
 		new /obj/item/pipe(loc, make_from=src)
 		qdel(src)

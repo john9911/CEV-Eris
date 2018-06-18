@@ -30,17 +30,24 @@
 		spawn( 0 )
 			src.Entered(AM)
 			return
-	turfs |= src
 
 /turf/proc/update_icon()
 	return
 
+/turf/Initialize()
+	turfs += src
+	. = ..()
+
 /turf/Destroy()
 	turfs -= src
 	..()
+	return QDEL_HINT_IWILLGC
 
 /turf/ex_act(severity)
 	return 0
+
+/turf/proc/is_solid_structure()
+	return 1
 
 /turf/proc/is_space()
 	return 0
@@ -67,7 +74,7 @@
 
 /turf/Enter(atom/movable/mover as mob|obj, atom/forget as mob|obj|turf|area)
 	if(movement_disabled && usr.ckey != movement_disabled_exception)
-		usr << "<span class='warning'>Movement is admin-disabled.</span>" //This is to identify lag problems
+		usr << SPAN_WARNING("Movement is admin-disabled.") //This is to identify lag problems
 		return
 
 	..()
@@ -113,7 +120,7 @@ var/const/enterloopsanity = 100
 /turf/Entered(atom/atom as mob|obj)
 
 	if(movement_disabled)
-		usr << "<span class='warning'>Movement is admin-disabled.</span>" //This is to identify lag problems
+		usr << SPAN_WARNING("Movement is admin-disabled.") //This is to identify lag problems
 		return
 	..()
 
@@ -131,6 +138,9 @@ var/const/enterloopsanity = 100
 		else if(is_space())
 			M.inertia_dir = 0
 			M.make_floating(0)
+		if(isliving(M))
+			var/mob/living/L = M
+			L.handle_footstep(src)
 
 	var/objects = 0
 	if(A && (A.flags & PROXMOVE))
@@ -201,7 +211,7 @@ var/const/enterloopsanity = 100
 				L.Add(t)
 	return L
 
-/turf/proc/process()
+/turf/Process()
 	return PROCESS_KILL
 
 /turf/proc/contains_dense_objects()
@@ -220,11 +230,23 @@ var/const/enterloopsanity = 100
 			var/turf/simulated/T = src
 			T.dirt = 0
 		for(var/obj/effect/O in src)
-			if(istype(O,/obj/effect/rune) || istype(O,/obj/effect/decal/cleanable) || istype(O,/obj/effect/overlay))
+			if(istype(O,/obj/effect/decal/cleanable) || istype(O,/obj/effect/overlay))
 				qdel(O)
 	else
-		user << "<span class='warning'>\The [source] is too dry to wash that.</span>"
+		user << SPAN_WARNING("\The [source] is too dry to wash that.")
 	source.reagents.trans_to_turf(src, 1, 10)	//10 is the multiplier for the reaction effect. probably needed to wet the floor properly.
 
 /turf/proc/update_blood_overlays()
 	return
+
+/turf/get_footstep_sound(var/mobtype)
+
+	var/sound
+
+	var/obj/structure/catwalk/catwalk = locate(/obj/structure/catwalk) in src
+	if(catwalk)
+		sound = safepick(catwalk.footstep_sounds[mobtype])
+	else
+		sound = safepick(footstep_sounds[mobtype])
+
+	return sound

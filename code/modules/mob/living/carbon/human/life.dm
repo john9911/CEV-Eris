@@ -1,5 +1,3 @@
-//This file was auto-corrected by findeclaration.exe on 25.5.2012 20:42:32
-
 //NOTE: Breathing happens once per FOUR TICKS, unless the last breath fails. In which case it happens once per ONE TICK! So oxyloss healing is done once per 4 ticks while oxyloss damage is applied once per tick!
 #define HUMAN_MAX_OXYLOSS 1 //Defines how much oxyloss humans can get per tick. A tile with no air at all (such as space) applies this value, otherwise it's a percentage of it.
 #define HUMAN_CRIT_MAX_OXYLOSS ( 2.0 / 6) //The amount of damage you'll get when in critical condition. We want this to be a 5 minute deal = 300s. There are 50HP to get through, so (1/6)*last_tick_duration per second. Breaths however only happen every 4 ticks. last_tick_duration = ~2.0 on average
@@ -180,7 +178,7 @@
 			for(var/mob/O in viewers(src, null))
 				if(O == src)
 					continue
-				O.show_message(text("<span class='danger'>[src] starts having a seizure!</span>"), 1)
+				O.show_message(text(SPAN_DANGER("[src] starts having a seizure!")), 1)
 			Paralyse(10)
 			make_jittery(1000)
 	if (disabilities & COUGHING)
@@ -213,19 +211,19 @@
 				custom_pain("Your head feels numb and painful.")
 		if(getBrainLoss() >= 15)
 			if(4 <= rn && rn <= 6) if(eye_blurry <= 0)
-				src << "<span class='warning'>It becomes hard to see for some reason.</span>"
+				src << SPAN_WARNING("It becomes hard to see for some reason.")
 				eye_blurry = 10
 		if(getBrainLoss() >= 35)
 			if(7 <= rn && rn <= 9) if(get_active_hand())
-				src << "<span class='danger'>Your hand won't respond properly, you drop what you're holding!</span>"
+				src << SPAN_DANGER("Your hand won't respond properly, you drop what you're holding!")
 				drop_item()
 		if(getBrainLoss() >= 45)
 			if(10 <= rn && rn <= 12)
 				if(prob(50))
-					src << "<span class='danger'>You suddenly black out!</span>"
+					src << SPAN_DANGER("You suddenly black out!")
 					Paralyse(10)
 				else if(!lying)
-					src << "<span class='danger'>Your legs won't respond properly, you fall down!</span>"
+					src << SPAN_DANGER("Your legs won't respond properly, you fall down!")
 					Weaken(10)
 
 
@@ -260,13 +258,13 @@
 			radiation -= 1 * RADIATION_SPEED_COEFFICIENT
 			if(prob(5) && prob(100 * RADIATION_SPEED_COEFFICIENT))
 				radiation -= 5 * RADIATION_SPEED_COEFFICIENT
-				src << "<span class='warning'>You feel weak.</span>"
+				src << SPAN_WARNING("You feel weak.")
 				Weaken(3)
 				if(!lying)
 					emote("collapse")
 			if(prob(5) && prob(100 * RADIATION_SPEED_COEFFICIENT) && species.get_bodytype() == "Human") //apes go bald
 				if((h_style != "Bald" || f_style != "Shaved" ))
-					src << "<span class='warning'>Your hair falls out.</span>"
+					src << SPAN_WARNING("Your hair falls out.")
 					h_style = "Bald"
 					f_style = "Shaved"
 					update_hair()
@@ -277,7 +275,7 @@
 			if(prob(5))
 				take_overall_damage(0, 5 * RADIATION_SPEED_COEFFICIENT, used_weapon = "Radiation Burns")
 			if(prob(1))
-				src << "<span class='warning'>You feel strange!</span>"
+				src << SPAN_WARNING("You feel strange!")
 				adjustCloneLoss(5 * RADIATION_SPEED_COEFFICIENT)
 				emote("gasp")
 
@@ -338,14 +336,14 @@
 		failed_last_breath = 1
 		if(prob(20))
 			emote("gasp")
-		if(health > config.health_threshold_crit)
+		if(health > HEALTH_THRESHOLD_CRIT)
 			adjustOxyLoss(HUMAN_MAX_OXYLOSS)
 		else
 			adjustOxyLoss(HUMAN_CRIT_MAX_OXYLOSS)
 
 		oxygen_alert = max(oxygen_alert, 1)
 		return 0
-	var/obj/item/organ/lungs/L = internal_organs_by_name["lungs"]
+	var/obj/item/organ/internal/lungs/L = internal_organs_by_name[O_LUNGS]
 	if(L && L.handle_breath(breath))
 		failed_last_breath = 0
 	else
@@ -630,14 +628,14 @@
 	else				//ALIVE. LIGHTS ARE ON
 		updatehealth()	//TODO
 
-		if(health <= config.health_threshold_dead || (species.has_organ["brain"] && !has_brain()))
+		if(health <= HEALTH_THRESHOLD_DEAD || (species.has_organ[O_BRAIN] && !has_brain()))
 			death()
 			blinded = 1
 			silent = 0
 			return 1
 
 		//UNCONSCIOUS. NO-ONE IS HOME
-		if((getOxyLoss() > (species.total_health/2)) || (health <= config.health_threshold_crit))
+		if((getOxyLoss() > (species.total_health/2)) || (health <= (HEALTH_THRESHOLD_CRIT - src.stats.getStat(STAT_PHY))))
 			Paralyse(3)
 
 		if(hallucination)
@@ -657,7 +655,7 @@
 				qdel(a)
 
 			if(halloss >= species.total_health)
-				src << "<span class='warning'>[species.halloss_message_self]</span>"
+				src << SPAN_WARNING("[species.halloss_message_self]")
 				src.visible_message("<B>[src]</B> [species.halloss_message].")
 				Paralyse(10)
 				setHalLoss(species.total_health-1)
@@ -665,7 +663,6 @@
 		if(paralysis || sleeping)
 			blinded = 1
 			stat = UNCONSCIOUS
-			animate_tail_reset()
 			adjustHalLoss(-3)
 
 		if(paralysis)
@@ -734,7 +731,7 @@
 /mob/living/carbon/human/handle_regular_hud_updates()
 	for (var/obj/screen/H in HUDprocess)
 //		var/obj/screen/B = H
-		H.process()
+		H.Process()
 	if(!overlays_cache)
 		overlays_cache = list()
 		overlays_cache.len = 23
@@ -958,7 +955,7 @@
 					stomach_contents.Remove(M)
 					qdel(M)
 					continue
-				if(air_master.current_cycle%3==1)
+				if(SSair.times_fired%3==1)
 					if(!(M.status_flags & GODMODE))
 						M.adjustBruteLoss(5)
 					nutrition += 10
@@ -972,12 +969,12 @@
 	if(status_flags & GODMODE)	return 0	//godmode
 	if(species && species.flags & NO_PAIN) return
 
-	if(health < config.health_threshold_softcrit)// health 0 makes you immediately collapse
+	if(health < (HEALTH_THRESHOLD_SOFTCRIT - src.stats.getStat(STAT_PHY)))// health 0 - stat makes you immediately collapse
 		shock_stage = max(shock_stage, 61)
 
 	if(traumatic_shock >= 80)
 		shock_stage += 1
-	else if(health < config.health_threshold_softcrit)
+	else if(health < HEALTH_THRESHOLD_SOFTCRIT - src.stats.getStat(STAT_PHY))
 		shock_stage = max(shock_stage, 61)
 	else
 		shock_stage = min(shock_stage, 160)
@@ -1031,7 +1028,7 @@
 		if(stat == DEAD)
 			holder.icon_state = "hudhealth-100" 	// X_X
 		else
-			var/percentage_health = RoundHealth((health-config.health_threshold_crit)/(maxHealth-config.health_threshold_crit)*100)
+			var/percentage_health = RoundHealth((health-HEALTH_THRESHOLD_CRIT)/(maxHealth-HEALTH_THRESHOLD_CRIT)*100)
 			holder.icon_state = "hud[percentage_health]"
 		hud_list[HEALTH_HUD] = holder
 
@@ -1121,32 +1118,25 @@
 						break
 		hud_list[WANTED_HUD] = holder
 
-	if (  BITTEST(hud_updateflag, IMPLOYAL_HUD) \
-	   || BITTEST(hud_updateflag,  IMPCHEM_HUD) \
-	   || BITTEST(hud_updateflag, IMPTRACK_HUD))
+	if (BITTEST(hud_updateflag,  IMPCHEM_HUD) || BITTEST(hud_updateflag, IMPTRACK_HUD))
 
 		var/image/holder1 = hud_list[IMPTRACK_HUD]
-		var/image/holder2 = hud_list[IMPLOYAL_HUD]
-		var/image/holder3 = hud_list[IMPCHEM_HUD]
+		var/image/holder2 = hud_list[IMPCHEM_HUD]
 
 		holder1.icon_state = "hudblank"
 		holder2.icon_state = "hudblank"
-		holder3.icon_state = "hudblank"
 
 		for(var/obj/item/weapon/implant/I in src)
 			if(I.implanted)
 				if(istype(I,/obj/item/weapon/implant/tracking))
 					holder1.icon_state = "hud_imp_tracking"
-				if(istype(I,/obj/item/weapon/implant/loyalty))
-					holder2.icon_state = "hud_imp_loyal"
 				if(istype(I,/obj/item/weapon/implant/chem))
-					holder3.icon_state = "hud_imp_chem"
+					holder2.icon_state = "hud_imp_chem"
 
 		hud_list[IMPTRACK_HUD] = holder1
-		hud_list[IMPLOYAL_HUD] = holder2
-		hud_list[IMPCHEM_HUD]  = holder3
+		hud_list[IMPCHEM_HUD]  = holder2
 
-	if (BITTEST(hud_updateflag, SPECIALROLE_HUD))
+/*	if (BITTEST(hud_updateflag, SPECIALROLE_HUD))
 		var/image/holder = hud_list[SPECIALROLE_HUD]
 		holder.icon_state = "hudblank"
 		if(mind && mind.special_role)
@@ -1156,7 +1146,7 @@
 				holder.icon_state = "hudsyndicate"
 			hud_list[SPECIALROLE_HUD] = holder
 	hud_updateflag = 0
-
+*/
 /mob/living/carbon/human/handle_silent()
 	if(..())
 		speech_problem_flag = 1
@@ -1207,13 +1197,17 @@
 		if(eyeobj.owner != src)
 			reset_view(null)
 	else
-		var/isRemoteObserve = 0
-		if((mRemote in mutations) && remoteview_target)
-			if(remoteview_target.stat==CONSCIOUS)
-				isRemoteObserve = 1
+		var/isRemoteObserve = FALSE
+		if(shadow && client.eye == shadow && !is_physically_disabled())
+			isRemoteObserve = TRUE
+		else if(client.eye && istype(client.eye,/mob/observer/eye/god))
+			isRemoteObserve = TRUE
+		else if((mRemote in mutations) && remoteview_target)
+			if(remoteview_target.stat == CONSCIOUS)
+				isRemoteObserve = TRUE
 		if(!isRemoteObserve && client && !client.adminobs)
 			remoteview_target = null
-			reset_view(null, 0)
+			reset_view(null, FALSE)
 
 	update_equipment_vision()
 	species.handle_vision(src)

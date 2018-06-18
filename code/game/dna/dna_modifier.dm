@@ -47,22 +47,11 @@
 	idle_power_usage = 50
 	active_power_usage = 300
 	interact_offline = 1
+	circuit = /obj/item/weapon/circuitboard/clonescanner
 	var/locked = 0
 	var/mob/living/carbon/occupant = null
 	var/obj/item/weapon/reagent_containers/glass/beaker = null
 	var/opened = 0
-
-/obj/machinery/dna_scannernew/New()
-	..()
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/clonescanner(src)
-	component_parts += new /obj/item/weapon/stock_parts/scanning_module(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/micro_laser(src)
-	component_parts += new /obj/item/weapon/stock_parts/console_screen(src)
-	component_parts += new /obj/item/stack/cable_coil(src)
-	component_parts += new /obj/item/stack/cable_coil(src)
-	RefreshParts()
 
 /obj/machinery/dna_scannernew/relaymove(mob/user as mob)
 	if (user.stat)
@@ -75,7 +64,7 @@
 	set category = "Object"
 	set name = "Eject DNA Scanner"
 
-	if (usr.stat != 0)
+	if (usr.stat)
 		return
 
 	eject_occupant()
@@ -97,71 +86,63 @@
 	set category = "Object"
 	set name = "Enter DNA Scanner"
 
-	if (usr.stat != 0)
+	if (usr.stat)
 		return
 	if (!ishuman(usr) && !issmall(usr)) //Make sure they're a mob that has dna
-		usr << "<span class='notice'>Try as you might, you can not climb up into the scanner.</span>"
+		usr << SPAN_NOTICE("Try as you might, you can not climb up into the scanner.")
 		return
 	if (src.occupant)
-		usr << "<span class='warning'>The scanner is already occupied!</span>"
+		usr << SPAN_WARNING("The scanner is already occupied!")
 		return
 	if (usr.abiotic())
-		usr << "<span class='warning'>The subject cannot have abiotic items on.</span>"
+		usr << SPAN_WARNING("The subject cannot have abiotic items on.")
 		return
 	usr.stop_pulling()
-	usr.client.perspective = EYE_PERSPECTIVE
-	usr.client.eye = src
-	usr.loc = src
-	src.occupant = usr
-	src.icon_state = "scanner_1"
+	put_in(usr)
 	src.add_fingerprint(usr)
 	return
+
+/obj/machinery/dna_scannernew/affect_grab(var/mob/user, var/mob/target)
+	if (src.occupant)
+		user << SPAN_WARNING("The scanner is already occupied!")
+		return
+	if (target.abiotic())
+		user << SPAN_WARNING("The subject cannot have abiotic items on.")
+		return
+	put_in(target)
+	src.add_fingerprint(user)
+	return TRUE
+
 
 /obj/machinery/dna_scannernew/attackby(var/obj/item/weapon/item as obj, var/mob/user as mob)
 	if(istype(item, /obj/item/weapon/reagent_containers/glass))
 		if(beaker)
-			user << "<span class='warning'>A beaker is already loaded into the machine.</span>"
+			user << SPAN_WARNING("A beaker is already loaded into the machine.")
 			return
-
 		beaker = item
-		user.drop_item()
-		item.loc = src
+		user.drop_from_inventory(item)
+		item.forceMove(src)
 		user.visible_message("\The [user] adds \a [item] to \the [src]!", "You add \a [item] to \the [src]!")
 		return
-	else if (!istype(item, /obj/item/weapon/grab))
-		return
-	var/obj/item/weapon/grab/G = item
-	if (!ismob(G.affecting))
-		return
-	if (src.occupant)
-		user << "<span class='warning'>The scanner is already occupied!</span>"
-		return
-	if (G.affecting.abiotic())
-		user << "<span class='warning'>The subject cannot have abiotic items on.</span>"
-		return
-	put_in(G.affecting)
-	src.add_fingerprint(user)
-	qdel(G)
-	return
 
 /obj/machinery/dna_scannernew/proc/put_in(var/mob/M)
-	if(M.client)
-		M.client.perspective = EYE_PERSPECTIVE
-		M.client.eye = src
+	M.reset_view(src)
 	M.loc = src
 	src.occupant = M
 	src.icon_state = "scanner_1"
 
 	// search for ghosts, if the corpse is empty and the scanner is connected to a cloner
-	if(locate(/obj/machinery/computer/cloning, get_step(src, NORTH)) \
-		|| locate(/obj/machinery/computer/cloning, get_step(src, SOUTH)) \
-		|| locate(/obj/machinery/computer/cloning, get_step(src, EAST)) \
-		|| locate(/obj/machinery/computer/cloning, get_step(src, WEST)))
-
+	if(locate(/obj/machinery/computer/cloning) in range(1))
 		if(!M.client && M.mind)
 			for(var/mob/observer/ghost/ghost in player_list)
 				if(ghost.mind == M.mind)
-					ghost << "<b><font color = #330033><font size = 3>Your corpse has been placed into a cloning scanner. Return to your body if you want to be resurrected/cloned!</b> (Verbs -> Ghost -> Re-enter corpse)</font></font>"
+					ghost << {"
+						<font color = #330033 size = 3>
+						<b>Your corpse has been placed into a cloning scanner.
+						Return to your body if you want to be resurrected/cloned!</b>
+						(Verbs -> Ghost -> Re-enter corpse)
+						</font>
+					"}
 					break
 	return
 
@@ -238,8 +219,8 @@
 /obj/machinery/computer/scan_consolenew/attackby(obj/item/I as obj, mob/user as mob)
 	if (istype(I, /obj/item/weapon/disk/data)) //INSERT SOME diskS
 		if (!src.disk)
-			user.drop_item()
-			I.loc = src
+			user.drop_from_inventory(I)
+			I.forceMove(src)
 			src.disk = I
 			user << "You insert [I]."
 			nanomanager.update_uis(src) // update all UIs attached to src
@@ -293,7 +274,7 @@
 	return 1
 
 /*
-/obj/machinery/computer/scan_consolenew/process() //not really used right now
+/obj/machinery/computer/scan_consolenew/Process() //not really used right now
 	if(stat & (NOPOWER|BROKEN))
 		return
 	if (!( src.status )) //remove this
@@ -383,7 +364,7 @@
 			occupantData["isViableSubject"] = 0
 		occupantData["health"] = connected.occupant.health
 		occupantData["maxHealth"] = connected.occupant.maxHealth
-		occupantData["minHealth"] = config.health_threshold_dead
+		occupantData["minHealth"] = HEALTH_THRESHOLD_DEAD
 		occupantData["uniqueEnzymes"] = connected.occupant.dna.unique_enzymes
 		occupantData["uniqueIdentity"] = connected.occupant.dna.uni_identity
 		occupantData["structuralEnzymes"] = connected.occupant.dna.struc_enzymes

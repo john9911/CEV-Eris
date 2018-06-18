@@ -30,7 +30,7 @@
 	if(state != 1)
 		user << "\red The shield generator needs to be firmly secured to the floor first."
 		return 1
-	if(src.locked && !istype(user, /mob/living/silicon))
+	if(src.locked && !issilicon(user))
 		user << "\red The controls are locked!"
 		return 1
 	if(power != 1)
@@ -80,7 +80,7 @@
 	power = 1	// IVE GOT THE POWER!
 	return 1
 
-/obj/machinery/shieldwallgen/process()
+/obj/machinery/shieldwallgen/Process()
 	power()
 	if(power)
 		storedpower -= 2500 //the generator post itself uses some power
@@ -158,27 +158,29 @@
 		CF.set_dir(field_dir)
 
 
-/obj/machinery/shieldwallgen/attackby(obj/item/W, mob/user)
-	if(istype(W, /obj/item/weapon/wrench))
-		if(active)
-			user << "Turn off the field generator first."
-			return
+/obj/machinery/shieldwallgen/attackby(obj/item/I, mob/user)
 
-		else if(state == 0)
-			state = 1
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			user << "You secure the external reinforcing bolts to the floor."
-			src.anchored = 1
-			return
+	if(QUALITY_BOLT_TURNING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_BOLT_TURNING, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+			if(active)
+				user << "Turn off the field generator first."
+				return
 
-		else if(state == 1)
-			state = 0
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			user << "You undo the external reinforcing bolts."
-			src.anchored = 0
-			return
+			else if(state == 0)
+				state = 1
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user << "You secure the external reinforcing bolts to the floor."
+				src.anchored = 1
+				return
 
-	if(istype(W, /obj/item/weapon/card/id)||istype(W, /obj/item/device/pda))
+			else if(state == 1)
+				state = 0
+				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+				user << "You undo the external reinforcing bolts."
+				src.anchored = 0
+				return
+
+	if(istype(I, /obj/item/weapon/card/id)||istype(I, /obj/item/device/pda))
 		if (src.allowed(user))
 			src.locked = !src.locked
 			user << "Controls are now [src.locked ? "locked." : "unlocked."]"
@@ -187,7 +189,7 @@
 
 	else
 		src.add_fingerprint(user)
-		visible_message("\red The [src.name] has been hit with \the [W.name] by [user.name]!")
+		visible_message("\red The [src.name] has been hit with \the [I.name] by [user.name]!")
 
 /obj/machinery/shieldwallgen/proc/cleanup(var/NSEW)
 	var/obj/machinery/shieldwall/F
@@ -212,7 +214,7 @@
 	src.cleanup(2)
 	src.cleanup(4)
 	src.cleanup(8)
-	..()
+	. = ..()
 
 /obj/machinery/shieldwallgen/bullet_act(var/obj/item/projectile/Proj)
 	storedpower -= 400 * Proj.get_structure_damage()
@@ -257,13 +259,13 @@
 
 /obj/machinery/shieldwall/Destroy()
 	update_nearby_tiles()
-	..()
+	. = ..()
 
 /obj/machinery/shieldwall/attack_hand(mob/user as mob)
 	return
 
 
-/obj/machinery/shieldwall/process()
+/obj/machinery/shieldwall/Process()
 	if(needs_power)
 		if(isnull(gen_primary)||isnull(gen_secondary))
 			qdel(src)

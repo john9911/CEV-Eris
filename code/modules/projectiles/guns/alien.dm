@@ -16,14 +16,14 @@
 
 /obj/item/weapon/gun/launcher/spikethrower/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 	last_regen = world.time
 
 /obj/item/weapon/gun/launcher/spikethrower/Destroy()
-	processing_objects.Remove(src)
-	..()
+	STOP_PROCESSING(SSobj, src)
+	. = ..()
 
-/obj/item/weapon/gun/launcher/spikethrower/process()
+/obj/item/weapon/gun/launcher/spikethrower/Process()
 	if(spikes < max_spikes && world.time > last_regen + spike_gen_time)
 		spikes++
 		last_regen = world.time
@@ -37,8 +37,8 @@
 	icon_state = "spikethrower[spikes]"
 
 /obj/item/weapon/gun/launcher/spikethrower/special_check(user)
-	if(istype(user,/mob/living/carbon/human))
-		user << "<span class='warning'>\The [src] does not respond to you!</span>"
+	if(ishuman(user))
+		user << SPAN_WARNING("\The [src] does not respond to you!")
 		return 0
 	return ..()
 

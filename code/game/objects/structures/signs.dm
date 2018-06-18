@@ -4,7 +4,7 @@
 	opacity = 0
 	density = 0
 	layer = 3.5
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 
 /obj/structure/sign/ex_act(severity)
 	switch(severity)
@@ -21,7 +21,7 @@
 	return
 
 /obj/structure/sign/attackby(obj/item/tool as obj, mob/user as mob)	//deconstruction
-	if(istype(tool, /obj/item/weapon/screwdriver) && !istype(src, /obj/structure/sign/double))
+	if(istype(tool, /obj/item/weapon/tool/screwdriver) && !istype(src, /obj/structure/sign/double))
 		user << "You unfasten the sign with your [tool]."
 		var/obj/item/sign/S = new(src.loc)
 		S.name = name
@@ -37,11 +37,11 @@
 	name = "sign"
 	desc = ""
 	icon = 'icons/obj/decals.dmi'
-	w_class = 3		//big
+	w_class = ITEM_SIZE_NORMAL		//big
 	var/sign_state = ""
 
 /obj/item/sign/attackby(obj/item/tool as obj, mob/user as mob)	//construction
-	if(istype(tool, /obj/item/weapon/screwdriver) && isturf(user.loc))
+	if(istype(tool, /obj/item/weapon/tool/screwdriver) && isturf(user.loc))
 		var/direction = input("In which direction?", "Select direction.") in list("North", "East", "South", "West", "Cancel")
 		if(direction == "Cancel") return
 		var/obj/structure/sign/S = new(user.loc)
@@ -204,11 +204,6 @@
 
 //Eris signs
 
-/obj/structure/sign/ironhammer
-	name = "Ironhammer Security"
-	desc = "Sign depicts the symbolic of Ironhammer Security, the largest security provider within Trade Union of Hansa."
-	icon_state = "ironhammer"
-
 /obj/structure/sign/atmos_co2
 	name = "CO2 warning sign"
 	desc = "WARNING! CO2 flow tube. Ensure the flow is disengaged before working."
@@ -363,3 +358,238 @@
 	name = "MEMETIC HAZARD"
 	desc = "Warning: Memetic hazard, wear meson goggles!"
 	icon_state = "memetic"
+
+//Eris departments
+
+/obj/structure/sign/department
+	name = "department sign"
+	desc = "Sign of some important ship compartment."
+
+/obj/structure/sign/department/medbay
+	name = "MEDBAY"
+	icon_state = "medbay"
+
+/obj/structure/sign/department/virology
+	name = "VIROLOGY"
+	icon_state = "virology"
+
+/obj/structure/sign/department/chem
+	name = "CHEMISTRY"
+	icon_state = "chem"
+
+/obj/structure/sign/department/gene
+	name = "GENETICS"
+	icon_state = "gene"
+
+/obj/structure/sign/department/morgue
+	name = "MORGUE"
+	icon_state = "morgue"
+
+/obj/structure/sign/department/operational
+	name = "OPERATIONAL"
+	icon_state = "operational"
+
+/obj/structure/sign/department/sci
+	name = "SCIENCE"
+	icon_state = "sci"
+
+/obj/structure/sign/department/xenolab
+	name = "XENOLAB"
+	icon_state = "xenolab"
+
+/obj/structure/sign/department/anomaly
+	name = "ANOMALYLAB"
+	icon_state = "anomaly"
+
+/obj/structure/sign/department/dock
+	name = "DOKUCHAYEV DOCK"
+	icon_state = "dock"
+
+/obj/structure/sign/department/rnd
+	name = "RND"
+	icon_state = "rnd"
+
+/obj/structure/sign/department/robo
+	name = "ROBOTICS"
+	icon_state = "robo"
+
+/obj/structure/sign/department/toxins
+	name = "TOXINS"
+	icon_state = "toxins"
+
+/obj/structure/sign/department/toxin_res
+	name = "TOXINLAB"
+	icon_state = "toxin_res"
+
+/obj/structure/sign/department/eva
+	name = "E.V.A."
+	icon_state = "eva"
+
+/obj/structure/sign/department/ass
+	name = "TOOL STORAGE"
+	icon_state = "ass"
+
+/obj/structure/sign/department/bar
+	name = "BAR"
+	icon_state = "bar"
+
+/obj/structure/sign/department/biblio
+	name = "LIBRARY"
+	icon_state = "biblio"
+
+/obj/structure/sign/department/chapel
+	name = "CHAPEL"
+	icon_state = "chapel"
+
+/obj/structure/sign/department/bridge
+	name = "BRIDGE"
+	icon_state = "bridge"
+
+/obj/structure/sign/department/telecoms
+	name = "TELECOMS"
+	icon_state = "telecoms"
+
+/obj/structure/sign/department/conference_room
+	name = "CONFERENCE"
+	icon_state = "conference_room"
+
+/obj/structure/sign/department/ai
+	name = "AI"
+	icon_state = "ai"
+
+/obj/structure/sign/department/cargo
+	name = "CARGO"
+	icon_state = "cargo"
+
+/obj/structure/sign/department/mail
+	name = "MAIL"
+	icon_state = "mail"
+
+/obj/structure/sign/department/miner_dock
+	name = "HULK DOCK"
+	icon_state = "miner_dock"
+
+/obj/structure/sign/department/cargo_dock
+	name = "CARGO A5 DOCK"
+	icon_state = "cargo_dock"
+
+/obj/structure/sign/department/eng
+	name = "ENGINEERING"
+	icon_state = "eng"
+
+/obj/structure/sign/department/engine
+	name = "ENGINE"
+	icon_state = "engine"
+
+/obj/structure/sign/department/gravi
+	name = "GRAVGEN"
+	icon_state = "gravi"
+
+/obj/structure/sign/department/atmos
+	name = "ATMOSPHERICS"
+	icon_state = "atmos"
+
+/obj/structure/sign/department/shield
+	name = "SHIELDGEN"
+	icon_state = "shield"
+
+/obj/structure/sign/department/drones
+	name = "DRONES"
+	icon_state = "drones"
+
+/obj/structure/sign/department/interrogation
+	name = "INTERROGATION"
+	icon_state = "interrogation"
+
+/obj/structure/sign/department/commander
+	name = "IHS COMMANDER"
+	icon_state = "commander"
+
+/obj/structure/sign/department/armory
+	name = "IHS ARMORY"
+	icon_state = "armory"
+
+/obj/structure/sign/department/prison
+	name = "PRISON"
+	icon_state = "prison"
+
+//Eris factions
+
+/obj/structure/sign/faction
+	name = "faction sign"
+	desc = "Faction sign of some sort."
+
+/obj/structure/sign/faction/ironhammer
+	name = "Ironhammer Security"
+	desc = "Sign depicts the symbolic of Ironhammer Security, the largest security provider within Trade Union of Hansa."
+	icon_state = "ironhammer"
+
+/obj/structure/sign/faction/alliance
+	name = "Mankind Alliance"
+	desc = "Alliance's all-seeing eye, banner of now fallen empire. Once they were owning all the Milky Way. Now it's just dust, forgotten derelicts and automated ships."
+	icon_state = "alliance"
+
+/obj/structure/sign/faction/alliance_old
+	name = "Mankind Alliance"
+	desc = "Alliance's all-seeing eye, banner of now fallen empire. Once they were owning all the Milky Way. Now it's just dust, forgotten derelicts and automated ships."
+	icon_state = "alliance-old"
+
+/obj/structure/sign/faction/frozenstar
+	name = "Frozen Star"
+	desc = "The most popular Hanza's weapon manufacturer."
+	icon_state = "frozenstar"
+
+/obj/structure/sign/faction/moebius
+	name = "Moebius Laboratories"
+	desc = "Shady pharmaceutical and prosthetic manufacturer. Few outsiders know what happens behind the doors of their labs, and whoever knows does not live a long life."
+	icon_state = "moebius"
+
+/obj/structure/sign/faction/neotheology
+	name = "NeoTheology"
+	desc = "Tau Cross of Cyberchristianity - symbol of NeoTheology."
+	icon_state = "neotheology"
+
+/obj/structure/sign/faction/neotheology_old
+	name = "NeoTheology"
+	desc = "Tau Cross of Cyberchristianity - symbol of NeoTheology."
+	icon_state = "neotheology-old"
+
+/obj/structure/sign/faction/neotheology_cross
+	name = "Cyberñhristianity Tau cross"
+	desc = "Religious symbol of Cyberchristianity - the Tau cross. It looks like a decoration, not a real cruciform."
+	icon_state = "wall_cross_steel"
+
+/obj/structure/sign/faction/neotheology_cross/gold
+	name = "Cyberñhristianity Tau cross"
+	desc = "Religious symbol of Cyberchristianity - the Tau cross. It looks like a decoration, not a real cruciform."
+	icon_state = "wall_cross_gold"
+
+/obj/structure/sign/faction/astersguild
+	name = "Asters Guild"
+	desc = "Asters Guild - monopolists of far space transportation."
+	icon_state = "astersguild"
+
+/obj/structure/sign/faction/technomancers
+	name = "Technomancer League"
+	desc = "Technomancer League - anarchistic community ruled by powerful clans."
+	icon_state = "technomancers"
+
+/obj/structure/sign/faction/excelsior
+	name = "EXCELSIOR"
+	desc = "EXCELSIOR is union of communist mining communities with no respect to any private property."
+	icon_state = "excelsior"
+
+/obj/structure/sign/faction/excelsior_old
+	name = "EXCELSIOR"
+	desc = "EXCELSIOR is union of communist mining communities with no respect to any private property."
+	icon_state = "excelsior-old"
+
+/obj/structure/sign/derelict1
+	name = "Old sign"
+	desc = "Technical information of some sort, shame its too worn-out to read."
+	icon_state = "something-old1"
+
+/obj/structure/sign/derelict2
+	name = "Old sign"
+	desc = "Looks like a planet crashing by some station above it. Its kinda scary."
+	icon_state = "something-old2"

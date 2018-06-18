@@ -17,7 +17,7 @@
 	// If the gloves do anything, have them return 1 to stop
 	// normal attack_hand() here.
 	var/obj/item/clothing/gloves/G = gloves // not typecast specifically enough in defines
-	if(istype(G) && G.Touch(A,1))
+	if(istype(G) && G.Touch(A, 1))
 		return
 
 	A.attack_hand(src)
@@ -29,12 +29,44 @@
 	return
 
 /mob/living/carbon/human/RangedAttack(var/atom/A)
+	if((istype(A, /turf/simulated/floor) || istype(A, /obj/structure/catwalk)) && isturf(loc) && shadow && !is_physically_disabled()) //Climbing through openspace
+		var/turf/T = get_turf(A)
+		if(T.Adjacent(shadow) && !locate(/obj/structure) in shadow.loc)
+			var/list/objects_to_stand_on = list(
+				/obj/item/weapon/stool,
+				/obj/structure/bed,
+				/obj/structure/table,
+				/obj/structure/closet/crate
+			)
+			var/atom/helper = null
+			var/area/location = get_area(loc)
+			if(!location.has_gravity)
+				helper = src
+			else
+				for(var/type in objects_to_stand_on)
+					helper = locate(type) in src.loc
+					if(helper)
+						break
+				if(!helper)
+					return
+
+			visible_message(SPAN_WARNING("[src] starts climbing onto \the [A]!"))
+			shadow.visible_message(SPAN_WARNING("[shadow] starts climbing onto \the [A]!"))
+			if(do_after(src, 50, helper))
+				visible_message(SPAN_WARNING("[src] climbs onto \the [A]!"))
+				shadow.visible_message(SPAN_WARNING("[shadow] climbs onto \the [A]!"))
+				src.Move(T)
+			else
+				visible_message(SPAN_WARNING("[src] gives up on trying to climb onto \the [A]!"))
+				shadow.visible_message(SPAN_WARNING("[shadow] gives up on trying to climb onto \the [A]!"))
+			return
+
 	if(!gloves && !mutations.len) return
 	var/obj/item/clothing/gloves/G = gloves
 	if((LASER in mutations) && a_intent == I_HURT)
 		LaserEyes(A) // moved into a proc below
 
-	else if(istype(G) && G.Touch(A,0)) // for magic gloves
+	else if(istype(G) && G.Touch(A, 0)) // for magic gloves
 		return
 
 	else if(TK in mutations)
@@ -55,7 +87,7 @@
 	if(!..())
 		return 0
 
-	A.attack_generic(src,rand(5,6),"bitten")
+	A.attack_generic(src, rand(5, 6), "bitten")
 
 /*
 	Slimes
@@ -81,11 +113,11 @@
 
 		switch(src.a_intent)
 			if (I_HELP) // We just poke the other
-				M.visible_message("<span class='notice'>[src] gently pokes [M]!</span>", "<span class='notice'>[src] gently pokes you!</span>")
+				M.visible_message(SPAN_NOTICE("[src] gently pokes [M]!"), SPAN_NOTICE("[src] gently pokes you!"))
 			if (I_DISARM) // We stun the target, with the intention to feed
 				var/stunprob = 1
 				var/power = max(0, min(10, (powerlevel + rand(0, 3))))
-				if (powerlevel > 0 && !istype(A, /mob/living/carbon/slime))
+				if (powerlevel > 0 && !isslime(A))
 					if(ishuman(M))
 						var/mob/living/carbon/human/H = M
 						stunprob *= H.species.siemens_coefficient
@@ -102,7 +134,7 @@
 
 				if(prob(stunprob))
 					powerlevel = max(0, powerlevel-3)
-					M.visible_message("<span class='danger'>[src] has shocked [M]!</span>", "<span class='danger'>[src] has shocked you!</span>")
+					M.visible_message(SPAN_DANGER("[src] has shocked [M]!"), SPAN_DANGER("[src] has shocked you!"))
 					M.Weaken(power)
 					M.Stun(power)
 					M.stuttering = max(M.stuttering, power)
@@ -112,19 +144,19 @@
 					s.start()
 
 					if(prob(stunprob) && powerlevel >= 8)
-						M.adjustFireLoss(powerlevel * rand(6,10))
+						M.adjustFireLoss(powerlevel * rand(6, 10))
 				else if(prob(40))
-					M.visible_message("<span class='danger'>[src] has pounced at [M]!</span>", "<span class='danger'>[src] has pounced at you!</span>")
+					M.visible_message(SPAN_DANGER("[src] has pounced at [M]!"), SPAN_DANGER("[src] has pounced at you!"))
 					M.Weaken(power)
 				else
-					M.visible_message("<span class='danger'>[src] has tried to pounce at [M]!</span>", "<span class='danger'>[src] has tried to pounce at you!</span>")
+					M.visible_message(SPAN_DANGER("[src] has tried to pounce at [M]!"), SPAN_DANGER("[src] has tried to pounce at you!"))
 				M.updatehealth()
 			if (I_GRAB) // We feed
 				Wrap(M)
 			if (I_HURT) // Attacking
-				A.attack_generic(src, (is_adult ? rand(20,40) : rand(5,25)), "glomped")
+				A.attack_generic(src, (is_adult ? rand(20, 40) : rand(5, 25)), "glomped")
 	else
-		A.attack_generic(src, (is_adult ? rand(20,40) : rand(5,25)), "glomped") // Basic attack.
+		A.attack_generic(src, (is_adult ? rand(20, 40) : rand(5, 25)), "glomped") // Basic attack.
 /*
 	New Players:
 	Have no reason to click on anything at all.
@@ -140,10 +172,10 @@
 	if(!..())
 		return
 
-	if(melee_damage_upper == 0 && istype(A,/mob/living))
-		custom_emote(1,"[friendly] [A]!")
+	if(melee_damage_upper == 0 && isliving(A))
+		custom_emote(1, "[friendly] [A]!")
 		return
 
 	var/damage = rand(melee_damage_lower, melee_damage_upper)
-	if(A.attack_generic(src,damage,attacktext,environment_smash) && loc && attack_sound)
+	if(A.attack_generic(src, damage, attacktext, environment_smash) && loc && attack_sound)
 		playsound(loc, attack_sound, 50, 1, 1)

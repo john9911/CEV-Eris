@@ -7,7 +7,6 @@
 #define SEC_LEVEL_GREEN 0
 #define SEC_LEVEL_BLUE  1
 #define SEC_LEVEL_RED   2
-#define SEC_LEVEL_DELTA 3
 
 #define BE_PLANT "BE_PLANT"
 #define BE_SYNTH "BE_SYNTH"
@@ -26,27 +25,37 @@
 #define ANTAG_VOTABLE           0x200 // Can be voted as an additional antagonist before roundstart.
 #define ANTAG_SET_APPEARANCE    0x400 // Causes antagonists to use an appearance modifier on spawn.
 
-// Mode/antag template macros.
-#define MODE_BORER "borer"
-#define MODE_XENOMORPH "xeno"
-#define MODE_LOYALIST "loyalist"
-#define MODE_MUTINEER "mutineer"
-#define MODE_COMMANDO "commando"
-#define MODE_DEATHSQUAD "deathsquad"
-#define MODE_ACTOR "actor"
-#define MODE_MERCENARY "mercenary"
-#define MODE_NINJA "ninja"
-#define MODE_RAIDER "raider"
-#define MODE_WIZARD "wizard"
-#define MODE_CHANGELING "changeling"
-#define MODE_CULTIST "cultist"
-#define MODE_HIGHLANDER "highlander"
-#define MODE_MONKEY "monkey"
-#define MODE_RENEGADE "renegade"
-#define MODE_REVOLUTIONARY "revolutionary"
-#define MODE_LOYALIST "loyalist"
-#define MODE_MALFUNCTION "malf"
-#define MODE_TRAITOR "traitor"
+// Storyteller names macro
+#define STORYTELLER_BASE "erida"
+
+// antag template macros.
+#define ROLE_BORER "borer"
+#define ROLE_BORER_REPRODUCED "borer_r"
+#define ROLE_XENOMORPH "xeno"
+#define ROLE_LOYALIST "loyalist"
+#define ROLE_MUTINEER "mutineer"
+#define ROLE_COMMANDO "commando"
+#define ROLE_DEATHSQUAD "deathsquad"
+#define ROLE_ACTOR "actor"
+#define ROLE_MERCENARY "mercenary"
+#define ROLE_CHANGELING "changeling"
+#define ROLE_MONKEY "monkey"
+#define ROLE_MALFUNCTION "malf"
+#define ROLE_TRAITOR "traitor"
+#define ROLE_TRAITOR_SYNTH "robo_traitor"
+#define ROLE_MARSHAL "marshal"
+
+#define ROLE_EXCELSIOR_REV "excelsior_rev"
+
+#define ROLE_INQUISITOR "inquisitor"
+#define ROLE_SECDOC_DEFENDER "secdoc_defender"
+
+#define FACTION_EXCELSIOR "excelsior"
+#define FACTION_BORERS "borers"
+#define FACTION_XENOMORPHS "xenomorphs"
+
+#define ROLESET_TRAITOR "traitor"
+#define ROLESET_VERSUS_TRAITOR "double_agents"
 
 #define DEFAULT_TELECRYSTAL_AMOUNT 25
 
@@ -87,3 +96,8 @@
 #define Sp_RECHARGE	"recharge"
 #define Sp_CHARGES	"charges"
 #define Sp_HOLDVAR	"holdervar"
+
+#define INITIALIZATION_NOW 1
+#define INITIALIZATION_HAS_BEGUN 2
+#define INITIALIZATION_COMPLETE 4
+#define INITIALIZATION_NOW_AND_COMPLETE (INITIALIZATION_NOW|INITIALIZATION_COMPLETE)

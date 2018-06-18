@@ -9,6 +9,7 @@
 	var/list/clothing_choices = list()
 	siemens_coefficient = 0.8
 	species_restricted = null
+	silence_steps = TRUE
 
 /obj/item/clothing/shoes/mime
 	name = "mime shoes"
@@ -54,8 +55,6 @@
 	species_restricted = null
 	body_parts_covered = 0
 
-	wizard_garb = 1
-
 /obj/item/clothing/shoes/sandal/marisa
 	desc = "A pair of magic, black shoes."
 	name = "magic shoes"
@@ -96,9 +95,6 @@
 	max_heat_protection_temperature = SHOE_MAX_HEAT_PROTECTION_TEMPERATURE
 	species_restricted = null
 
-/obj/item/clothing/shoes/cult/cultify()
-	return
-
 /obj/item/clothing/shoes/cyborg
 	name = "cyborg boots"
 	desc = "Shoes for a cyborg costume"
@@ -111,7 +107,7 @@
 	item_state = "slippers"
 	force = 0
 	species_restricted = null
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 
 /obj/item/clothing/shoes/slippers_worn
 	name = "worn bunny slippers"
@@ -119,12 +115,7 @@
 	icon_state = "slippers_worn"
 	item_state = "slippers_worn"
 	force = 0
-	w_class = 2
-
-/obj/item/clothing/shoes/laceup
-	name = "laceup shoes"
-	desc = "The height of fashion, and they're pre-polished!"
-	icon_state = "laceups"
+	w_class = ITEM_SIZE_SMALL
 
 /obj/item/clothing/shoes/swimmingfins
 	desc = "Help you swim good."

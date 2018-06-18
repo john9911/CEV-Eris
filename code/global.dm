@@ -6,16 +6,14 @@
 // Items that ask to be called every cycle.
 var/global/datum/datacore/data_core = null
 var/global/list/all_areas                = list()
-var/global/list/machines                 = list()
-var/global/list/processing_objects       = list()
-var/global/list/processing_power_items   = list()
+//var/global/list/machines                 = list()		//Removed
+//var/global/list/processing_objects       = list()		//Removed
+//var/global/list/processing_power_items   = list()		//Removed
 var/global/list/active_diseases          = list()
 var/global/list/med_hud_users            = list() // List of all entities using a medical HUD.
 var/global/list/sec_hud_users            = list() // List of all entities using a security HUD.
 var/global/list/hud_icon_reference       = list()
 
-
-var/global/list/global_mutations  = list() // List of hidden mutation things.
 
 var/global/datum/universal_state/universe = new
 
@@ -26,6 +24,7 @@ var/list/hit_appends = list("-OOF", "-ACK", "-UGH", "-HRNK", "-HURGH", "-GLORF")
 
 
 var/diary               = null
+var/world_qdel_log		= null
 var/href_logfile        = null
 var/station_name        = "CEV Eris"
 var/station_short       = "Eris"
@@ -39,38 +38,15 @@ var/changelog_hash      = ""
 var/game_year           = (text2num(time2text(world.realtime, "YYYY")) + 544)
 
 var/round_progressing = 1
-var/master_mode       = "extended" // "extended"
-var/secret_force_mode = "secret"   // if this is anything but "secret", the secret rotation will forceably choose this mode.
+var/master_storyteller       = "shitgenerator"
 
 var/host = null //only here until check @ code\modules\ghosttrap\trap.dm:112 is fixed
 
-var/list/jobMax        = list()
 var/list/bombers       = list()
 var/list/admin_log     = list()
 var/list/lastsignalers = list() // Keeps last 100 signals here in format: "[src] used \ref[src] @ location [src.loc]: [freq]/[code]"
 var/list/lawchanges    = list() // Stores who uploaded laws to which silicon-based lifeform, and what the law was.
 var/list/reg_dna       = list()
-
-var/list/monkeystart     = list()
-var/list/wizardstart     = list()
-var/list/newplayer_start = list()
-
-//Spawnpoints.
-var/list/latejoin         = list()
-var/list/latejoin_gateway = list()
-var/list/latejoin_cryo    = list()
-var/list/latejoin_cyborg  = list()
-
-var/list/prisonwarp         = list() // Prisoners go to these
-var/list/holdingfacility    = list() // Captured people go here
-var/list/xeno_spawn         = list() // Aliens spawn at at these.
-var/list/tdome1             = list()
-var/list/tdome2             = list()
-var/list/tdomeobserve       = list()
-var/list/tdomeadmin         = list()
-var/list/prisonsecuritywarp = list() // Prison security goes to these.
-var/list/prisonwarped       = list() // List of players already warped.
-var/list/ninjastart         = list()
 
 var/list/cardinal    = list(NORTH, SOUTH, EAST, WEST)
 var/list/cornerdirs  = list(NORTHEAST, NORTHWEST, SOUTHEAST, SOUTHWEST)
@@ -82,19 +58,9 @@ var/list/reverse_dir = list( // reverse_dir[dir] = reverse of dir
 )
 
 var/datum/configuration/config      = null
-var/datum/sun/sun                   = null
-
-var/list/combatlog = list()
-var/list/IClog     = list()
-var/list/OOClog    = list()
-var/list/adminlog  = list()
-
-var/list/powernets = list()
+var/datum/sun/sun                   = new
 
 var/Debug2 = 0
-var/datum/debug/debugobj
-
-var/datum/moduletypes/mods = new()
 
 var/gravity_is_on = 1
 
@@ -106,27 +72,11 @@ var/datum/event_manager/event_manager	= new() // Event Manager, the manager for 
 var/list/awaydestinations = list() // Away missions. A list of landmarks that the warpgate can take you to.
 
 // MySQL configuration
-var/sqladdress = "localhost"
-var/sqlport    = "3306"
-var/sqldb      = "tgstation"
-var/sqllogin   = "root"
-var/sqlpass    = ""
-
-// Feedback gathering sql connection
-var/sqlfdbkdb    = "test"
-var/sqlfdbklogin = "root"
-var/sqlfdbkpass  = ""
-var/sqllogging   = 0 // Should we log deaths, population stats, etc.?
-
-// Forum MySQL configuration. (for use with forum account/key authentication)
-// These are all default values that will load should the forumdbconfig.txt file fail to read for whatever reason.
-var/forumsqladdress = "localhost"
-var/forumsqlport    = "3306"
-var/forumsqldb      = "tgstation"
-var/forumsqllogin   = "root"
-var/forumsqlpass    = ""
-var/forum_activated_group     = "2"
-var/forum_authenticated_group = "10"
+var/sqladdress
+var/sqlport
+var/sqldb
+var/sqllogin
+var/sqlpass
 
 // For FTP requests. (i.e. downloading runtime logs.)
 // However it'd be ok to use for accessing attack logs and such too, which are even laggier.
@@ -136,13 +86,12 @@ var/custom_event_msg = null
 // Database connections. A connection is established on world creation.
 // Ideally, the connection dies when the server restarts (After feedback logging.).
 var/DBConnection/dbcon     = new() // Feedback    database (New database)
-var/DBConnection/dbcon_old = new() // /tg/station database (Old database) -- see the files in the SQL folder for information on what goes where.
 
 // Reference list for disposal sort junctions. Filled up by sorting junction's New()
 /var/list/tagger_locations = list()
 
 // Added for Xenoarchaeology, might be useful for other stuff.
-var/global/list/alphabet_uppercase = list("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z")
+var/global/list/alphabet_uppercase = list("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
 
 
 // Used by robots and robot preferences.

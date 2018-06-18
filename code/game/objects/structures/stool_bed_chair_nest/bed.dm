@@ -25,7 +25,7 @@
 	..(newloc)
 	color = null
 	if(!new_material)
-		new_material = DEFAULT_WALL_MATERIAL
+		new_material = MATERIAL_STEEL
 	material = get_material_by_name(new_material)
 	if(!istype(material))
 		qdel(src)
@@ -88,8 +88,21 @@
 				qdel(src)
 				return
 
+/obj/structure/bed/affect_grab(var/mob/user, var/mob/target)
+	user.visible_message(SPAN_NOTICE("[user] attempts to buckle [target] into \the [src]!"))
+	if(do_after(user, 20, src) && Adjacent(target))
+		target.forceMove(loc)
+		spawn(0)
+			if(buckle_mob(target))
+				target.visible_message(
+					SPAN_DANGER("[target] is buckled to [src] by [user]!"),
+					SPAN_DANGER("You are buckled to [src] by [user]!"),
+					SPAN_NOTICE("You hear metal clanking.")
+				)
+		return TRUE
+
 /obj/structure/bed/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench))
+	if(istype(W, /obj/item/weapon/tool/wrench))
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
 		dismantle()
 		qdel(src)
@@ -120,7 +133,7 @@
 		add_padding(padding_type)
 		return
 
-	else if (istype(W, /obj/item/weapon/wirecutters))
+	else if (istype(W, /obj/item/weapon/tool/wirecutters))
 		if(!padding_material)
 			user << "\The [src] has no padding to remove."
 			return
@@ -128,19 +141,6 @@
 		playsound(src, 'sound/items/Wirecutter.ogg', 100, 1)
 		remove_padding()
 
-	else if(istype(W, /obj/item/weapon/grab))
-		var/obj/item/weapon/grab/G = W
-		var/mob/living/affecting = G.affecting
-		user.visible_message("<span class='notice'>[user] attempts to buckle [affecting] into \the [src]!</span>")
-		if(do_after(user, 20, src))
-			affecting.loc = loc
-			spawn(0)
-				if(buckle_mob(affecting))
-					affecting.visible_message(\
-						"<span class='danger'>[affecting.name] is buckled to [src] by [user.name]!</span>",\
-						"<span class='danger'>You are buckled to [src] by [user.name]!</span>",\
-						"<span class='notice'>You hear metal clanking.</span>")
-			qdel(W)
 	else
 		..()
 
@@ -169,7 +169,7 @@
 	..(newloc,"wood","leather")
 
 /obj/structure/bed/padded/New(var/newloc)
-	..(newloc,"plastic","cotton")
+	..(newloc,MATERIAL_PLASTIC,"cotton")
 
 /obj/structure/bed/alien
 	name = "resting contraption"
@@ -191,7 +191,7 @@
 	return // Doesn't care about material or anything else.
 
 /obj/structure/bed/roller/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench) || istype(W,/obj/item/stack) || istype(W, /obj/item/weapon/wirecutters))
+	if(istype(W, /obj/item/weapon/tool/wrench) || istype(W,/obj/item/stack) || istype(W, /obj/item/weapon/tool/wirecutters))
 		return
 	else if(istype(W,/obj/item/roller_holder))
 		if(buckled_mob)
@@ -209,7 +209,7 @@
 	desc = "A collapsed roller bed that can be carried around."
 	icon = 'icons/obj/rollerbed.dmi'
 	icon_state = "folded"
-	w_class = 4.0 // Can't be put in backpacks. Oh well.
+	w_class = ITEM_SIZE_LARGE // Can't be put in backpacks. Oh well.
 
 /obj/item/roller/attack_self(mob/user)
 		var/obj/structure/bed/roller/R = new /obj/structure/bed/roller(user.loc)
@@ -221,7 +221,7 @@
 	if(istype(W,/obj/item/roller_holder))
 		var/obj/item/roller_holder/RH = W
 		if(!RH.held)
-			user << "<span class='notice'>You collect the roller bed.</span>"
+			user << SPAN_NOTICE("You collect the roller bed.")
 			src.loc = RH
 			RH.held = src
 			return
@@ -242,10 +242,10 @@
 /obj/item/roller_holder/attack_self(mob/user as mob)
 
 	if(!held)
-		user << "<span class='notice'>The rack is empty.</span>"
+		user << SPAN_NOTICE("The rack is empty.")
 		return
 
-	user << "<span class='notice'>You deploy the roller bed.</span>"
+	user << SPAN_NOTICE("You deploy the roller bed.")
 	var/obj/structure/bed/roller/R = new /obj/structure/bed/roller(user.loc)
 	R.add_fingerprint(user)
 	qdel(held)

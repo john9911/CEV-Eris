@@ -45,11 +45,10 @@
 	if(severity && prob(30))
 		src.visible_message("The [src] crumbles away, leaving some dust and gravel behind.")*/
 
-/obj/item/weapon/ore/strangerock/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W,/obj/item/weapon/weldingtool/))
-		var/obj/item/weapon/weldingtool/w = W
-		if(w.isOn())
-			if(w.get_fuel() >= 4 && !src.method)
+/obj/item/weapon/ore/strangerock/attackby(obj/item/I, mob/user)
+	if(QUALITY_WELDING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_WELDING, FAILCHANCE_EASY, required_stat = STAT_COG))
+			if(!src.method)
 				if(inside)
 					inside.loc = get_turf(src)
 					for(var/mob/M in viewers(world.view, user))
@@ -58,21 +57,19 @@
 					for(var/mob/M in viewers(world.view, user))
 						M.show_message("<span class='info'>[src] burns away into nothing.</span>",1)
 				qdel(src)
-				w.remove_fuel(4)
 			else
 				for(var/mob/M in viewers(world.view, user))
 					M.show_message("<span class='info'>A few sparks fly off [src], but nothing else happens.</span>",1)
-				w.remove_fuel(1)
 			return
 
-	else if(istype(W,/obj/item/device/core_sampler/))
-		var/obj/item/device/core_sampler/S = W
+	else if(istype(I,/obj/item/device/core_sampler/))
+		var/obj/item/device/core_sampler/S = I
 		S.sample_item(src, user)
 		return
 
 	..()
 	if(prob(33))
-		src.visible_message("<span class='warning'>[src] crumbles away, leaving some dust and gravel behind.</span>")
+		src.visible_message(SPAN_WARNING("[src] crumbles away, leaving some dust and gravel behind."))
 		qdel(src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +98,7 @@
 	var/apply_prefix = 1
 	if(prob(40))
 		material_descriptor = pick("rusted ","dusty ","archaic ","fragile ")
-	source_material = pick("cordite","quadrinium",DEFAULT_WALL_MATERIAL,"titanium","aluminium","ferritic-alloy","plasteel","duranium")
+	source_material = pick("cordite","quadrinium",MATERIAL_STEEL,"titanium","aluminium","ferritic-alloy","plasteel","duranium")
 
 	var/talkative = 0
 	if(prob(5))
@@ -138,7 +135,7 @@
 			if(prob(25))
 				new_item = new /obj/item/weapon/material/kitchen/utensil/fork(src.loc)
 			else if(prob(50))
-				new_item = new /obj/item/weapon/material/kitchen/utensil/knife(src.loc)
+				new_item = new /obj/item/weapon/material/knife(src.loc)
 			else
 				new_item = new /obj/item/weapon/material/kitchen/utensil/spoon(src.loc)
 			additional_desc = "[pick("It's like no [item_type] you've ever seen before",\
@@ -207,7 +204,12 @@
 			new_item.icon = 'icons/obj/xenoarchaeology.dmi'
 			new_item.icon_state = "box"
 			var/obj/item/weapon/storage/box/new_box = new_item
-			new_box.max_w_class = pick(1,2,2,3,3,3,4,4)
+			new_box.max_w_class = pick(\
+				prob(1);ITEM_SIZE_TINY,
+				prob(2);ITEM_SIZE_SMALL,
+				prob(3);ITEM_SIZE_NORMAL,
+				prob(2);ITEM_SIZE_LARGE\
+			)
 			var/storage_amount = 2**(new_box.max_w_class-1)
 			new_box.max_storage_space = rand(storage_amount, storage_amount * 10)
 			if(prob(30))
@@ -225,11 +227,11 @@
 		if(13)
 			item_type = "tool"
 			if(prob(25))
-				new_item = new /obj/item/weapon/wrench(src.loc)
+				new_item = new /obj/item/weapon/tool/wrench(src.loc)
 			else if(prob(25))
-				new_item = new /obj/item/weapon/crowbar(src.loc)
+				new_item = new /obj/item/weapon/tool/crowbar(src.loc)
 			else
-				new_item = new /obj/item/weapon/screwdriver(src.loc)
+				new_item = new /obj/item/weapon/tool/screwdriver(src.loc)
 			additional_desc = "[pick("It doesn't look safe.",\
 			"You wonder what it was used for",\
 			"There appear to be [pick("dark red","dark purple","dark green","dark blue")] stains on it")]."
@@ -276,44 +278,18 @@
 			apply_material_decorations = 0
 			if(prob(10))
 				apply_image_decorations = 1
-			if(prob(25))
-				new_item = new /obj/item/device/soulstone(src.loc)
-				new_item.icon = 'icons/obj/xenoarchaeology.dmi'
-				new_item.icon_state = icon_state
-		if(17)
-			//cultblade
-			apply_prefix = 0
-			new_item = new /obj/item/weapon/melee/cultblade(src.loc)
-			apply_material_decorations = 0
-			apply_image_decorations = 0
-		if(18)
+		if(17 to 18)
 			new_item = new /obj/item/device/radio/beacon(src.loc)
 			talkative = 0
 			new_item.icon = 'icons/obj/xenoarchaeology.dmi'
 			new_item.icon_state = "unknown[rand(1,4)]"
 			new_item.desc = ""
-		if(19)
+		if(19 to 20)
 			apply_prefix = 0
 			new_item = new /obj/item/weapon/material/sword(src.loc)
 			new_item.force = 10
 			item_type = new_item.name
-		if(20)
-			//arcane clothing
-			apply_prefix = 0
-			var/list/possible_spawns = list(/obj/item/clothing/head/culthood,
-			/obj/item/clothing/head/culthood/magus,
-			/obj/item/clothing/head/culthood/alt,
-			/obj/item/clothing/head/helmet/space/cult)
-
-			var/new_type = pick(possible_spawns)
-			new_item = new new_type(src.loc)
-		if(21)
-			//soulstone
-			apply_prefix = 0
-			new_item = new /obj/item/device/soulstone(src.loc)
-			item_type = new_item.name
-			apply_material_decorations = 0
-		if(22)
+		if(21 to 22)
 			if(prob(50))
 				new_item = new /obj/item/weapon/material/shard(src.loc)
 			else
@@ -357,13 +333,13 @@
 				//10% chance to have an unchargeable cell
 				//15% chance to gain a random amount of starting energy, otherwise start with an empty cell
 				if(prob(5))
-					new_gun.power_supply.rigged = 1
+					new_gun.cell.rigged = TRUE
 				if(prob(10))
-					new_gun.power_supply.maxcharge = 0
+					new_gun.cell.maxcharge = 0
 				if(prob(15))
-					new_gun.power_supply.charge = rand(0, new_gun.power_supply.maxcharge)
+					new_gun.cell.charge = rand(0, new_gun.cell.maxcharge)
 				else
-					new_gun.power_supply.charge = 0
+					new_gun.cell.charge = 0
 
 			item_type = "gun"
 		if(27)
@@ -490,18 +466,18 @@
 				new_item = new /obj/item/clothing/mask/gas(src.loc)
 	var/decorations = ""
 	if(apply_material_decorations)
-		source_material = pick("cordite","quadrinium",DEFAULT_WALL_MATERIAL,"titanium","aluminium","ferritic-alloy","plasteel","duranium")
+		source_material = pick("cordite","quadrinium",MATERIAL_STEEL,"titanium","aluminium","ferritic-alloy","plasteel","duranium")
 		desc = "A [material_descriptor ? "[material_descriptor] " : ""][item_type] made of [source_material], all craftsmanship is of [pick("the lowest","low","average","high","the highest")] quality."
 
 		var/list/descriptors = list()
 		if(prob(30))
 			descriptors.Add("is encrusted with [pick("","synthetic ","multi-faceted ","uncut ","sparkling ") + pick("rubies","emeralds","diamonds","opals","lapiz lazuli")]")
 		if(prob(30))
-			descriptors.Add("is studded with [pick("gold","silver","aluminium","titanium")]")
+			descriptors.Add("is studded with [pick("gold","gold","aluminium","titanium")]")
 		if(prob(30))
 			descriptors.Add("is encircled with bands of [pick("quadrinium","cordite","ferritic-alloy","plasteel","duranium")]")
 		if(prob(30))
-			descriptors.Add("menaces with spikes of [pick("solid plasma","uranium","white pearl","black steel")]")
+			descriptors.Add("menaces with spikes of [pick("solid plasma",MATERIAL_URANIUM,"white pearl","black steel")]")
 		if(descriptors.len > 0)
 			decorations = "It "
 			for(var/index=1, index <= descriptors.len, index++)

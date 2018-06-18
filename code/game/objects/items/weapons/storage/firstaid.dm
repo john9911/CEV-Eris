@@ -28,7 +28,7 @@
 
 		icon_state = pick("ointment","firefirstaid")
 
-		new /obj/item/device/healthanalyzer( src )
+		new /obj/item/device/scanner/healthanalyzer( src )
 		new /obj/item/weapon/reagent_containers/hypospray/autoinjector( src )
 		new /obj/item/stack/medical/ointment( src )
 		new /obj/item/stack/medical/ointment( src )
@@ -49,7 +49,7 @@
 		new /obj/item/stack/medical/bruise_pack(src)
 		new /obj/item/stack/medical/ointment(src)
 		new /obj/item/stack/medical/ointment(src)
-		new /obj/item/device/healthanalyzer(src)
+		new /obj/item/device/scanner/healthanalyzer(src)
 		new /obj/item/weapon/reagent_containers/hypospray/autoinjector( src )
 		return
 
@@ -71,7 +71,7 @@
 		new /obj/item/weapon/reagent_containers/pill/antitox( src )
 		new /obj/item/weapon/reagent_containers/pill/antitox( src )
 		new /obj/item/weapon/reagent_containers/pill/antitox( src )
-		new /obj/item/device/healthanalyzer( src )
+		new /obj/item/device/scanner/healthanalyzer( src )
 		return
 
 /obj/item/weapon/storage/firstaid/o2
@@ -89,7 +89,7 @@
 		new /obj/item/weapon/reagent_containers/pill/dexalin( src )
 		new /obj/item/weapon/reagent_containers/hypospray/autoinjector( src )
 		new /obj/item/weapon/reagent_containers/syringe/inaprovaline( src )
-		new /obj/item/device/healthanalyzer( src )
+		new /obj/item/device/scanner/healthanalyzer( src )
 		return
 
 /obj/item/weapon/storage/firstaid/adv
@@ -131,19 +131,29 @@
 /obj/item/weapon/storage/firstaid/surgery
 	name = "surgery kit"
 	desc = "Contains tools for surgery. Has precise foam fitting for safe transport."
+	icon_state = "surgeon"
+	item_state = "firstaid-surgeon"
+	can_hold = list(
+		/obj/item/weapon/tool/bonesetter,
+		/obj/item/weapon/tool/cautery,
+		/obj/item/weapon/tool/saw/circular,
+		/obj/item/weapon/tool/hemostat,
+		/obj/item/weapon/tool/retractor,
+		/obj/item/weapon/tool/scalpel,
+		/obj/item/weapon/tool/surgicaldrill,
+		/obj/item/stack/medical/advanced/bruise_pack
+		)
 
 /obj/item/weapon/storage/firstaid/surgery/New()
 	..()
 	if (empty) return
-	new /obj/item/weapon/bonesetter(src)
-	new /obj/item/weapon/cautery(src)
-	new /obj/item/weapon/circular_saw(src)
-	new /obj/item/weapon/hemostat(src)
-	new /obj/item/weapon/retractor(src)
-	new /obj/item/weapon/scalpel(src)
-	new /obj/item/weapon/surgicaldrill(src)
-	new /obj/item/weapon/bonegel(src)
-	new /obj/item/weapon/FixOVein(src)
+	new /obj/item/weapon/tool/bonesetter(src)
+	new /obj/item/weapon/tool/cautery(src)
+	new /obj/item/weapon/tool/saw/circular(src)
+	new /obj/item/weapon/tool/hemostat(src)
+	new /obj/item/weapon/tool/retractor(src)
+	new /obj/item/weapon/tool/scalpel(src)
+	new /obj/item/weapon/tool/surgicaldrill(src)
 	new /obj/item/stack/medical/advanced/bruise_pack(src)
 
 	make_exact_fit()
@@ -157,7 +167,7 @@
 	icon_state = "pill_canister"
 	icon = 'icons/obj/chemical.dmi'
 	item_state = "contsolid"
-	w_class = 2.0
+	w_class = ITEM_SIZE_SMALL
 	can_hold = list(/obj/item/weapon/reagent_containers/pill,/obj/item/weapon/dice,/obj/item/weapon/paper)
 	allow_quick_gather = 1
 	use_to_pickup = 1

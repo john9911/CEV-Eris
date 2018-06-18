@@ -142,7 +142,7 @@
 			inputting = 1
 		// else inputting = 0, as set in process()
 
-/obj/machinery/power/smes/process()
+/obj/machinery/power/smes/Process()
 	if(stat & BROKEN)	return
 	if(failure_timer)	// Disabled by gridcheck.
 		failure_timer--
@@ -208,7 +208,7 @@
 //Will return 1 on failure
 /obj/machinery/power/smes/proc/make_terminal(const/mob/user)
 	if (user.loc == loc)
-		user << "<span class='warning'>You must not be on the same tile as the [src].</span>"
+		user << SPAN_WARNING("You must not be on the same tile as the [src].")
 		return 1
 
 	//Direction the terminal will face to
@@ -220,13 +220,13 @@
 			tempDir = WEST
 	var/turf/tempLoc = get_step(src, reverse_direction(tempDir))
 	if (istype(tempLoc, /turf/space))
-		user << "<span class='warning'>You can't build a terminal on space.</span>"
+		user << SPAN_WARNING("You can't build a terminal on space.")
 		return 1
 	else if (istype(tempLoc))
 		if(!tempLoc.is_plating())
-			user << "<span class='warning'>You must remove the floor plating first.</span>"
+			user << SPAN_WARNING("You must remove the floor plating first.")
 			return 1
-	user << "<span class='notice'>You start adding cable to the [src].</span>"
+	user << SPAN_NOTICE("You start adding cable to the [src].")
 	if(do_after(user, 50, src))
 		terminal = new /obj/machinery/power/terminal(tempLoc)
 		terminal.set_dir(tempDir)
@@ -250,26 +250,57 @@
 	ui_interact(user)
 
 
-/obj/machinery/power/smes/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if(istype(W, /obj/item/weapon/screwdriver))
-		if(!open_hatch)
-			open_hatch = 1
-			user << "<span class='notice'>You open the maintenance hatch of [src].</span>"
-			return 0
-		else
-			open_hatch = 0
-			user << "<span class='notice'>You close the maintenance hatch of [src].</span>"
-			return 0
+/obj/machinery/power/smes/attackby(var/obj/item/I, var/mob/user)
+
+	var/list/usable_qualities = list(QUALITY_SCREW_DRIVING)
+	if(terminal && !building_terminal && !open_hatch)
+		usable_qualities.Add(QUALITY_WELDING)
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_SCREW_DRIVING)
+			if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+				open_hatch = !open_hatch
+				user << SPAN_NOTICE("You [panel_open ? "open" : "close"] the maintenance hatch of \the [src] with [I].")
+			return
+
+		if(QUALITY_WIRE_CUTTING)
+			if(terminal && !building_terminal && !open_hatch)
+				var/turf/tempTDir = terminal.loc
+				if (istype(tempTDir))
+					if(!tempTDir.is_plating())
+						user << SPAN_WARNING("You must remove the floor plating first.")
+						return
+				if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+					building_terminal = 1
+					if (prob(50) && electrocute_mob(usr, terminal.powernet, terminal))
+						var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
+						s.set_up(5, 1, src)
+						s.start()
+						building_terminal = 0
+						if(usr.stunned)
+							return
+					new /obj/item/stack/cable_coil(loc,10)
+					user.visible_message(\
+						SPAN_NOTICE("[user.name] remove the cables and dismantled the power terminal."),\
+						SPAN_NOTICE("You remove the cables and dismantle the power terminal."))
+					qdel(terminal)
+					building_terminal = 0
+			return
+
+		if(ABORT_CHECK)
+			return
 
 	if (!open_hatch)
-		user << "<span class='warning'>You need to open access hatch on [src] first!</span>"
+		user << SPAN_WARNING("You need to open access hatch on [src] first!")
 		return 0
 
-	if(istype(W, /obj/item/stack/cable_coil) && !terminal && !building_terminal)
+	if(istype(I, /obj/item/stack/cable_coil) && !terminal && !building_terminal)
 		building_terminal = 1
-		var/obj/item/stack/cable_coil/CC = W
+		var/obj/item/stack/cable_coil/CC = I
 		if (CC.get_amount() <= 10)
-			user << "<span class='warning'>You need more cables.</span>"
+			user << SPAN_WARNING("You need more cables.")
 			building_terminal = 0
 			return 0
 		if (make_terminal(user))
@@ -278,37 +309,13 @@
 		building_terminal = 0
 		CC.use(10)
 		user.visible_message(\
-				"<span class='notice'>[user.name] has added cables to the [src].</span>",\
-				"<span class='notice'>You added cables to the [src].</span>")
+				SPAN_NOTICE("[user.name] has added cables to the [src]."),\
+				SPAN_NOTICE("You added cables to the [src]."))
 		terminal.connect_to_network()
 		stat = 0
 		return 0
 
-	else if(istype(W, /obj/item/weapon/wirecutters) && terminal && !building_terminal)
-		building_terminal = 1
-		var/turf/tempTDir = terminal.loc
-		if (istype(tempTDir))
-			if(!tempTDir.is_plating())
-				user << "<span class='warning'>You must remove the floor plating first.</span>"
-			else
-				user << "<span class='notice'>You begin to cut the cables...</span>"
-				playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
-				if(do_after(user, 50, src))
-					if (prob(50) && electrocute_mob(usr, terminal.powernet, terminal))
-						var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
-						s.set_up(5, 1, src)
-						s.start()
-						building_terminal = 0
-						if(usr.stunned)
-							return 0
-					new /obj/item/stack/cable_coil(loc,10)
-					user.visible_message(\
-						"<span class='notice'>[user.name] cut the cables and dismantled the power terminal.</span>",\
-						"<span class='notice'>You cut the cables and dismantle the power terminal.</span>")
-					qdel(terminal)
-		building_terminal = 0
-		return 0
-	return 1
+	return
 
 /obj/machinery/power/smes/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
 
@@ -389,7 +396,7 @@
 	failure_timer = max(failure_timer, duration)
 
 /obj/machinery/power/smes/proc/ion_act()
-	if(src.z in config.station_levels)
+	if(isStationLevel(src.z))
 		if(prob(1)) //explosion
 			for(var/mob/M in viewers(src))
 				M.show_message("\red The [src.name] is making strange noises!", 3, "\red You hear sizzling electronics.", 2)
@@ -451,6 +458,6 @@
 	output_level = 250000
 	should_be_mapped = 1
 
-/obj/machinery/power/smes/magical/process()
+/obj/machinery/power/smes/magical/Process()
 	charge = 5000000
 	..()

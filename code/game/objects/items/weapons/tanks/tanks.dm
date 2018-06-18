@@ -14,7 +14,7 @@ var/list/global/tank_gauge_cache = list()
 
 	flags = CONDUCT
 	slot_flags = SLOT_BACK
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 
 	force = WEAPON_FORCE_NORMAL
 	throwforce = 10.0
@@ -33,7 +33,7 @@ var/list/global/tank_gauge_cache = list()
 	src.air_contents = new /datum/gas_mixture()
 	src.air_contents.volume = volume //liters
 	src.air_contents.temperature = T20C
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 	update_gauge()
 	return
 
@@ -41,13 +41,13 @@ var/list/global/tank_gauge_cache = list()
 	if(air_contents)
 		qdel(air_contents)
 
-	processing_objects.Remove(src)
+	STOP_PROCESSING(SSobj, src)
 
 	if(istype(loc, /obj/item/device/transfer_valve))
 		var/obj/item/device/transfer_valve/TTV = loc
 		TTV.remove_tank(src)
 
-	..()
+	. = ..()
 
 /obj/item/weapon/tank/examine(mob/user)
 	. = ..(user, 0)
@@ -67,15 +67,15 @@ var/list/global/tank_gauge_cache = list()
 				descriptive = "room temperature"
 			else
 				descriptive = "cold"
-		user << "<span class='notice'>\The [src] feels [descriptive].</span>"
+		user << SPAN_NOTICE("\The [src] feels [descriptive].")
 
 /obj/item/weapon/tank/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	..()
 	if (istype(src.loc, /obj/item/assembly))
 		icon = src.loc
 
-	if ((istype(W, /obj/item/device/analyzer)) && get_dist(user, src) <= 1)
-		var/obj/item/device/analyzer/A = W
+	if ((istype(W, /obj/item/device/scanner/analyzer)) && get_dist(user, src) <= 1)
+		var/obj/item/device/scanner/analyzer/A = W
 		A.analyze_gases(src, user)
 	else if (istype(W,/obj/item/latexballon))
 		var/obj/item/latexballon/LB = W
@@ -95,9 +95,9 @@ var/list/global/tank_gauge_cache = list()
 	var/mob/living/carbon/location = null
 
 	if(istype(loc, /obj/item/weapon/rig))		// check for tanks in rigs
-		if(istype(loc.loc, /mob/living/carbon))
+		if(iscarbon(loc.loc))
 			location = loc.loc
-	else if(istype(loc, /mob/living/carbon))
+	else if(iscarbon(loc))
 		location = loc
 
 	var/using_internal
@@ -130,7 +130,7 @@ var/list/global/tank_gauge_cache = list()
 		if(mask_check)
 			if(location.wear_mask && (location.wear_mask.item_flags & AIRTIGHT))
 				data["maskConnected"] = 1
-			else if(istype(location, /mob/living/carbon/human))
+			else if(ishuman(location))
 				var/mob/living/carbon/human/H = location
 				if(H.head && (H.head.item_flags & AIRTIGHT))
 					data["maskConnected"] = 1
@@ -165,7 +165,7 @@ var/list/global/tank_gauge_cache = list()
 			src.distribute_pressure += cp
 		src.distribute_pressure = min(max(round(src.distribute_pressure), 0), TANK_MAX_RELEASE_PRESSURE)
 	if (href_list["stat"])
-		if(istype(loc,/mob/living/carbon))
+		if(iscarbon(loc))
 			var/mob/living/carbon/location = loc
 			if(location.internal == src)
 				location.internal = null
@@ -173,7 +173,7 @@ var/list/global/tank_gauge_cache = list()
 				if(location.HUDneed.Find("internal"))
 					var/obj/screen/HUDelm = location.HUDneed["internal"]
 					HUDelm.icon_state = "internal0"
-				usr << "<span class='notice'>You close the tank release valve.</span>"
+				usr << SPAN_NOTICE("You close the tank release valve.")
 /*				if (location.internals)
 					location.internals.icon_state = "internal0"*/
 			else
@@ -181,14 +181,14 @@ var/list/global/tank_gauge_cache = list()
 				var/can_open_valve
 				if(location.wear_mask && (location.wear_mask.item_flags & AIRTIGHT))
 					can_open_valve = 1
-				else if(istype(location,/mob/living/carbon/human))
+				else if(ishuman(location))
 					var/mob/living/carbon/human/H = location
 					if(H.head && (H.head.item_flags & AIRTIGHT))
 						can_open_valve = 1
 
 				if(can_open_valve)
 					location.internal = src
-					usr << "<span class='notice'>You open \the [src] valve.</span>"
+					usr << SPAN_NOTICE("You open \the [src] valve.")
 					playsound(usr, 'sound/effects/Custom_internals.ogg', 100, 0)
 /*					if (location.internals)
 						location.internals.icon_state = "internal1"*/
@@ -196,7 +196,7 @@ var/list/global/tank_gauge_cache = list()
 						var/obj/screen/HUDelm = location.HUDneed["internal"]
 						HUDelm.icon_state = "internal1"
 				else
-					usr << "<span class='warning'>You need something to connect to \the [src].</span>"
+					usr << SPAN_WARNING("You need something to connect to \the [src].")
 
 	src.add_fingerprint(usr)
 	return 1
@@ -226,7 +226,7 @@ var/list/global/tank_gauge_cache = list()
 
 	return remove_air(moles_needed)
 
-/obj/item/weapon/tank/process()
+/obj/item/weapon/tank/Process()
 	//Allow for reactions
 	air_contents.react() //cooking up air tanks - add plasma and oxygen, then heat above PLASMA_MINIMUM_BURN_TEMPERATURE
 	if(gauge_icon)
@@ -283,7 +283,7 @@ var/list/global/tank_gauge_cache = list()
 
 	else if(pressure > TANK_RUPTURE_PRESSURE)
 		#ifdef FIREDBG
-		log_debug("<span class='warning'>[x],[y] tank is rupturing: [pressure] kPa, integrity [integrity]</span>")
+		log_debug(SPAN_WARNING("[x],[y] tank is rupturing: [pressure] kPa, integrity [integrity]"))
 		#endif
 
 		if(integrity <= 0)
@@ -298,7 +298,7 @@ var/list/global/tank_gauge_cache = list()
 
 	else if(pressure > TANK_LEAK_PRESSURE)
 		#ifdef FIREDBG
-		log_debug("<span class='warning'>[x],[y] tank is leaking: [pressure] kPa, integrity [integrity]</span>")
+		log_debug(SPAN_WARNING("[x],[y] tank is leaking: [pressure] kPa, integrity [integrity]"))
 		#endif
 
 		if(integrity <= 0)

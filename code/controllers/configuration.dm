@@ -1,4 +1,4 @@
-var/list/gamemode_cache = list()
+var/list/storyteller_cache = list()
 
 /datum/configuration
 	var/server_name = null				// server name (for world name / status)
@@ -34,30 +34,25 @@ var/list/gamemode_cache = list()
 	var/allow_admin_rev = 1				// allows admin revives
 	var/vote_delay = 6000				// minimum time between voting sessions (deciseconds, 10 minute default)
 	var/vote_period = 600				// length of voting period (deciseconds, default 1 minute)
-	var/vote_autotransfer_initial = 108000 // Length of time before the first autotransfer vote is called
-	var/vote_autotransfer_interval = 36000 // length of time before next sequential autotransfer vote
 	var/vote_autogamemode_timeleft = 100 //Length of time before round start when autogamemode vote is called (in seconds, default 100).
 	var/vote_no_default = 0				// vote does not default to nochange/norestart (tbi)
 	var/vote_no_dead = 0				// dead people can't vote (tbi)
 //	var/enable_authentication = 0		// goon authentication
 	var/del_new_on_log = 1				// del's new players if they log before they spawn in
-	var/feature_object_spell_system = 0 //spawns a spellbook which gives object-type spells instead of verb-type spells for the wizard
-	var/traitor_scaling = 0 			//if amount of traitors scales based on amount of players
 	var/objectives_disabled = 0 			//if objectives are disabled or not
 	var/protect_roles_from_antagonist = 0// If security and such can be traitor/cult/other
-	var/continous_rounds = 0			// Gamemodes which end instantly will instead keep on going until the round ends by escape shuttle or nuke.
 	var/allow_Metadata = 0				// Metadata is supported.
 	var/popup_admin_pm = 0				//adminPMs to non-admins show in a pop-up 'reply' window when set to 1.
+	var/fps = 20
+	var/tick_limit_mc_init = TICK_LIMIT_MC_INIT_DEFAULT	//SSinitialization throttling
 	var/Ticklag = 0.9
 	var/Tickcomp = 0
 	var/socket_talk	= 0					// use socket_talk to communicate with other processes
 	var/list/resource_urls = null
 	var/antag_hud_allowed = 0			// Ghosts can turn on Antagovision to see a HUD of who is the bad guys this round.
 	var/antag_hud_restricted = 0                    // Ghosts that turn on Antagovision cannot rejoin the round.
-	var/list/mode_names = list()
-	var/list/modes = list()				// allowed modes
-	var/list/votable_modes = list()		// votable modes
-	var/list/probabilities = list()		// relative probability of each mode
+	var/list/storyteller_names = list()
+	var/list/storytellers = list()				// allowed modes
 	var/humans_need_surnames = 0
 	var/allow_random_events = 0			// enables random events mid-round when set to 1
 	var/allow_ai = 1					// allow ai job
@@ -75,10 +70,6 @@ var/list/gamemode_cache = list()
 	var/load_jobs_from_txt = 0
 	var/ToRban = 0
 	var/automute_on = 0					//enables automuting/spam prevention
-	var/jobs_have_minimal_access = 0	//determines whether jobs use minimal access or expanded access.
-
-	var/cult_ghostwriter = 1               //Allows ghosts to write in blood in cult rounds...
-	var/cult_ghostwriter_req_cultists = 10 //...so long as this many cultists are active.
 
 	var/character_slots = 10				// The number of available character slots
 
@@ -101,23 +92,14 @@ var/list/gamemode_cache = list()
 	var/githuburl
 
 	//Alert level description
-	var/alert_desc_green = "All threats to the station have passed. Security may not have weapons visible, privacy laws are once again fully enforced."
+	var/alert_desc_green = "All threats to the ship have passed. Security may not have weapons visible, privacy laws are once again fully enforced."
 	var/alert_desc_blue_upto = "The station has received reliable information about possible hostile activity on the station. Security staff may have weapons visible, random searches are permitted."
 	var/alert_desc_blue_downto = "The immediate threat has passed. Security may no longer have weapons drawn at all times, but may continue to have them visible. Random searches are still allowed."
 	var/alert_desc_red_upto = "There is an immediate serious threat to the station. Security may have weapons unholstered at all times. Random searches are allowed and advised."
 	var/alert_desc_red_downto = "The self-destruct mechanism has been deactivated, there is still however an immediate serious threat to the station. Security may have weapons unholstered at all times, random searches are allowed and advised."
-	var/alert_desc_delta = "The station's self-destruct mechanism has been engaged. All crew are instructed to obey all instructions given by heads of staff. Any violations of these orders can be punished by death. This is not a drill."
 
 	var/forbid_singulo_possession = 0
 
-	//game_options.txt configs
-
-	var/health_threshold_softcrit = 0
-	var/health_threshold_crit = 0
-	var/health_threshold_dead = -100
-
-	var/organ_health_multiplier = 1
-	var/organ_regeneration_multiplier = 1
 	var/organs_decay
 	var/default_brain_health = 400
 
@@ -138,8 +120,6 @@ var/list/gamemode_cache = list()
 	var/generate_asteroid = 0
 	var/no_click_cooldown = 0
 
-	var/asteroid_z_levels = list()
-
 	//Used for modifying movement speed for mobs.
 	//Unversal modifiers
 	var/run_speed = 0
@@ -156,8 +136,6 @@ var/list/gamemode_cache = list()
 
 	var/admin_legacy_system = 0	//Defines whether the server uses the legacy admin system with admins.txt or the SQL system. Config option in config.txt
 	var/ban_legacy_system = 0	//Defines whether the server uses the legacy banning system with the files in /data or the SQL system. Config option in config.txt
-	var/use_age_restriction_for_jobs = 0   //Do jobs use account age restrictions?   --requires database
-	var/use_age_restriction_for_antags = 0 //Do antags use account age restrictions? --requires database
 
 	var/simultaneous_pm_warning_timeout = 100
 
@@ -181,33 +159,41 @@ var/list/gamemode_cache = list()
 	var/use_lib_nudge = 0 //Use the C library nudge instead of the python nudge.
 	var/use_overmap = 0
 
-	var/list/station_levels = list(1, 2, 3, 4, 5)	// Defines which Z-levels the station exists on.
-	var/list/admin_levels= list(6)					// Defines which Z-levels which are for admin functionality, for example including such areas as Central Command and the Syndicate Shuttle
-	var/list/contact_levels = list(1, 2, 3, 4, 5)	// Defines which Z-levels which, for example, a Code Red announcement may affect
-	var/list/player_levels = list(1, 2, 3, 4, 5)	// Defines all Z-levels a character can typically reach
-	var/list/sealed_levels = list() 				// Defines levels that do not allow random transit at the edges.
-
 	// Event settings
 	var/expected_round_length = 3 * 60 * 60 * 10 // 3 hours
 	// If the first delay has a custom start time
 	// No custom time, no custom time, between 80 to 100 minutes respectively.
-	var/list/event_first_run   = list(EVENT_LEVEL_MUNDANE = null, 	EVENT_LEVEL_MODERATE = null,	EVENT_LEVEL_MAJOR = list("lower" = 48000, "upper" = 60000))
+	var/list/event_first_run   = list(
+		EVENT_LEVEL_MUNDANE = null,
+		EVENT_LEVEL_MODERATE = null,
+		EVENT_LEVEL_MAJOR = list("lower" = 48000, "upper" = 60000),
+		EVENT_LEVEL_ECONOMY = list("lower" = 16000, "upper" = 20000),
+	)
 	// The lowest delay until next event
 	// 10, 30, 50 minutes respectively
-	var/list/event_delay_lower = list(EVENT_LEVEL_MUNDANE = 6000,	EVENT_LEVEL_MODERATE = 18000,	EVENT_LEVEL_MAJOR = 30000)
+	var/list/event_delay_lower = list(
+		EVENT_LEVEL_MUNDANE = 6000,
+		EVENT_LEVEL_MODERATE = 18000,
+		EVENT_LEVEL_MAJOR = 30000,
+		EVENT_LEVEL_ECONOMY = 18000
+	)
 	// The upper delay until next event
 	// 15, 45, 70 minutes respectively
-	var/list/event_delay_upper = list(EVENT_LEVEL_MUNDANE = 9000,	EVENT_LEVEL_MODERATE = 27000,	EVENT_LEVEL_MAJOR = 42000)
+	var/list/event_delay_upper = list(
+		EVENT_LEVEL_MUNDANE = 9000,
+		EVENT_LEVEL_MODERATE = 27000,
+		EVENT_LEVEL_MAJOR = 42000,
+		EVENT_LEVEL_ECONOMY = 18000
+	)
 
 	var/aliens_allowed = 0
-	var/ninjas_allowed = 0
 	var/abandon_allowed = 1
 	var/ooc_allowed = 1
 	var/looc_allowed = 1
 	var/dooc_allowed = 1
 	var/dsay_allowed = 1
 
-	var/starlight = 0	// Whether space turfs have ambient light or not
+	var/starlight = "#ffffff"	// null if turned off
 
 	var/list/ert_species = list("Human")
 
@@ -215,26 +201,22 @@ var/list/gamemode_cache = list()
 
 	var/aggressive_changelog = 0
 
-	var/list/language_prefixes = list(",","#","-")//Default language prefixes
+	var/list/language_prefixes = list(",", "#", "-")//Default language prefixes
 
 	var/ghosts_can_possess_animals = 0
 
 /datum/configuration/New()
-	var/list/L = typesof(/datum/game_mode) - /datum/game_mode
+	var/list/L = typesof(/datum/storyteller)-/datum/storyteller
 	for (var/T in L)
 		// I wish I didn't have to instance the game modes in order to look up
 		// their information, but it is the only way (at least that I know of).
-		var/datum/game_mode/M = new T()
-		if (M.config_tag)
-			gamemode_cache[M.config_tag] = M // So we don't instantiate them repeatedly.
-			if(!(M.config_tag in modes))		// ensure each mode is added only once
-				log_misc("Adding game mode [M.name] ([M.config_tag]) to configuration.")
-				src.modes += M.config_tag
-				src.mode_names[M.config_tag] = M.name
-				src.probabilities[M.config_tag] = M.probability
-				if (M.votable)
-					src.votable_modes += M.config_tag
-	src.votable_modes += "secret"
+		var/datum/storyteller/S = new T()
+		if (S.config_tag)
+			storyteller_cache[S.config_tag] = S // So we don't instantiate them repeatedly.
+			if(!(S.config_tag in storytellers))		// ensure each mode is added only once
+				log_misc("Adding storyteller [S.name] ([S.config_tag]) to configuration.")
+				src.storytellers += S.config_tag
+				src.storyteller_names[S.config_tag] = S.name
 
 /datum/configuration/proc/load(filename, type = "config") //the type can also be game_options, in which case it uses a different switch. not making it separate to not copypaste code - Urist
 	var/list/Lines = file2list(filename)
@@ -271,15 +253,6 @@ var/list/gamemode_cache = list()
 
 				if ("ban_legacy_system")
 					config.ban_legacy_system = 1
-
-				if ("use_age_restriction_for_jobs")
-					config.use_age_restriction_for_jobs = 1
-
-				if ("use_age_restriction_for_antags")
-					config.use_age_restriction_for_antags = 1
-
-				if ("jobs_have_minimal_access")
-					config.jobs_have_minimal_access = 1
 
 				if ("use_recursive_explosions")
 					use_recursive_explosions = 1
@@ -341,12 +314,6 @@ var/list/gamemode_cache = list()
 				if ("generate_asteroid")
 					config.generate_asteroid = 1
 
-				if ("asteroid_z_levels")
-					config.asteroid_z_levels = splittext(value, ";")
-					//Numbers get stored as strings, so we'll fix that right now.
-					for(var/z_level in config.asteroid_z_levels)
-						z_level = text2num(z_level)
-
 				if ("no_click_cooldown")
 					config.no_click_cooldown = 1
 
@@ -379,12 +346,6 @@ var/list/gamemode_cache = list()
 
 				if ("vote_period")
 					config.vote_period = text2num(value)
-
-				if ("vote_autotransfer_initial")
-					config.vote_autotransfer_initial = text2num(value)
-
-				if ("vote_autotransfer_interval")
-					config.vote_autotransfer_interval = text2num(value)
 
 				if ("vote_autogamemode_timeleft")
 					config.vote_autogamemode_timeleft = text2num(value)
@@ -459,41 +420,17 @@ var/list/gamemode_cache = list()
 				if ("usewhitelist")
 					config.usewhitelist = 1
 
-				if ("feature_object_spell_system")
-					config.feature_object_spell_system = 1
-
 				if ("allow_metadata")
 					config.allow_Metadata = 1
 
-				if ("traitor_scaling")
-					config.traitor_scaling = 1
-
 				if ("aliens_allowed")
 					config.aliens_allowed = 1
-
-				if ("ninjas_allowed")
-					config.ninjas_allowed = 1
 
 				if ("objectives_disabled")
 					config.objectives_disabled = 1
 
 				if("protect_roles_from_antagonist")
 					config.protect_roles_from_antagonist = 1
-
-				if ("probability")
-					var/prob_pos = findtext(value, " ")
-					var/prob_name = null
-					var/prob_value = null
-
-					if (prob_pos)
-						prob_name = lowertext(copytext(value, 1, prob_pos))
-						prob_value = copytext(value, prob_pos + 1)
-						if (prob_name in config.modes)
-							config.probabilities[prob_name] = text2num(prob_value)
-						else
-							log_misc("Unknown game mode probability configuration definition: [prob_name].")
-					else
-						log_misc("Incorrect probability configuration definition: [prob_name]  [prob_value].")
 
 				if("allow_random_events")
 					config.allow_random_events = 1
@@ -537,9 +474,6 @@ var/list/gamemode_cache = list()
 				if("alert_green")
 					config.alert_desc_green = value
 
-				if("alert_delta")
-					config.alert_desc_delta = value
-
 				if("forbid_singulo_possession")
 					forbid_singulo_possession = 1
 
@@ -557,6 +491,12 @@ var/list/gamemode_cache = list()
 
 				if("ticklag")
 					Ticklag = text2num(value)
+
+				if("fps")
+					fps = text2num(value)
+
+				if("tick_limit_mc_init")
+					tick_limit_mc_init = text2num(value)
 
 				if("allow_antag_hud")
 					config.antag_hud_allowed = 1
@@ -583,9 +523,6 @@ var/list/gamemode_cache = list()
 
 				if("gateway_delay")
 					config.gateway_delay = text2num(value)
-
-				if("continuous_rounds")
-					config.continous_rounds = 1
 
 				if("ghost_interaction")
 					config.ghost_interaction = 1
@@ -618,12 +555,6 @@ var/list/gamemode_cache = list()
 				if("use_lib_nudge")
 					config.use_lib_nudge = 1
 
-				if("allow_cult_ghostwriter")
-					config.cult_ghostwriter = 1
-
-				if("req_cult_ghostwriter")
-					config.cult_ghostwriter_req_cultists = text2num(value)
-
 				if("character_slots")
 					config.character_slots = text2num(value)
 
@@ -638,18 +569,6 @@ var/list/gamemode_cache = list()
 
 				if("use_overmap")
 					config.use_overmap = 1
-
-				if("station_levels")
-					config.station_levels = text2numlist(value, ";")
-
-				if("admin_levels")
-					config.admin_levels = text2numlist(value, ";")
-
-				if("contact_levels")
-					config.contact_levels = text2numlist(value, ";")
-
-				if("player_levels")
-					config.player_levels = text2numlist(value, ";")
 
 				if("expected_round_length")
 					config.expected_round_length = MinutesToTicks(text2num(value))
@@ -672,21 +591,26 @@ var/list/gamemode_cache = list()
 					var/values = text2numlist(value, ";")
 					config.event_first_run[EVENT_LEVEL_MAJOR] = list("lower" = MinutesToTicks(values[1]), "upper" = MinutesToTicks(values[2]))
 
+				if("event_custom_start_economy")
+					var/values = text2numlist(value, ";")
+					config.event_first_run[EVENT_LEVEL_ECONOMY] = list("lower" = MinutesToTicks(values[1]), "upper" = MinutesToTicks(values[2]))
+
 				if("event_delay_lower")
 					var/values = text2numlist(value, ";")
 					config.event_delay_lower[EVENT_LEVEL_MUNDANE] = MinutesToTicks(values[1])
 					config.event_delay_lower[EVENT_LEVEL_MODERATE] = MinutesToTicks(values[2])
 					config.event_delay_lower[EVENT_LEVEL_MAJOR] = MinutesToTicks(values[3])
+					config.event_delay_lower[EVENT_LEVEL_ECONOMY] = MinutesToTicks(values[4])
 
 				if("event_delay_upper")
 					var/values = text2numlist(value, ";")
 					config.event_delay_upper[EVENT_LEVEL_MUNDANE] = MinutesToTicks(values[1])
 					config.event_delay_upper[EVENT_LEVEL_MODERATE] = MinutesToTicks(values[2])
 					config.event_delay_upper[EVENT_LEVEL_MAJOR] = MinutesToTicks(values[3])
+					config.event_delay_upper[EVENT_LEVEL_ECONOMY] = MinutesToTicks(values[4])
 
 				if("starlight")
-					value = text2num(value)
-					config.starlight = value >= 0 ? value : 0
+					config.starlight = value ? value : 0
 
 				if("ert_species")
 					config.ert_species = splittext(value, ";")
@@ -716,22 +640,12 @@ var/list/gamemode_cache = list()
 			value = text2num(value)
 
 			switch(name)
-				if("health_threshold_crit")
-					config.health_threshold_crit = value
-				if("health_threshold_softcrit")
-					config.health_threshold_softcrit = value
-				if("health_threshold_dead")
-					config.health_threshold_dead = value
 				if("revival_pod_plants")
 					config.revival_pod_plants = value
 				if("revival_cloning")
 					config.revival_cloning = value
 				if("revival_brain_life")
 					config.revival_brain_life = value
-				if("organ_health_multiplier")
-					config.organ_health_multiplier = value / 100
-				if("organ_regeneration_multiplier")
-					config.organ_regeneration_multiplier = value / 100
 				if("organ_damage_spillover_multiplier")
 					config.organ_damage_spillover_multiplier = value / 100
 				if("organs_can_decay")
@@ -805,75 +719,24 @@ var/list/gamemode_cache = list()
 				sqllogin = value
 			if ("password")
 				sqlpass = value
-			if ("feedback_database")
-				sqlfdbkdb = value
-			if ("feedback_login")
-				sqlfdbklogin = value
-			if ("feedback_password")
-				sqlfdbkpass = value
-			if ("enable_stat_tracking")
-				sqllogging = 1
 			else
 				log_misc("Unknown setting in configuration: '[name]'")
 
-/datum/configuration/proc/loadforumsql(filename)  // -- TLE
-	var/list/Lines = file2list(filename)
-	for(var/t in Lines)
-		if(!t)	continue
-
-		t = trim(t)
-		if (length(t) == 0)
-			continue
-		else if (copytext(t, 1, 2) == "#")
-			continue
-
-		var/pos = findtext(t, " ")
-		var/name = null
-		var/value = null
-
-		if (pos)
-			name = lowertext(copytext(t, 1, pos))
-			value = copytext(t, pos + 1)
-		else
-			name = lowertext(t)
-
-		if (!name)
-			continue
-
-		switch (name)
-			if ("address")
-				forumsqladdress = value
-			if ("port")
-				forumsqlport = value
-			if ("database")
-				forumsqldb = value
-			if ("login")
-				forumsqllogin = value
-			if ("password")
-				forumsqlpass = value
-			if ("activatedgroup")
-				forum_activated_group = value
-			if ("authenticatedgroup")
-				forum_authenticated_group = value
-			else
-				log_misc("Unknown setting in configuration: '[name]'")
-
-/datum/configuration/proc/pick_mode(mode_name)
+/datum/configuration/proc/pick_storyteller(story_name)
 	// I wish I didn't have to instance the game modes in order to look up
 	// their information, but it is the only way (at least that I know of).
-	for (var/game_mode in gamemode_cache)
-		var/datum/game_mode/M = gamemode_cache[game_mode]
-		if (M.config_tag && M.config_tag == mode_name)
-			return M
-	return gamemode_cache["extended"]
+	if(story_name in storyteller_cache)
+		return storyteller_cache[story_name]
 
-/datum/configuration/proc/get_runnable_modes()
-	var/list/runnable_modes = list()
-	for(var/game_mode in gamemode_cache)
-		var/datum/game_mode/M = gamemode_cache[game_mode]
-		if(M && M.can_start() && !isnull(config.probabilities[M.config_tag]) && config.probabilities[M.config_tag] > 0)
-			runnable_modes |= M
-	return runnable_modes
+	return storyteller_cache[STORYTELLER_BASE]
+
+/datum/configuration/proc/get_storytellers()
+	var/list/runnable_storytellers = list()
+	for(var/storyteller in storyteller_cache)
+		var/datum/storyteller/S = storyteller_cache[storyteller]
+		if(S)
+			runnable_storytellers |= S
+	return runnable_storytellers
 
 /datum/configuration/proc/post_load()
 	//apply a default value to config.python_path, if needed
@@ -882,3 +745,5 @@ var/list/gamemode_cache = list()
 			config.python_path = "/usr/bin/env python2"
 		else //probably windows, if not this should work anyway
 			config.python_path = "python"
+
+	world.name = station_name()

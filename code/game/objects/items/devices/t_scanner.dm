@@ -5,9 +5,9 @@
 	desc = "A terahertz-ray emitter and scanner used to detect underfloor objects such as cables and pipes."
 	icon_state = "t-ray0"
 	slot_flags = SLOT_BELT
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	item_state = "electronic"
-	matter = list(DEFAULT_WALL_MATERIAL = 150)
+	matter = list(MATERIAL_PLASTIC = 2, MATERIAL_GLASS = 1)
 	origin_tech = list(TECH_MAGNET = 1, TECH_ENGINEERING = 1)
 
 	var/scan_range = 1
@@ -28,15 +28,15 @@
 /obj/item/device/t_scanner/proc/set_active(var/active)
 	on = active
 	if(on)
-		processing_objects.Add(src)
+		START_PROCESSING(SSobj, src)
 		flicker = 0
 	else
-		processing_objects.Remove(src)
+		STOP_PROCESSING(SSobj, src)
 		set_user_client(null)
 	update_icon()
 
 //If reset is set, then assume the client has none of our overlays, otherwise we only send new overlays.
-/obj/item/device/t_scanner/process()
+/obj/item/device/t_scanner/Process()
 	if(!on) return
 
 	//handle clients changing
@@ -104,7 +104,7 @@
 	var/turf/center = get_turf(src.loc)
 	if(!center) return
 
-	for(var/turf/T in range(scan_range, center))
+	for(var/turf/T in trange(scan_range, center))
 		if(!!T.is_plating())
 			continue
 

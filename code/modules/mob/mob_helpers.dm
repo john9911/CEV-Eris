@@ -1,12 +1,12 @@
 // fun if you want to typecast humans/monkeys/etc without writing long path-filled lines.
 /proc/isxenomorph(A)
-	if(istype(A, /mob/living/carbon/human))
+	if(ishuman(A))
 		var/mob/living/carbon/human/H = A
 		return istype(H.species, /datum/species/xenos)
 	return 0
 
 /proc/issmall(A)
-	if(A && istype(A, /mob/living))
+	if(A && isliving(A))
 		var/mob/living/L = A
 		return L.mob_size <= MOB_SMALL
 	return 0
@@ -17,9 +17,9 @@
 /mob/living/carbon/human/isSynthetic()
 	// If they are 100% robotic, they count as synthetic.
 	for(var/obj/item/organ/external/E in organs)
-		if(!(E.status & ORGAN_ROBOT))
-			return 0
-	return 1
+		if(E.robotic < ORGAN_ROBOT)
+			return FALSE
+	return TRUE
 
 /mob/living/silicon/isSynthetic()
 	return 1
@@ -40,7 +40,7 @@ proc/hasorgans(A) // Fucking really??
 	return ishuman(A)
 
 proc/iscuffed(A)
-	if(istype(A, /mob/living/carbon))
+	if(iscarbon(A))
 		var/mob/living/carbon/C = A
 		if(C.handcuffed)
 			return 1
@@ -76,42 +76,42 @@ proc/getsensorlevel(A)
 
 //The base miss chance for the different defence zones
 var/list/global/base_miss_chance = list(
-	"head" = 40,
-	"chest" = 10,
-	"groin" = 20,
-	"l_leg" = 20,
-	"r_leg" = 20,
-	"l_arm" = 20,
-	"r_arm" = 20,
-	"l_hand" = 50,
-	"r_hand" = 50,
-	"l_foot" = 50,
-	"r_foot" = 50,
+	BP_HEAD = 40,
+	BP_CHEST = 10,
+	BP_GROIN = 20,
+	BP_L_LEG  = 20,
+	BP_R_LEG = 20,
+	BP_L_ARM = 20,
+	BP_R_ARM = 20,
+	BP_L_HAND = 50,
+	BP_R_HAND = 50,
+	BP_L_FOOT = 50,
+	BP_R_FOOT = 50,
 )
 
 //Used to weight organs when an organ is hit randomly (i.e. not a directed, aimed attack).
 //Also used to weight the protection value that armour provides for covering that body part when calculating protection from full-body effects.
 var/list/global/organ_rel_size = list(
-	"head" = 25,
-	"chest" = 70,
-	"groin" = 30,
-	"l_leg" = 25,
-	"r_leg" = 25,
-	"l_arm" = 25,
-	"r_arm" = 25,
-	"l_hand" = 10,
-	"r_hand" = 10,
-	"l_foot" = 10,
-	"r_foot" = 10,
+	BP_HEAD = 25,
+	BP_CHEST = 70,
+	BP_GROIN = 30,
+	BP_L_LEG  = 25,
+	BP_R_LEG = 25,
+	BP_L_ARM = 25,
+	BP_R_ARM = 25,
+	BP_L_HAND = 10,
+	BP_R_HAND = 10,
+	BP_L_FOOT = 10,
+	BP_R_FOOT = 10,
 )
 
 /proc/check_zone(zone)
-	if(!zone)	return "chest"
+	if(!zone)	return BP_CHEST
 	switch(zone)
-		if("eyes")
-			zone = "head"
+		if(O_EYES)
+			zone = BP_HEAD
 		if("mouth")
-			zone = "head"
+			zone = BP_HEAD
 	return zone
 
 // Returns zone with a certain probability. If the probability fails, or no zone is specified, then a random body part is chosen.
@@ -126,17 +126,17 @@ var/list/global/organ_rel_size = list(
 	var/ran_zone = zone
 	while (ran_zone == zone)
 		ran_zone = pick (
-			organ_rel_size["head"]; "head",
-			organ_rel_size["chest"]; "chest",
-			organ_rel_size["groin"]; "groin",
-			organ_rel_size["l_arm"]; "l_arm",
-			organ_rel_size["r_arm"]; "r_arm",
-			organ_rel_size["l_leg"]; "l_leg",
-			organ_rel_size["r_leg"]; "r_leg",
-			organ_rel_size["l_hand"]; "l_hand",
-			organ_rel_size["r_hand"]; "r_hand",
-			organ_rel_size["l_foot"]; "l_foot",
-			organ_rel_size["r_foot"]; "r_foot",
+			organ_rel_size[BP_HEAD]; BP_HEAD,
+			organ_rel_size[BP_CHEST]; BP_CHEST,
+			organ_rel_size[BP_GROIN]; BP_GROIN,
+			organ_rel_size[BP_L_ARM]; BP_L_ARM,
+			organ_rel_size[BP_R_ARM]; BP_R_ARM,
+			organ_rel_size[BP_L_LEG ]; BP_L_LEG ,
+			organ_rel_size[BP_R_LEG]; BP_R_LEG,
+			organ_rel_size[BP_L_HAND]; BP_L_HAND,
+			organ_rel_size[BP_R_HAND]; BP_R_HAND,
+			organ_rel_size[BP_L_FOOT]; BP_L_FOOT,
+			organ_rel_size[BP_R_FOOT]; BP_R_FOOT,
 		)
 
 	return ran_zone
@@ -218,14 +218,13 @@ proc/slur(phrase)
 	return rhtml_encode(newphrase)
 
 /proc/stutter(n)
-	var/te = rhtml_decode(n)
-	var/t = ""//placed before the message. Not really sure what it's for.
+	var/te = russian_to_cp1251(n)
 	n = length(n)//length of the entire word
-	var/p = null
-	p = 1//1 is the start of any word
+	var/list/t = list()
+	var/p = 1//1 is the start of any word
 	while(p <= n)//while P, which starts at 1 is less or equal to N which is the length.
 		var/n_letter = copytext(te, p, p + 1)//copies text from a certain distance. In this case, only one letter at a time.
-		if (prob(80) && (ckey(n_letter) in list("b","c","d","f","g","h","j","k","l","m","n","p","q","r","s","t","v","w","x","y","z")))
+		if (prob(80) && (rlowertext(n_letter) in LIST_OF_CONSONANT))
 			if (prob(10))
 				n_letter = text("[n_letter]-[n_letter]-[n_letter]-[n_letter]")//replaces the current letter with this instead.
 			else
@@ -236,9 +235,9 @@ proc/slur(phrase)
 						n_letter = null
 					else
 						n_letter = text("[n_letter]-[n_letter]")
-		t = text("[t][n_letter]")//since the above is ran through for each letter, the text just adds up back to the original word.
+		t += n_letter //since the above is ran through for each letter, the text just adds up back to the original word.
 		p++//for each letter p is increased to find where the next letter will be.
-	return sanitize(t)
+	return sanitize(jointext(t,null))
 
 
 proc/Gibberish(t, p)//t is the inputted message, and any value higher than 70 for p will cause letters to be replaced instead of added
@@ -293,6 +292,9 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 		return
 	M.shakecamera = 1
 	spawn(1)
+		if(isnull(M))
+			return
+
 		if(!M.client)
 			return
 
@@ -313,7 +315,7 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 
 
 /proc/findname(msg)
-	for(var/mob/M in mob_list)
+	for(var/mob/M in SSmobs.mob_list)
 		if (M.real_name == text("[msg]"))
 			return 1
 	return 0
@@ -379,7 +381,7 @@ var/list/intents = list(I_HELP,I_DISARM,I_GRAB,I_HURT)
 
 
 proc/is_blind(A)
-	if(istype(A, /mob/living/carbon))
+	if(iscarbon(A))
 		var/mob/living/carbon/C = A
 		if(C.sdisabilities & BLIND || C.blinded)
 			return 1
@@ -400,7 +402,7 @@ proc/is_blind(A)
 
 /proc/mobs_in_area(var/area/A)
 	var/list/mobs = new
-	for(var/mob/living/M in mob_list)
+	for(var/mob/living/M in SSmobs.mob_list)
 		if(get_area(M) == A)
 			mobs += M
 	return mobs
@@ -427,7 +429,7 @@ proc/is_blind(A)
 				name = realname
 
 	for(var/mob/M in player_list)
-		if(M.client && ((!istype(M, /mob/new_player) && M.stat == DEAD) || (M.client.holder && !is_mentor(M.client))) && M.is_preference_enabled(/datum/client_preference/show_dsay))
+		if(M.client && (isghost(M) || (M.client.holder && !is_mentor(M.client))) && M.is_preference_enabled(/datum/client_preference/show_dsay))
 			var/follow
 			var/lname
 			if(subject)
@@ -454,7 +456,7 @@ proc/is_blind(A)
 /proc/announce_ghost_joinleave(O, var/joined_ghosts = 1, var/message = "")
 	var/client/C
 	//Accept any type, sort what we want here
-	if(istype(O, /mob))
+	if(ismob(O))
 		var/mob/M = O
 		if(M.client)
 			C = M.client
@@ -575,7 +577,7 @@ proc/is_blind(A)
 
 #undef SAFE_PERP
 
-/mob/proc/get_multitool(var/obj/item/device/multitool/P)
+/mob/proc/get_multitool(var/obj/item/weapon/tool/multitool/P)
 	if(istype(P))
 		return P
 

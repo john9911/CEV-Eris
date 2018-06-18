@@ -52,13 +52,13 @@
 	return ..()
 
 // register for radio system
-/obj/machinery/status_display/initialize()
-	..()
+/obj/machinery/status_display/Initialize()
+	. = ..()
 	if(radio_controller)
 		radio_controller.add_object(src, frequency)
 
 // timed process
-/obj/machinery/status_display/process()
+/obj/machinery/status_display/Process()
 	if(stat & NOPOWER)
 		remove_display()
 		return
@@ -82,18 +82,18 @@
 		if(STATUS_DISPLAY_BLANK)	//blank
 			return 1
 		if(STATUS_DISPLAY_TRANSFER_SHUTTLE_TIME)				//emergency shuttle timer
-			if(emergency_shuttle.waiting_to_leave())
+			if(evacuation_controller.is_prepared())
 				message1 = "-ETD-"
-				if (emergency_shuttle.shuttle.is_launching())
+				if (evacuation_controller.waiting_to_leave())
 					message2 = "Launch"
 				else
-					message2 = get_shuttle_timer_departure()
+					message2 = get_shuttle_timer()
 					if(length(message2) > CHARS_PER_LINE)
 						message2 = "Error"
 				update_display(message1, message2)
-			else if(emergency_shuttle.has_eta())
+			else if(evacuation_controller.has_eta())
 				message1 = "-ETA-"
-				message2 = get_shuttle_timer_arrival()
+				message2 = get_shuttle_timer()
 				if(length(message2) > CHARS_PER_LINE)
 					message2 = "Error"
 				update_display(message1, message2)
@@ -163,20 +163,14 @@
 	if(maptext != new_text)
 		maptext = new_text
 
-/obj/machinery/status_display/proc/get_shuttle_timer_arrival()
-	var/timeleft = emergency_shuttle.estimate_arrival_time()
-	if(timeleft < 0)
-		return ""
-	return "[add_zero(num2text((timeleft / 60) % 60),2)]:[add_zero(num2text(timeleft % 60), 2)]"
-
-/obj/machinery/status_display/proc/get_shuttle_timer_departure()
-	var/timeleft = emergency_shuttle.estimate_launch_time()
+/obj/machinery/status_display/proc/get_shuttle_timer()
+	var/timeleft = evacuation_controller.get_eta()
 	if(timeleft < 0)
 		return ""
 	return "[add_zero(num2text((timeleft / 60) % 60),2)]:[add_zero(num2text(timeleft % 60), 2)]"
 
 /obj/machinery/status_display/proc/get_supply_shuttle_timer()
-	var/datum/shuttle/ferry/supply/shuttle = supply_controller.shuttle
+	var/datum/shuttle/autodock/ferry/supply/shuttle = supply_controller.shuttle
 	if (!shuttle)
 		return "Error"
 

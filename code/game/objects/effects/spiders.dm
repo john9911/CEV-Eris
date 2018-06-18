@@ -20,20 +20,17 @@
 				qdel(src)
 	return
 
-/obj/effect/spider/attackby(var/obj/item/weapon/W, var/mob/user)
-	if(W.attack_verb.len)
-		visible_message("<span class='warning'>\The [src] have been [pick(W.attack_verb)] with \the [W][(user ? " by [user]." : ".")]</span>")
+/obj/effect/spider/attackby(var/obj/item/I, var/mob/user)
+	if(I.attack_verb.len)
+		visible_message("<span class='warning'>\The [src] have been [pick(I.attack_verb)] with \the [I][(user ? " by [user]." : ".")]</span>")
 	else
-		visible_message("<span class='warning'>\The [src] have been attacked with \the [W][(user ? " by [user]." : ".")]</span>")
+		visible_message("<span class='warning'>\The [src] have been attacked with \the [I][(user ? " by [user]." : ".")]</span>")
 
-	var/damage = W.force / 4.0
+	var/damage = I.force / 4.0
 
-	if(istype(W, /obj/item/weapon/weldingtool))
-		var/obj/item/weapon/weldingtool/WT = W
-
-		if(WT.remove_fuel(0, user))
+	if(QUALITY_WELDING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_INSTANT, QUALITY_WELDING, FAILCHANCE_ZERO))
 			damage = 15
-			playsound(loc, 'sound/items/Welder.ogg', 100, 1)
 
 	health -= damage
 	healthcheck()
@@ -62,9 +59,9 @@
 	if(air_group || (height==0)) return 1
 	if(istype(mover, /mob/living/simple_animal/hostile/giant_spider))
 		return 1
-	else if(istype(mover, /mob/living))
+	else if(isliving(mover))
 		if(prob(50))
-			mover << "<span class='warning'>You get stuck in \the [src] for a moment.</span>"
+			mover << SPAN_WARNING("You get stuck in \the [src] for a moment.")
 			return 0
 	else if(istype(mover, /obj/item/projectile))
 		return prob(30)
@@ -78,21 +75,21 @@
 	New()
 		pixel_x = rand(3,-3)
 		pixel_y = rand(3,-3)
-		processing_objects |= src
+		START_PROCESSING(SSobj, src)
 
 /obj/effect/spider/eggcluster/New(var/location, var/atom/parent)
 	get_light_and_color(parent)
 	..()
 
 /obj/effect/spider/eggcluster/Destroy()
-	processing_objects -= src
+	STOP_PROCESSING(SSobj, src)
 	if(istype(loc, /obj/item/organ/external))
 		var/obj/item/organ/external/O = loc
 		O.implants -= src
 
-	..()
+	. = ..()
 
-/obj/effect/spider/eggcluster/process()
+/obj/effect/spider/eggcluster/Process()
 	amount_grown += rand(0,2)
 	if(amount_grown >= 100)
 		var/num = rand(6,24)
@@ -121,7 +118,7 @@
 /obj/effect/spider/spiderling/New(var/location, var/atom/parent)
 	pixel_x = rand(6,-6)
 	pixel_y = rand(6,-6)
-	processing_objects |= src
+	START_PROCESSING(SSobj, src)
 	//50% chance to grow up
 	if(prob(50))
 		amount_grown = 1
@@ -129,8 +126,8 @@
 	..()
 
 /obj/effect/spider/spiderling/Destroy()
-	processing_objects -= src
-	..()
+	STOP_PROCESSING(SSobj, src)
+	. = ..()
 
 /obj/effect/spider/spiderling/Bump(atom/user)
 	if(istype(user, /obj/structure/table))
@@ -147,7 +144,7 @@
 	if(health <= 0)
 		die()
 
-/obj/effect/spider/spiderling/process()
+/obj/effect/spider/spiderling/Process()
 	if(travelling_in_vent)
 		if(istype(src.loc, /turf))
 			travelling_in_vent = 0
@@ -176,7 +173,7 @@
 							return
 
 						if(prob(50))
-							src.visible_message("<span class='notice'>You hear something squeezing through the ventilation ducts.</span>",2)
+							src.visible_message(SPAN_NOTICE("You hear something squeezing through the ventilation ducts."),2)
 						sleep(travel_time)
 
 						if(!exit_vent || exit_vent.welded)
@@ -220,14 +217,14 @@
 			src.loc = O.owner ? O.owner.loc : O.loc
 			src.visible_message("<span class='warning'>\A [src] makes its way out of [O.owner ? "[O.owner]'s [O.name]" : "\the [O]"]!</span>")
 			if(O.owner)
-				O.owner.apply_damage(1, BRUTE, O.limb_name)
+				O.owner.apply_damage(1, BRUTE, O.organ_tag)
 		else if(prob(1))
-			O.owner.apply_damage(1, TOX, O.limb_name)
+			O.owner.apply_damage(1, TOX, O.organ_tag)
 			if(world.time > last_itch + 30 SECONDS)
 				last_itch = world.time
-				O.owner << "<span class='notice'>Your [O.name] itches...</span>"
+				O.owner << SPAN_NOTICE("Your [O.name] itches...")
 	else if(prob(1))
-		src.visible_message("<span class='notice'>\The [src] skitters.</span>")
+		src.visible_message(SPAN_NOTICE("\The [src] skitters."))
 
 	if(amount_grown)
 		amount_grown += rand(0,2)
@@ -248,7 +245,7 @@
 		icon_state = pick("cocoon1","cocoon2","cocoon3")
 
 /obj/effect/spider/cocoon/Destroy()
-	src.visible_message("<span class='warning'>\The [src] splits open.</span>")
+	src.visible_message(SPAN_WARNING("\The [src] splits open."))
 	for(var/atom/movable/A in contents)
 		A.loc = src.loc
 	return ..()

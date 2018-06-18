@@ -2,17 +2,18 @@
 /obj/item/device/ano_scanner
 	name = "Alden-Saraspova counter"
 	desc = "Aids in triangulation of exotic particles."
-	icon = 'icons/obj/xenoarchaeology.dmi'
-	icon_state = "flashgun"
+	icon = 'icons/obj/device.dmi'
+	icon_state = "ano_scanner"
 	item_state = "lampgreen"
-	w_class = 2.0
+	w_class = ITEM_SIZE_SMALL
 	slot_flags = SLOT_BELT
 	var/nearest_artifact_id = "unknown"
 	var/nearest_artifact_distance = -1
 	var/last_scan_time = 0
 	var/scan_delay = 25
 
-/obj/item/device/ano_scanner/initialize()
+/obj/item/device/ano_scanner/Initialize()
+	. = ..()
 	scan()
 
 /obj/item/device/ano_scanner/attack_self(var/mob/user as mob)
@@ -21,6 +22,7 @@
 /obj/item/device/ano_scanner/interact(var/mob/user as mob)
 	if(world.time - last_scan_time >= scan_delay)
 		spawn(0)
+			icon_state = "ano_scanner2"
 			scan()
 
 			if(!user) return
@@ -31,6 +33,8 @@
 				user << "Background radiation levels detected."
 	else
 		user << "Scanning array is recharging."
+	spawn(25)
+		icon_state = "ano_scanner"
 
 /obj/item/device/ano_scanner/proc/scan()
 	set background = 1

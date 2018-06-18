@@ -9,7 +9,7 @@ var/global/universe_has_ended = 0
 
 /datum/universal_state/supermatter_cascade/OnShuttleCall(var/mob/user)
 	if(user)
-		user << "<span class='sinister'>All you hear on the frequency is static and panicked screaming. There will be no shuttle call today.</span>"
+		user << "<span class='sinister'>All you hear on the frequency is static and panicked screaming. There is no escape.</span>"
 	return 0
 
 /datum/universal_state/supermatter_cascade/OnTurfChange(var/turf/T)
@@ -37,7 +37,7 @@ var/global/universe_has_ended = 0
 // Apply changes when entering state
 /datum/universal_state/supermatter_cascade/OnEnter()
 	set background = 1
-	garbage_collector.garbage_collect = 0
+	SSgarbage.state = SS_SLEEPING
 	world << "<span class='sinister' style='font-size:22pt'>You are blinded by a brilliant flash of energy.</span>"
 
 	world << sound('sound/effects/cascade.ogg')
@@ -46,21 +46,16 @@ var/global/universe_has_ended = 0
 		if (M.HUDtech.Find("flash"))
 			flick("e_flash", M.HUDtech["flash"])
 
-	if(emergency_shuttle.can_recall())
-		priority_announcement.Announce("The emergency shuttle has returned due to bluespace distortion.")
-		emergency_shuttle.recall()
+	if(evacuation_controller.cancel_evacuation())
+		priority_announcement.Announce("The evacuation has been aborted due to bluespace distortion.")
 
 	AreaSet()
 	MiscSet()
 	APCSet()
 	OverlayAndAmbientSet()
 
-	// Disable Nar-Sie.
-	cult.allow_narsie = 0
-
 	PlayerSet()
 
-	new /obj/singularity/narsie/large/exit(pick(endgame_exits))
 	spawn(rand(30,60) SECONDS)
 		var/txt = {"
 There's been a galaxy-wide electromagnetic pulse.  All of our systems are heavily damaged and many personnel are dead or dying. We are seeing increasing indications of the universe itself beginning to unravel.
@@ -75,7 +70,7 @@ The access requirements on the Asteroid Shuttles' consoles have now been revoked
 "}
 		priority_announcement.Announce(txt,"SUPERMATTER CASCADE DETECTED")
 
-		for(var/obj/machinery/computer/shuttle_control/C in machines)
+		for(var/obj/machinery/computer/shuttle_control/C in SSmachines.machinery)
 			if(istype(C, /obj/machinery/computer/shuttle_control/research) || istype(C, /obj/machinery/computer/shuttle_control/mining))
 				C.req_access = list()
 				C.req_one_access = list()
@@ -95,7 +90,7 @@ The access requirements on the Asteroid Shuttles' consoles have now been revoked
 /datum/universal_state/supermatter_cascade/OverlayAndAmbientSet()
 	spawn(0)
 		for(var/atom/movable/lighting_overlay/L in world)
-			if(L.z in config.admin_levels)
+			if(isAdminLevel(L.z))
 				L.update_overlay(1,1,1)
 			else
 				L.update_overlay(0.0, 0.4, 1)
@@ -104,12 +99,12 @@ The access requirements on the Asteroid Shuttles' consoles have now been revoked
 			OnTurfChange(T)
 
 /datum/universal_state/supermatter_cascade/proc/MiscSet()
-	for (var/obj/machinery/firealarm/alm in machines)
+	for (var/obj/machinery/firealarm/alm in SSmachines.machinery)
 		if (!(alm.stat & BROKEN))
 			alm.ex_act(2)
 
 /datum/universal_state/supermatter_cascade/proc/APCSet()
-	for (var/obj/machinery/power/apc/APC in machines)
+	for (var/obj/machinery/power/apc/APC in SSmachines.machinery)
 		if (!(APC.stat & BROKEN) && !APC.is_critical)
 			APC.chargemode = 0
 			if(APC.cell)
@@ -118,13 +113,13 @@ The access requirements on the Asteroid Shuttles' consoles have now been revoked
 			APC.queue_icon_update()
 
 /datum/universal_state/supermatter_cascade/proc/PlayerSet()
-	for(var/datum/mind/M in player_list)
-		if(!istype(M.current,/mob/living))
+	for(var/datum/antagonist/A in current_antags)
+		if(!isliving(A.owner.current))
 			continue
-		if(M.current.stat!=2)
-			M.current.Weaken(10)
+		if(A.owner.current.stat!=2)
+			A.owner.current.Weaken(10)
 //			flick("e_flash", M.current.flash)
-			if (M.current.HUDtech.Find("flash"))
-				flick("e_flash", M.current.HUDtech["flash"])
+			if (A.owner.current.HUDtech.Find("flash"))
+				flick("e_flash", A.owner.current.HUDtech["flash"])
 
-		clear_antag_roles(M)
+		A.remove_antagonist()

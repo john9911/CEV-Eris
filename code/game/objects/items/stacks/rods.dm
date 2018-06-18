@@ -4,12 +4,12 @@
 	singular_name = "metal rod"
 	icon_state = "rods"
 	flags = CONDUCT
-	w_class = 3.0
+	w_class = ITEM_SIZE_NORMAL
 	force = WEAPON_FORCE_PAINFULL
 	throwforce = WEAPON_FORCE_PAINFULL
 	throw_speed = 5
 	throw_range = 20
-	matter = list(DEFAULT_WALL_MATERIAL = 1875)
+	matter = list(MATERIAL_STEEL = 1)
 	max_amount = 60
 	attack_verb = list("hit", "bludgeoned", "whacked")
 
@@ -22,20 +22,18 @@
 	charge_costs = list(500)
 	stacktype = /obj/item/stack/rods
 
-/obj/item/stack/rods/attackby(obj/item/W as obj, mob/user as mob)
+/obj/item/stack/rods/attackby(obj/item/I, mob/user)
 	..()
-	if (istype(W, /obj/item/weapon/weldingtool))
-		var/obj/item/weapon/weldingtool/WT = W
-
+	if(QUALITY_WELDING in I.tool_qualities)
 		if(get_amount() < 2)
-			user << "<span class='warning'>You need at least two rods to do this.</span>"
+			user << SPAN_WARNING("You need at least two rods to do this.")
 			return
 
-		if(WT.remove_fuel(0,user))
+		if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_WELDING, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
 			var/obj/item/stack/material/steel/new_item = new(usr.loc)
 			new_item.add_to_stacks(usr)
 			for (var/mob/M in viewers(src))
-				M.show_message("<span class='notice'>[src] is shaped into metal by [user.name] with the weldingtool.</span>", 3, "<span class='notice'>You hear welding.</span>", 2)
+				M.show_message(SPAN_NOTICE("[src] is shaped into metal by [user.name] with the [I.name]."), 3, SPAN_NOTICE("You hear welding."), 2)
 			var/obj/item/stack/rods/R = src
 			src = null
 			var/replace = (user.get_inactive_hand()==R)
@@ -64,15 +62,15 @@
 
 	else if(!in_use)
 		if(get_amount() < 2)
-			user << "<span class='warning'>You need at least two rods to do this.</span>"
+			user << SPAN_WARNING("You need at least two rods to do this.")
 			return
-		usr << "<span class='notice'>Assembling grille...</span>"
+		usr << SPAN_NOTICE("Assembling grille...")
 		in_use = 1
 		if (!do_after(usr, 10))
 			in_use = 0
 			return
 		var/obj/structure/grille/F = new /obj/structure/grille/ ( usr.loc )
-		usr << "<span class='notice'>You assemble a grille</span>"
+		usr << SPAN_NOTICE("You assemble a grille")
 		in_use = 0
 		F.add_fingerprint(usr)
 		use(2)

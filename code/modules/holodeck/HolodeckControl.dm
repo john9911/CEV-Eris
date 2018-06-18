@@ -43,13 +43,13 @@
 	dat += "<HR>Current Loaded Programs:<BR>"
 
 	if(!linkedholodeck)
-		dat += "<span class='danger'>Warning: Unable to locate holodeck.<br></span>"
+		dat += SPAN_DANGER("Warning: Unable to locate holodeck.<br>")
 		user << browse(dat, "window=computer;size=400x500")
 		onclose(user, "computer")
 		return
 
 	if(!supported_programs.len)
-		dat += "<span class='danger'>Warning: No supported holo-programs loaded.<br></span>"
+		dat += SPAN_DANGER("Warning: No supported holo-programs loaded.<br>")
 		user << browse(dat, "window=computer;size=400x500")
 		onclose(user, "computer")
 		return
@@ -96,7 +96,7 @@
 /obj/machinery/computer/HolodeckControl/Topic(href, href_list)
 	if(..())
 		return 1
-	if((usr.contents.Find(src) || (in_range(src, usr) && istype(src.loc, /turf))) || (istype(usr, /mob/living/silicon)))
+	if((usr.contents.Find(src) || (in_range(src, usr) && istype(src.loc, /turf))) || (issilicon(usr)))
 		usr.set_machine(src)
 
 		if(href_list["program"])
@@ -134,7 +134,7 @@
 		emagged = 1
 		safety_disabled = 1
 		update_projections()
-		user << "<span class='notice'>You vastly increase projector power and override the safety and security protocols.</span>"
+		user << SPAN_NOTICE("You vastly increase projector power and override the safety and security protocols.")
 		user << "Warning.  Automatic shutoff and derezing protocols have been corrupted.  Please call [company_name] maintenance and do not use the simulator."
 		log_game("[key_name(usr)] emagged the Holodeck Control Computer")
 		return 1
@@ -160,7 +160,7 @@
 //This could all be done better, but it works for now.
 /obj/machinery/computer/HolodeckControl/Destroy()
 	emergencyShutdown()
-	..()
+	. = ..()
 
 /obj/machinery/computer/HolodeckControl/ex_act(severity)
 	emergencyShutdown()
@@ -172,7 +172,7 @@
 	if (stat != oldstat && active && (stat & NOPOWER))
 		emergencyShutdown()
 
-/obj/machinery/computer/HolodeckControl/process()
+/obj/machinery/computer/HolodeckControl/Process()
 	for(var/item in holographic_objs) // do this first, to make sure people don't take items out when power is down.
 		if(!(get_turf(item) in linkedholodeck))
 			derez(item, 0)
@@ -287,21 +287,21 @@
 			linkedholodeck.play_ambience(M)
 
 	spawn(30)
-		for(var/obj/effect/landmark/L in linkedholodeck)
+		for(var/obj/landmark/L in linkedholodeck)
 			if(L.name=="Atmospheric Test Start")
 				spawn(20)
 					var/turf/T = get_turf(L)
-					var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
+					var/datum/effect/effect/system/spark_spread/s = new
 					s.set_up(2, 1, T)
 					s.start()
 					if(T)
 						T.temperature = 5000
 						T.hotspot_expose(50000,50000,1)
-			if(L.name=="Holocarp Spawn")
+			if(istype(L, /obj/landmark/mob/holocarpspawn))
 				holographic_mobs += new /mob/living/simple_animal/hostile/carp/holodeck(L.loc)
 
-			if(L.name=="Holocarp Spawn Random")
-				if (prob(4)) //With 4 spawn points, carp should only appear 15% of the time.
+			if(istype(L, /obj/landmark/mob/holocarprandom))
+				if(prob(4)) //With 4 spawn points, carp should only appear 15% of the time.
 					holographic_mobs += new /mob/living/simple_animal/hostile/carp/holodeck(L.loc)
 
 		update_projections()

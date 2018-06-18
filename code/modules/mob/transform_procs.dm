@@ -65,6 +65,7 @@
 	return ..()
 
 /mob/proc/AIize(move=1)
+
 	if(client)
 		src << sound(null, repeat = 0, wait = 0, volume = 85, channel = 1) // stop the jams for AIs
 	var/mob/living/silicon/ai/O = new (loc, base_law_type,,1)//No MMI but safety is in effect.
@@ -78,26 +79,21 @@
 		O.key = key
 
 	if(move)
-		var/obj/loc_landmark
-		for(var/obj/effect/landmark/start/sloc in landmarks_list)
-			if (sloc.name != "AI")
+		var/obj/new_location = null
+		for(var/turf/sloc in getSpawnLocations(/datum/job/ai))
+			if(locate(/obj/structure/AIcore) in sloc)
 				continue
-			if ((locate(/mob/living) in sloc.loc) || (locate(/obj/structure/AIcore) in sloc.loc))
-				continue
-			loc_landmark = sloc
-		if (!loc_landmark)
-			for(var/obj/effect/landmark/tripai in landmarks_list)
-				if (tripai.name == "tripai")
-					if((locate(/mob/living) in tripai.loc) || (locate(/obj/structure/AIcore) in tripai.loc))
-						continue
-					loc_landmark = tripai
-		if (!loc_landmark)
+			new_location = sloc
+		if (!new_location)
+			for(var/turf/sloc in getSpawnLocations("triai"))
+				if(locate(/obj/structure/AIcore) in sloc)
+					continue
+				new_location = sloc
+		if (!new_location)
 			O << "Oh god sorry we can't find an unoccupied AI spawn location, so we're spawning you on top of someone."
-			for(var/obj/effect/landmark/start/sloc in landmarks_list)
-				if (sloc.name == "AI")
-					loc_landmark = sloc
+			new_location = pickSpawnLocation(/datum/job/ai, FALSE)
 
-		O.loc = loc_landmark.loc
+		O.forceMove(new_location)
 
 	O.on_mob_init()
 
@@ -137,7 +133,7 @@
 		mind.transfer_to(O)
 		if(O.mind.assigned_role == "Cyborg")
 			O.mind.original = O
-		else if(mind && mind.special_role)
+		else if(mind && mind.antagonist.len)
 			O.mind.store_memory("In case you look at this after being borged, the objectives are only here until I find a way to make them not show up for you, as I can't simply delete them without screwing up round-end reporting. --NeoFite")
 	else
 		O.key = key
@@ -145,13 +141,7 @@
 	O.loc = loc
 	O.job = "Cyborg"
 	if(O.mind.assigned_role == "Cyborg")
-		if(O.mind.role_alt_title == "Android")
-			O.mmi = new /obj/item/device/mmi/digital/posibrain(O)
-		else if(O.mind.role_alt_title == "Robot")
-			O.mmi = new /obj/item/device/mmi/digital/robot(O)
-		else
-			O.mmi = new /obj/item/device/mmi(O)
-
+		O.mmi = new /obj/item/device/mmi(O)
 		O.mmi.transfer_identity(src)
 
 	callHook("borgify", list(O))
@@ -281,18 +271,6 @@
 	if(ispath(MP, /mob/living/simple_animal/space_worm))
 		return 0 //Unfinished. Very buggy, they seem to just spawn additional space worms everywhere and eating your own tail results in new worms spawning.
 
-	if(ispath(MP, /mob/living/simple_animal/construct/behemoth))
-		return 0 //I think this may have been an unfinished WiP or something. These constructs should really have their own class simple_animal/construct/subtype
-
-	if(ispath(MP, /mob/living/simple_animal/construct/armoured))
-		return 0 //Verbs do not appear for players. These constructs should really have their own class simple_animal/construct/subtype
-
-	if(ispath(MP, /mob/living/simple_animal/construct/wraith))
-		return 0 //Verbs do not appear for players. These constructs should really have their own class simple_animal/construct/subtype
-
-	if(ispath(MP, /mob/living/simple_animal/construct/builder))
-		return 0 //Verbs do not appear for players. These constructs should really have their own class simple_animal/construct/subtype
-
 //Good mobs!
 	if(ispath(MP, /mob/living/simple_animal/cat))
 		return 1
@@ -303,8 +281,6 @@
 	if(ispath(MP, /mob/living/simple_animal/hostile/carp))
 		return 1
 	if(ispath(MP, /mob/living/simple_animal/mushroom))
-		return 1
-	if(ispath(MP, /mob/living/simple_animal/shade))
 		return 1
 	if(ispath(MP, /mob/living/simple_animal/tomato))
 		return 1

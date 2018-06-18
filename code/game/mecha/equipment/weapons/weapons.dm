@@ -25,8 +25,8 @@
 	if(!curloc || !targloc)
 		return
 	chassis.use_power(energy_drain)
-	chassis.visible_message("<span class='warning'>[chassis] fires [src]!</span>")
-	occupant_message("<span class='warning'>You fire [src]!</span>")
+	chassis.visible_message(SPAN_WARNING("[chassis] fires [src]!"))
+	occupant_message(SPAN_WARNING("You fire [src]!"))
 	log_message("Fired from [src], targeting [target].")
 	for(var/i = 1 to min(projectiles, projectiles_per_shot))
 		var/turf/aimloc = targloc
@@ -49,7 +49,7 @@
 /obj/item/mecha_parts/mecha_equipment/weapon/proc/Fire(atom/A, atom/target)
 	var/obj/item/projectile/P = A
 	var/def_zone
-	if(chassis && istype(chassis.occupant,/mob/living/carbon/human))
+	if(chassis && ishuman(chassis.occupant))
 		var/mob/living/carbon/human/H = chassis.occupant
 		def_zone = H.targeted_organ
 	P.launch(target, def_zone)
@@ -147,7 +147,7 @@
 		playsound(chassis, 'sound/items/AirHorn.ogg', 100, 1)
 		chassis.occupant_message("<font color='red' size='5'>HONK</font>")
 		for(var/mob/living/carbon/M in ohearers(6, chassis))
-			if(istype(M, /mob/living/carbon/human))
+			if(ishuman(M))
 				var/mob/living/carbon/human/H = M
 				if(istype(H.l_ear, /obj/item/clothing/ears/earmuffs) || istype(H.r_ear, /obj/item/clothing/ears/earmuffs))
 					continue
@@ -196,7 +196,7 @@
 	name = "\improper LBX AC 10 \"Scattershot\""
 	icon_state = "mecha_scatter"
 	equip_cooldown = 20
-	projectile = /obj/item/projectile/bullet/pistol/medium
+	projectile = /obj/item/projectile/bullet/a10mm
 	fire_sound = 'sound/weapons/Gunshot.ogg'
 	fire_volume = 80
 	projectiles = 40
@@ -208,7 +208,7 @@
 	name = "\improper Ultra AC 2"
 	icon_state = "mecha_uac2"
 	equip_cooldown = 10
-	projectile = /obj/item/projectile/bullet/pistol/medium
+	projectile = /obj/item/projectile/bullet/a10mm
 	fire_sound = 'sound/weapons/Gunshot.ogg'
 	projectiles = 300
 	projectiles_per_shot = 3
@@ -226,7 +226,7 @@
 /obj/item/mecha_parts/mecha_equipment/weapon/ballistic/missile_rack/flare
 	name = "\improper BNI Flare Launcher"
 	icon_state = "mecha_flaregun"
-	projectile = /obj/item/device/flashlight/flare
+	projectile = /obj/item/device/lighting/glowstick/flare
 	fire_sound = 'sound/weapons/tablehit1.ogg'
 	auto_rearm = 1
 	fire_cooldown = 20
@@ -237,7 +237,7 @@
 	required_type = /obj/mecha  //Why restrict it to just mining or combat mechs?
 
 /obj/item/mecha_parts/mecha_equipment/weapon/ballistic/missile_rack/flare/Fire(atom/movable/AM, atom/target, turf/aimloc)
-	var/obj/item/device/flashlight/flare/fired = AM
+	var/obj/item/device/lighting/glowstick/flare/fired = AM
 	fired.turn_on()
 	..()
 
@@ -286,13 +286,3 @@
 	var/obj/item/weapon/grenade/flashbang/F = AM
 	spawn(det_time)
 		F.prime()
-
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/missile_rack/flashbang/clusterbang//Because I am a heartless bastard -Sieve
-	name = "\improper SOP-6 grenade launcher"
-	projectile = /obj/item/weapon/grenade/flashbang/clusterbang
-
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/missile_rack/flashbang/clusterbang/limited/get_equip_info()//Limited version of the clusterbang launcher that can't reload
-	return "<span style=\"color:[equip_ready?"#0f0":"#f00"];\">*</span>&nbsp;[chassis.selected==src?"<b>":"<a href='?src=\ref[chassis];select_equip=\ref[src]'>"][src.name][chassis.selected==src?"</b>":"</a>"]\[[src.projectiles]\]"
-
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/missile_rack/flashbang/clusterbang/limited/rearm()
-	return//Extra bit of security

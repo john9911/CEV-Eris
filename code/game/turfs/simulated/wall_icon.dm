@@ -8,7 +8,7 @@
 	else
 		construction_stage = null
 	if(!material)
-		material = get_material_by_name(DEFAULT_WALL_MATERIAL)
+		material = get_material_by_name(MATERIAL_STEEL)
 	if(material)
 		explosion_resistance = material.explosion_resistance
 	if(reinf_material && reinf_material.explosion_resistance > explosion_resistance)
@@ -99,7 +99,7 @@
 	if(!material)
 		return
 	var/list/dirs = list()
-	for(var/turf/simulated/wall/W in orange(src, 1))
+	for(var/turf/simulated/wall/W in trange(1, src) - src)
 		if(!W.material)
 			continue
 		if(propagate)

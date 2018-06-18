@@ -18,7 +18,7 @@
 			var/obj/structure/largecrate/C = locate() in T
 			for(var/drop_type in supplied_drop_types)
 				var/atom/movable/A = new drop_type(T)
-				if(!istype(A, /mob))
+				if(!ismob(A))
 					if(!C) C = new(T)
 					C.contents |= A
 			return
@@ -32,6 +32,7 @@
 		error("Unhandled drop type: [drop_type]")
 
 
+ADMIN_VERB_ADD(/datum/admins/proc/call_supply_drop, R_FUN, FALSE)
 /datum/admins/proc/call_supply_drop()
 	set category = "Fun"
 	set desc = "Call an immediate supply drop on your location."

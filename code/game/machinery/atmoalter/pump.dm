@@ -4,7 +4,7 @@
 	icon = 'icons/obj/atmos.dmi'
 	icon_state = "psiphon:0"
 	density = 1
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 
 	var/on = 0
 	var/direction_out = 0 //0 = siphoning, 1 = releasing
@@ -23,7 +23,7 @@
 
 /obj/machinery/portable_atmospherics/powered/pump/New()
 	..()
-	cell = new/obj/item/weapon/cell/apc(src)
+	cell = new/obj/item/weapon/cell/medium/high(src)
 
 	var/list/air_mix = StandardAirMix()
 	src.air_contents.adjust_multi("oxygen", air_mix["oxygen"], "nitrogen", air_mix["nitrogen"])
@@ -60,7 +60,7 @@
 
 	..(severity)
 
-/obj/machinery/portable_atmospherics/powered/pump/process()
+/obj/machinery/portable_atmospherics/powered/pump/Process()
 	..()
 	var/power_draw = -1
 

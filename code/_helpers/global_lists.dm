@@ -6,7 +6,7 @@ var/list/directory = list()							//list of all ckeys with associated client
 //This is for procs to replace all the goddamn 'in world's that are chilling around the code
 
 var/global/list/player_list = list()				//List of all mobs **with clients attached**. Excludes /mob/new_player
-var/global/list/mob_list = list()					//List of all mobs, including clientless
+//var/global/list/mob_list = list()					//List of all mobs, including clientless   --Removed
 var/global/list/human_mob_list = list()				//List of all human mobs and sub-types, including clientless
 var/global/list/silicon_mob_list = list()			//List of all silicon mobs, including clientless
 var/global/list/living_mob_list = list()			//List of all alive mobs, including clientless. Excludes /mob/new_player
@@ -17,14 +17,14 @@ var/global/list/chemical_reactions_list				//list of all /datum/chemical_reactio
 var/global/list/chemical_reagents_list				//list of all /datum/reagent datums indexed by reagent id. Used by chemistry stuff
 var/global/list/landmarks_list = list()				//list of all landmarks created
 var/global/list/surgery_steps = list()				//list of all surgery steps  |BS12
-var/global/list/side_effects = list()				//list of all medical sideeffects types by thier names |BS12
 var/global/list/mechas_list = list()				//list of all mechs. Used by hostile mobs target tracking.
 var/global/list/joblist = list()					//list of all jobstypes, minus borg and AI
+var/global/list/hearing_objects = list()			//list of all objects, that can hear mob say
 
 var/global/list/global_corporations = list()
 var/global/list/HUDdatums = list()
 
-#define all_genders_define_list list(MALE,FEMALE,PLURAL,NEUTER)
+#define all_genders_define_list list(MALE, FEMALE, PLURAL, NEUTER)
 
 var/global/list/turfs = list()						//list of all turfs
 
@@ -52,23 +52,39 @@ var/global/list/hair_styles_female_list = list()
 var/global/list/facial_hair_styles_list = list()	//stores /datum/sprite_accessory/facial_hair indexed by name
 var/global/list/facial_hair_styles_male_list = list()
 var/global/list/facial_hair_styles_female_list = list()
-var/global/list/skin_styles_female_list = list()		//unused
 
 var/datum/category_collection/underwear/global_underwear = new()
 
 var/global/list/backbaglist = list("Nothing", "Backpack", "Satchel", "Satchel Alt")
 var/global/list/exclude_jobs = list(/datum/job/ai,/datum/job/cyborg)
 
+var/global/list/organ_structure = list(
+	chest = list(name= "Chest", children=list()),
+	groin = list(name= "Groin",     parent=BP_CHEST, children=list()),
+	head  = list(name= "Head",      parent=BP_CHEST, children=list()),
+	r_arm = list(name= "Right arm", parent=BP_CHEST, children=list()),
+	l_arm = list(name= "Left arm",  parent=BP_CHEST, children=list()),
+	r_leg = list(name= "Right leg", parent=BP_GROIN, children=list()),
+	l_leg = list(name= "Left leg",  parent=BP_GROIN, children=list()),
+	r_hand= list(name= "Right hand",parent=BP_R_ARM, children=list()),
+	l_hand= list(name= "Left hand", parent=BP_L_ARM, children=list()),
+	r_foot= list(name= "Right foot",parent=BP_R_LEG, children=list()),
+	l_foot= list(name= "Left foot", parent=BP_L_LEG, children=list()),
+	)
+
+var/global/list/organ_tag_to_name = list(
+	head  = "Head", r_arm = "Right arm",r_hand = "Right hand",
+	chest = "Body", r_leg = "Right Leg",r_foot = "Right foot",
+	eyes  = "Eyes", l_arm = "Left arm", l_hand = "Left hand",
+	groin = "Groin",l_leg = "Left Leg", l_foot = "Left foot",
+	chest2= "Back", heart = "Heart",    lungs  = "Lungs",
+	liver = "Liver"
+	)
+
+
 // Visual nets
 var/list/datum/visualnet/visual_nets = list()
 var/datum/visualnet/camera/cameranet = new()
-var/datum/visualnet/cult/cultnet = new()
-
-// Runes
-var/global/list/rune_list = new()
-var/global/list/escape_list = list()
-var/global/list/endgame_exits = list()
-var/global/list/endgame_safespawns = list()
 
 var/global/list/syndicate_access = list(access_maint_tunnels, access_syndicate, access_external_airlocks)
 
@@ -98,7 +114,7 @@ var/global/list/string_slot_flags = list(
 	"feet" = SLOT_FEET,
 	"exo slot" = SLOT_OCLOTHING,
 	"body" = SLOT_ICLOTHING,
-	"uniform" = SLOT_TIE,
+	"uniform" = SLOT_ACCESSORY_BUFFER,
 	"holster" = SLOT_HOLSTER
 )
 
@@ -210,3 +226,13 @@ var/global/list/string_slot_flags = list(
 				. += "    has: [t]\n"
 	world << .
 */
+var/global/list/admin_permissions = list(
+	"fun" = 0x1,
+	"server" = 0x2,
+	"debug" = 0x4,
+	"permissions" = 0x8,
+	"mentor" = 0x10,
+	"moderator" = 0x20,
+	"admin" = 0x40,
+	"host" = 0x80
+	)

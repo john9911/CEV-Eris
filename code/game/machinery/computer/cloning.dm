@@ -4,7 +4,6 @@
 	icon_keyboard = "med_key"
 	icon_screen = "dna"
 	light_color = COLOR_LIME
-	circuit = /obj/item/weapon/circuitboard/cloning
 	req_access = list(access_heads) //Only used for record deletion right now.
 	var/obj/machinery/dna_scannernew/scanner = null //Linked scanner. For scanning.
 	var/list/pods = list() //Linked cloning pods.
@@ -16,8 +15,8 @@
 	var/obj/item/weapon/disk/data/diskette = null //Mostly so the geneticist can steal everything.
 	var/loading = 0 // Nice loading text
 
-/obj/machinery/computer/cloning/initialize()
-	..()
+/obj/machinery/computer/cloning/Initialize()
+	. = ..()
 	set_extension(src, /datum/extension/multitool, /datum/extension/multitool/cryo, list(/proc/is_operable))
 	updatemodules()
 
@@ -373,9 +372,9 @@
 		scantemp = "Error: Unable to locate valid genetic data."
 		return
 	if (!subject.has_brain())
-		if(istype(subject, /mob/living/carbon/human))
+		if(ishuman(subject))
 			var/mob/living/carbon/human/H = subject
-			if(H.species.has_organ["brain"])
+			if(H.species.has_organ[O_BRAIN])
 				scantemp = "Error: No signs of intelligence detected."
 		else
 			scantemp = "Error: No signs of intelligence detected."
@@ -408,7 +407,7 @@
 	var/obj/item/weapon/implant/health/imp = locate(/obj/item/weapon/implant/health, subject)
 	if (isnull(imp))
 		imp = new /obj/item/weapon/implant/health(subject)
-		imp.implanted = subject
+		imp.install(subject)
 		R.implant = "\ref[imp]"
 	//Update it if needed
 	else

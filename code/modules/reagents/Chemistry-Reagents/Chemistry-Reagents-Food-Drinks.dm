@@ -23,11 +23,13 @@
 	var/totalFlavor = 0
 	for(var/i in 1 to data.len)
 		totalFlavor += data[data[i]]
-	for(var/i in 1 to data.len) //cull the tasteless
-		if(data[data[i]]/totalFlavor * 100 < 10)
-			data[data[i]] = null
-			data -= data[i]
-			data -= null
+
+	if(totalFlavor != 0)
+		for(var/i in 1 to data.len) //cull the tasteless
+			if(data[data[i]]/totalFlavor * 100 < 10)
+				data[data[i]] = null
+				data -= data[i]
+				data -= null
 
 /datum/reagent/nutriment/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	if(!injectable)
@@ -236,7 +238,7 @@
 	M.bodytemperature = max(M.bodytemperature - 10 * TEMPERATURE_DAMAGE_COEFFICIENT, 0)
 	if(prob(1))
 		M.emote("shiver")
-	if(istype(M, /mob/living/carbon/slime))
+	if(isslime(M))
 		M.bodytemperature = max(M.bodytemperature - rand(10,20), 0)
 	holder.remove_reagent("capsaicin", 5)
 
@@ -268,8 +270,8 @@
 		M.apply_effect(agony_amount, AGONY, 0)
 		if(prob(5))
 			M.custom_emote(2, "[pick("dry heaves!","coughs!","splutters!")]")
-			M << "<span class='danger'>You feel like your insides are burning!</span>"
-	if(istype(M, /mob/living/carbon/slime))
+			M << SPAN_DANGER("You feel like your insides are burning!")
+	if(isslime(M))
 		M.bodytemperature += rand(0, 15) + slime_temp_adj
 	holder.remove_reagent("frostoil", 5)
 
@@ -295,7 +297,7 @@
 	var/obj/item/face_protection = null
 
 	var/list/protection
-	if(istype(M, /mob/living/carbon/human))
+	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
 		protection = list(H.head, H.glasses, H.wear_mask)
 		if(H.species && (H.species.flags & NO_PAIN))
@@ -315,9 +317,9 @@
 	var/message = null
 	if(eyes_covered)
 		if(!mouth_covered)
-			message = "<span class='warning'>Your [eye_protection] protects your eyes from the pepperspray!</span>"
+			message = SPAN_WARNING("Your [eye_protection] protects your eyes from the pepperspray!")
 	else
-		message = "<span class='warning'>The pepperspray gets in your eyes!</span>"
+		message = SPAN_WARNING("The pepperspray gets in your eyes!")
 		if(mouth_covered)
 			M.eye_blurry = max(M.eye_blurry, 15)
 			M.eye_blind = max(M.eye_blind, 5)
@@ -327,9 +329,9 @@
 
 	if(mouth_covered)
 		if(!message)
-			message = "<span class='warning'>Your [face_protection] protects you from the pepperspray!</span>"
+			message = SPAN_WARNING("Your [face_protection] protects you from the pepperspray!")
 	else if(!no_pain)
-		message = "<span class='danger'>Your face and throat burn!</span>"
+		message = SPAN_DANGER("Your face and throat burn!")
 		if(prob(25))
 			M.custom_emote(2, "[pick("coughs!","coughs hysterically!","splutters!")]")
 		M.Stun(5)
@@ -341,12 +343,12 @@
 		if(H.species && (H.species.flags & NO_PAIN))
 			return
 	if(dose == metabolism)
-		M << "<span class='danger'>You feel like your insides are burning!</span>"
+		M << SPAN_DANGER("You feel like your insides are burning!")
 	else
 		M.apply_effect(4, AGONY, 0)
 		if(prob(5))
-			M.visible_message("<span class='warning'>[M] [pick("dry heaves!","coughs!","splutters!")]</span>", "<span class='danger'>You feel like your insides are burning!</span>")
-	if(istype(M, /mob/living/carbon/slime))
+			M.visible_message("<span class='warning'>[M] [pick("dry heaves!","coughs!","splutters!")]</span>", SPAN_DANGER("You feel like your insides are burning!"))
+	if(isslime(M))
 		M.bodytemperature += rand(15, 30)
 	holder.remove_reagent("frostoil", 5)
 
@@ -1857,7 +1859,7 @@
 		M.adjustToxLoss(2 * removed)
 	if(dose > 60 && ishuman(M) && prob(5))
 		var/mob/living/carbon/human/H = M
-		var/obj/item/organ/heart/L = H.internal_organs_by_name["heart"]
+		var/obj/item/organ/internal/heart/L = H.internal_organs_by_name[O_HEART]
 		if (L && istype(L))
 			if(dose < 120)
 				L.take_damage(10 * removed, 0)

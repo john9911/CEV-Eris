@@ -39,6 +39,7 @@
 
 	var/mob/living/cameraFollow = null
 	var/list/datum/action/actions = list()
+	var/step_count = 0
 
 	var/tod = null // Time of death
 	var/update_slimes = 1
@@ -56,3 +57,7 @@
 	var/slurring = null		//Carbon
 
 	var/job = null//Living
+
+	var/image/static_overlay // For static overlays on living mobs
+
+	var/datum/stat_holder/stats

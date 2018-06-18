@@ -90,7 +90,6 @@
 	user << "***** STATION SELF-DESTRUCT SEQUENCE INITIATED *****"
 	user << "Self-destructing in 2 minutes. Use this command again to abort."
 	user.bombing_station = 1
-	set_security_level("delta")
 	radio.autosay("Self destruct sequence has been activated. Self-destructing in 120 seconds.", "Self-Destruct Control")
 
 	var/timer = 120
@@ -107,7 +106,7 @@
 
 	if(ticker)
 		ticker.station_explosion_cinematic(0,null)
-		if(ticker.mode)
-			ticker.mode:station_was_nuked = 1
+		if(ticker.storyteller)
+			ticker.ship_was_nuked = TRUE
 
 

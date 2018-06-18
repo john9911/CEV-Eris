@@ -18,7 +18,6 @@
 	S["job_engsec_high"]	>> pref.job_engsec_high
 	S["job_engsec_med"]		>> pref.job_engsec_med
 	S["job_engsec_low"]		>> pref.job_engsec_low
-	S["player_alt_titles"]	>> pref.player_alt_titles
 
 /datum/category_item/player_setup_item/occupation/save_character(var/savefile/S)
 	S["alternate_option"]	<< pref.alternate_option
@@ -31,7 +30,6 @@
 	S["job_engsec_high"]	<< pref.job_engsec_high
 	S["job_engsec_med"]		<< pref.job_engsec_med
 	S["job_engsec_low"]		<< pref.job_engsec_low
-	S["player_alt_titles"]	<< pref.player_alt_titles
 
 /datum/category_item/player_setup_item/occupation/sanitize_character()
 	pref.alternate_option	= sanitize_integer(pref.alternate_option, 0, 2, initial(pref.alternate_option))
@@ -44,53 +42,34 @@
 	pref.job_engsec_high	= sanitize_integer(pref.job_engsec_high, 0, 65535, initial(pref.job_engsec_high))
 	pref.job_engsec_med 	= sanitize_integer(pref.job_engsec_med, 0, 65535, initial(pref.job_engsec_med))
 	pref.job_engsec_low 	= sanitize_integer(pref.job_engsec_low, 0, 65535, initial(pref.job_engsec_low))
-	if(!pref.player_alt_titles) pref.player_alt_titles = new()
 
 	if(!job_master)
 		return
 
-	for(var/datum/job/job in job_master.occupations)
-		var/alt_title = pref.player_alt_titles[job.title]
-		if(alt_title && !(alt_title in job.alt_titles))
-			pref.player_alt_titles -= job.title
-
-/datum/category_item/player_setup_item/occupation/content(mob/user, limit = 18, list/splitJobs = list("Chief Medical Officer"))
+/datum/category_item/player_setup_item/occupation/content(mob/user, limit = 18, list/splitJobs = list("Moebius Biolab Officer"))
 	if(!job_master)
 		return
 
+	. = list()
 	. += "<tt><center>"
 	. += "<b>Choose occupation chances</b><br>Unavailable occupations are crossed out.<br>"
 	. += "<table width='100%' cellpadding='1' cellspacing='0'><tr><td width='20%'>" // Table within a table for alignment, also allows you to easily add more colomns.
-	. += "<table width='100%' cellpadding='1' cellspacing='0'>"
+	. += "<table width='100%' cellpadding='1' cellspacing='0' style='color:black;'>"
 	var/index = -1
 
-	//The job before the current job. I only use this to get the previous jobs color when I'm filling in blank rows.
-	var/datum/job/lastJob
-	if (!job_master)		return
+	if(!job_master)
+		return
 	for(var/datum/job/job in job_master.occupations)
 
 		index += 1
 		if((index >= limit) || (job.title in splitJobs))
-			if((index < limit) && (lastJob != null))
-				//If the cells were broken up by a job in the splitJob list then it will fill in the rest of the cells with
-				//the last job's selection color. Creating a rather nice effect.
-				for(var/i = 0, i < (limit - index), i += 1)
-					. += "<tr bgcolor='[lastJob.selection_color]'><td width='60%' align='right'><a>&nbsp</a></td><td><a>&nbsp</a></td></tr>"
-			. += "</table></td><td width='20%'><table width='100%' cellpadding='1' cellspacing='0'>"
+			. += "</table></td><td width='20%'><table width='100%' cellpadding='1' cellspacing='0' style='color:black;'>"
 			index = 0
 
 		. += "<tr bgcolor='[job.selection_color]'><td width='60%' align='right'>"
 		var/rank = job.title
-		lastJob = job
 		if(jobban_isbanned(user, rank))
 			. += "<del>[rank]</del></td><td><b> \[BANNED]</b></td></tr>"
-			continue
-		if(!job.player_old_enough(user.client))
-			var/available_in_days = job.available_in_days(user.client)
-			. += "<del>[rank]</del></td><td> \[IN [(available_in_days)] DAYS]</td></tr>"
-			continue
-		if(job.minimum_character_age && user.client && (user.client.prefs.age < job.minimum_character_age))
-			. += "<del>[rank]</del></td><td> \[MINIMUM CHARACTER AGE: [job.minimum_character_age]]</td></tr>"
 			continue
 		if((pref.job_civilian_low & ASSISTANT) && (rank != "Assistant"))
 			. += "<font color=orange>[rank]</font></td><td></td></tr>"
@@ -106,44 +85,42 @@
 
 		if(rank == "Assistant")//Assistant is special
 			if(pref.job_civilian_low & ASSISTANT)
-				. += " <font color=green>\[Yes]</font>"
+				. += " <font color=55cc55>\[Yes]</font>"
 			else
-				. += " <font color=red>\[No]</font>"
-			if(job.alt_titles) //Blatantly cloned from a few lines down.
-				. += "</a></td></tr><tr bgcolor='[lastJob.selection_color]'><td width='60%' align='center'>&nbsp</td><td><a href='?src=\ref[src];select_alt_title=\ref[job]'>\[[pref.GetPlayerAltTitle(job)]\]</a></td></tr>"
+				. += " <font color=black>\[No]</font>"
 			. += "</a></td></tr>"
 			continue
 
 		if(pref.GetJobDepartment(job, 1) & job.flag)
-			. += " <font color=blue>\[High]</font>"
+			. += " <font color=55cc55>\[High]</font>"
 		else if(pref.GetJobDepartment(job, 2) & job.flag)
-			. += " <font color=green>\[Medium]</font>"
+			. += " <font color=eecc22>\[Medium]</font>"
 		else if(pref.GetJobDepartment(job, 3) & job.flag)
-			. += " <font color=orange>\[Low]</font>"
+			. += " <font color=cc5555>\[Low]</font>"
 		else
-			. += " <font color=red>\[NEVER]</font>"
-		if(job.alt_titles)
-			. += "</a></td></tr><tr bgcolor='[lastJob.selection_color]'><td width='60%' align='center'>&nbsp</td><td><a href='?src=\ref[src];select_alt_title=\ref[job]'>\[[pref.GetPlayerAltTitle(job)]\]</a></td></tr>"
+			. += " <font color=black>\[NEVER]</font>"
 		. += "</a></td></tr>"
 
 	. += "</td'></tr></table>"
 
-	. += "</center></table>"
+	. += "</center></table><center>"
 
 	switch(pref.alternate_option)
 		if(GET_RANDOM_JOB)
-			. += "<center><br><u><a href='?src=\ref[src];job_alternative=1'><font color=green>Get random job if preferences unavailable</font></a></u></center><br>"
+			. += "<u><a href='?src=\ref[src];job_alternative=1'><font color=ca6cca>Get random job if preferences unavailable</font></a></u>"
 		if(BE_ASSISTANT)
-			. += "<center><br><u><a href='?src=\ref[src];job_alternative=1'><font color=red>Be assistant if preference unavailable</font></a></u></center><br>"
+			. += "<u><a href='?src=\ref[src];job_alternative=1'><font color=red>Be assistant if preference unavailable</font></a></u>"
 		if(RETURN_TO_LOBBY)
-			. += "<center><br><u><a href='?src=\ref[src];job_alternative=1'><font color=purple>Return to lobby if preference unavailable</font></a></u></center><br>"
+			. += "<u><a href='?src=\ref[src];job_alternative=1'><font color=purple>Return to lobby if preference unavailable</font></a></u>"
 
-	. += "<center><a href='?src=\ref[src];reset_jobs=1'>\[Reset\]</a></center>"
+	. += "<a href='?src=\ref[src];reset_jobs=1'>\[Reset\]</a></center>"
 	. += "</tt>"
+	. = jointext(.,null)
 
 /datum/category_item/player_setup_item/occupation/OnTopic(href, href_list, user)
 	if(href_list["reset_jobs"])
 		ResetJobs()
+		pref.req_update_icon = 1
 		return TOPIC_REFRESH
 
 	else if(href_list["job_alternative"])
@@ -151,28 +128,16 @@
 			pref.alternate_option += 1
 		else if(pref.alternate_option == RETURN_TO_LOBBY)
 			pref.alternate_option = 0
+		pref.req_update_icon = 1
 		return TOPIC_REFRESH
 
-	else if(href_list["select_alt_title"])
-		var/datum/job/job = locate(href_list["select_alt_title"])
-		if (job)
-			var/choices = list(job.title) + job.alt_titles
-			var/choice = input("Choose an title for [job.title].", "Choose Title", pref.GetPlayerAltTitle(job)) as anything in choices|null
-			if(choice && CanUseTopic(user))
-				SetPlayerAltTitle(job, choice)
-				return TOPIC_REFRESH
-
 	else if(href_list["set_job"])
-		if(SetJob(user, href_list["set_job"])) return TOPIC_REFRESH
+		if(SetJob(user, href_list["set_job"]))
+			pref.req_update_icon = 1
+			return TOPIC_REFRESH
 
 	return ..()
 
-/datum/category_item/player_setup_item/occupation/proc/SetPlayerAltTitle(datum/job/job, new_title)
-	// remove existing entry
-	pref.player_alt_titles -= job.title
-	// add one if it's not default
-	if(job.title != new_title)
-		pref.player_alt_titles[job.title] = new_title
 
 /datum/category_item/player_setup_item/occupation/proc/SetJob(mob/user, role)
 	var/datum/job/job = job_master.GetJob(role)
@@ -261,10 +226,6 @@
 	pref.job_engsec_med = 0
 	pref.job_engsec_low = 0
 
-	pref.player_alt_titles.Cut()
-
-/datum/preferences/proc/GetPlayerAltTitle(datum/job/job)
-	return (job.title in player_alt_titles) ? player_alt_titles[job.title] : job.title
 
 /datum/preferences/proc/GetJobDepartment(var/datum/job/job, var/level)
 	if(!job || !level)	return 0

@@ -6,12 +6,12 @@
 
 	flags = CONDUCT
 	force = WEAPON_FORCE_WEAK
-	w_class = 2.0
+	w_class = ITEM_SIZE_SMALL
 	throwforce = WEAPON_FORCE_WEAK
 	throw_range = 15
 	throw_speed = 3
 
-	//matter = list("metal" = 50,"glass" = 50)
+	matter = list(MATERIAL_PLASTIC = 3, MATERIAL_GLASS = 1)
 
 
 /obj/item/device/binoculars/attack_self(mob/user)

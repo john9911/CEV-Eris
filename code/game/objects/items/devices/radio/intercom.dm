@@ -3,7 +3,7 @@
 	desc = "Talk through this."
 	icon_state = "intercom"
 	anchored = 1
-	w_class = 4.0
+	w_class = ITEM_SIZE_LARGE
 	canhear_range = 2
 	flags = CONDUCT | NOBLOODY
 	var/number = 0
@@ -35,14 +35,9 @@
 	name = "station intercom (Security)"
 	frequency = SEC_I_FREQ
 
-/obj/item/device/radio/intercom/entertainment
-	name = "entertainment intercom"
-	frequency = ENT_FREQ
-	canhear_range = 4
-
 /obj/item/device/radio/intercom/New()
 	..()
-	processing_objects += src
+	START_PROCESSING(SSobj, src)
 
 /obj/item/device/radio/intercom/department/medbay/New()
 	..()
@@ -55,12 +50,6 @@
 		num2text(SEC_I_FREQ) = list(access_security)
 	)
 
-/obj/item/device/radio/intercom/entertainment/New()
-	..()
-	internal_channels = list(
-		num2text(PUB_FREQ) = list(),
-		num2text(ENT_FREQ) = list()
-	)
 
 /obj/item/device/radio/intercom/syndicate
 	name = "illicit intercom"
@@ -74,8 +63,8 @@
 	internal_channels[num2text(SYND_FREQ)] = list(access_syndicate)
 
 /obj/item/device/radio/intercom/Destroy()
-	processing_objects -= src
-	..()
+	STOP_PROCESSING(SSobj, src)
+	. = ..()
 
 /obj/item/device/radio/intercom/attack_ai(mob/user as mob)
 	src.add_fingerprint(user)
@@ -102,7 +91,7 @@
 
 	return canhear_range
 
-/obj/item/device/radio/intercom/process()
+/obj/item/device/radio/intercom/Process()
 	if(((world.timeofday - last_tick) > 30) || ((world.timeofday - last_tick) < 0))
 		last_tick = world.timeofday
 

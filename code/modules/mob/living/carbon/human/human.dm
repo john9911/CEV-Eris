@@ -34,7 +34,6 @@
 	hud_list[LIFE_HUD]	      = image('icons/mob/hud.dmi', src, "hudhealthy")
 	hud_list[ID_HUD]          = image('icons/mob/hud.dmi', src, "hudunknown")
 	hud_list[WANTED_HUD]      = image('icons/mob/hud.dmi', src, "hudblank")
-	hud_list[IMPLOYAL_HUD]    = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[IMPCHEM_HUD]     = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[IMPTRACK_HUD]    = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[SPECIALROLE_HUD] = image('icons/mob/hud.dmi', src, "hudblank")
@@ -62,8 +61,8 @@
 	if(statpanel("Status"))
 		stat("Intent:", "[a_intent]")
 		stat("Move Mode:", "[m_intent]")
-		if(emergency_shuttle)
-			var/eta_status = emergency_shuttle.get_status_panel_eta()
+		if(evacuation_controller)
+			var/eta_status = evacuation_controller.get_status_panel_eta()
 			if(eta_status)
 				stat(null, eta_status)
 
@@ -75,7 +74,7 @@
 				stat("Tank Pressure", internal.air_contents.return_pressure())
 				stat("Distribution Pressure", internal.distribute_pressure)
 
-		var/obj/item/organ/xenos/plasmavessel/P = internal_organs_by_name["plasma vessel"]
+		var/obj/item/organ/internal/xenos/plasmavessel/P = internal_organs_by_name[O_PLASMA]
 		if(P)
 			stat(null, "Plasma Stored: [P.stored_plasma]/[P.max_plasma]")
 
@@ -151,61 +150,15 @@
 
 	for(var/obj/item/organ/external/temp in organs)
 		switch(temp.name)
-			if("head")
+			if(BP_HEAD)
 				update |= temp.take_damage(b_loss * 0.2, f_loss * 0.2, used_weapon = weapon_message)
-			if("chest")
+			if(BP_CHEST)
 				update |= temp.take_damage(b_loss * 0.4, f_loss * 0.4, used_weapon = weapon_message)
-			if("l_arm")
+			else
 				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-			if("r_arm")
-				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-			if("l_leg")
-				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-			if("r_leg")
-				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-			if("r_foot")
-				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-			if("l_foot")
-				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-			if("r_arm")
-				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-			if("l_arm")
-				update |= temp.take_damage(b_loss * 0.05, f_loss * 0.05, used_weapon = weapon_message)
-	if(update)	UpdateDamageIcon()
+	if(update)
+		UpdateDamageIcon()
 
-/mob/living/carbon/human/proc/implant_loyalty(mob/living/carbon/human/M, override = FALSE) // Won't override by default.
-	if(!config.use_loyalty_implants && !override) return // Nuh-uh.
-
-	var/obj/item/weapon/implant/loyalty/L = new/obj/item/weapon/implant/loyalty(M)
-	L.imp_in = M
-	L.implanted = 1
-	var/obj/item/organ/external/affected = M.organs_by_name["head"]
-	affected.implants += L
-	L.part = affected
-	L.implanted(src)
-
-/mob/living/carbon/human/proc/implant(var/implant_type = /obj/item/weapon/implant/loyalty)
-	var/obj/item/weapon/implant/L = new implant_type(src)
-	if(!istype(L, /obj/item/weapon/implant))
-		del(L)
-		return 0
-
-// TODO: replace with    L.implanted(src, "head")
-
-	L.imp_in = src
-	L.implanted = 1
-	var/obj/item/organ/external/affected = get_organ("head")
-	affected.implants += L
-	L.part = affected
-	L.implanted(src)
-
-/mob/living/carbon/human/proc/is_loyalty_implanted(mob/living/carbon/human/M)
-	for(var/L in M.contents)
-		if(istype(L, /obj/item/weapon/implant/loyalty))
-			for(var/obj/item/organ/external/O in M.organs)
-				if(L in O.implants)
-					return 1
-	return 0
 
 /mob/living/carbon/human/restrained()
 	if (handcuffed)
@@ -238,9 +191,9 @@
 
 	dat += "<BR><HR>"
 
-	if(species.hud.has_hands)
+/*	if(species.hud.has_hands)
 		dat += "<BR><b>Left hand:</b> <A href='?src=\ref[src];item=[slot_l_hand]'>[istype(l_hand) ? l_hand : "nothing"]</A>"
-		dat += "<BR><b>Right hand:</b> <A href='?src=\ref[src];item=[slot_r_hand]'>[istype(r_hand) ? r_hand : "nothing"]</A>"
+		dat += "<BR><b>Right hand:</b> <A href='?src=\ref[src];item=[slot_r_hand]'>[istype(r_hand) ? r_hand : "nothing"]</A>"*/
 
 	// Do they get an option to set internals?
 	if(istype(wear_mask, /obj/item/clothing/mask) || istype(head, /obj/item/clothing/head/helmet/space))
@@ -248,8 +201,6 @@
 			dat += "<BR><A href='?src=\ref[src];item=internals'>Toggle internals.</A>"
 
 	// Other incidentals.
-	if(istype(suit) && suit.has_sensor == 1)
-		dat += "<BR><A href='?src=\ref[src];item=sensors'>Set sensors</A>"
 	if(handcuffed)
 		dat += "<BR><A href='?src=\ref[src];item=[slot_handcuffed]'>Handcuffed</A>"
 	if(legcuffed)
@@ -357,7 +308,7 @@ var/list/rank_prefix = list(\
 
 //Returns "Unknown" if facially disfigured and real_name if not. Useful for setting name when polyacided or when updating a human's name variable
 /mob/living/carbon/human/proc/get_face_name()
-	var/obj/item/organ/external/head = get_organ("head")
+	var/obj/item/organ/external/head = get_organ(BP_HEAD)
 	if(!head || head.disfigured || head.is_stump() || !real_name || (HUSK in mutations) )	//disfigured. use id-name if possible
 		return "Unknown"
 	return real_name
@@ -398,7 +349,7 @@ var/list/rank_prefix = list(\
 	if(status_flags & GODMODE)	return 0	//godmode
 
 	if (!def_zone)
-		def_zone = pick("l_hand", "r_hand")
+		def_zone = pick(BP_L_HAND, BP_R_HAND)
 
 	var/obj/item/organ/external/affected_organ = get_organ(check_zone(def_zone))
 	var/siemens_coeff = base_siemens_coeff * get_siemens_coefficient_organ(affected_organ)
@@ -449,10 +400,10 @@ var/list/rank_prefix = list(\
 
 										spawn()
 											BITSET(hud_updateflag, WANTED_HUD)
-											if(istype(usr,/mob/living/carbon/human))
+											if(ishuman(usr))
 												var/mob/living/carbon/human/U = usr
 												U.handle_regular_hud_updates()
-											if(istype(usr,/mob/living/silicon/robot))
+											if(isrobot(usr))
 												var/mob/living/silicon/robot/U = usr
 												U.handle_regular_hud_updates()
 
@@ -541,10 +492,10 @@ var/list/rank_prefix = list(\
 								var/counter = 1
 								while(R.fields[text("com_[]", counter)])
 									counter++
-								if(istype(usr,/mob/living/carbon/human))
+								if(ishuman(usr))
 									var/mob/living/carbon/human/U = usr
 									R.fields[text("com_[counter]")] = text("Made by [U.get_authentification_name()] ([U.get_assignment()]) on [time2text(world.realtime, "DDD MMM DD hh:mm:ss")], [game_year]<BR>[t1]")
-								if(istype(usr,/mob/living/silicon/robot))
+								if(isrobot(usr))
 									var/mob/living/silicon/robot/U = usr
 									R.fields[text("com_[counter]")] = text("Made by [U.name] ([U.modtype] [U.braintype]) on [time2text(world.realtime, "DDD MMM DD hh:mm:ss")], [game_year]<BR>[t1]")
 
@@ -577,10 +528,10 @@ var/list/rank_prefix = list(\
 										PDA_Manifest.Cut()
 
 									spawn()
-										if(istype(usr,/mob/living/carbon/human))
+										if(ishuman(usr))
 											var/mob/living/carbon/human/U = usr
 											U.handle_regular_hud_updates()
-										if(istype(usr,/mob/living/silicon/robot))
+										if(isrobot(usr))
 											var/mob/living/silicon/robot/U = usr
 											U.handle_regular_hud_updates()
 
@@ -670,10 +621,10 @@ var/list/rank_prefix = list(\
 								var/counter = 1
 								while(R.fields[text("com_[]", counter)])
 									counter++
-								if(istype(usr,/mob/living/carbon/human))
+								if(ishuman(usr))
 									var/mob/living/carbon/human/U = usr
 									R.fields[text("com_[counter]")] = text("Made by [U.get_authentification_name()] ([U.get_assignment()]) on [time2text(world.realtime, "DDD MMM DD hh:mm:ss")], [game_year]<BR>[t1]")
-								if(istype(usr,/mob/living/silicon/robot))
+								if(isrobot(usr))
 									var/mob/living/silicon/robot/U = usr
 									R.fields[text("com_[counter]")] = text("Made by [U.name] ([U.modtype] [U.braintype]) on [time2text(world.realtime, "DDD MMM DD hh:mm:ss")], [game_year]<BR>[t1]")
 
@@ -691,11 +642,11 @@ var/list/rank_prefix = list(\
 ///eyecheck()
 ///Returns a number between -1 to 2
 /mob/living/carbon/human/eyecheck()
-	if(!species.has_organ["eyes"]) //No eyes, can't hurt them.
+	if(!species.has_organ[O_EYES]) //No eyes, can't hurt them.
 		return FLASH_PROTECTION_MAJOR
 
-	if(internal_organs_by_name["eyes"]) // Eyes are fucked, not a 'weak point'.
-		var/obj/item/organ/I = internal_organs_by_name["eyes"]
+	if(internal_organs_by_name[O_EYES]) // Eyes are fucked, not a 'weak point'.
+		var/obj/item/organ/I = internal_organs_by_name[O_EYES]
 		if(I.status & ORGAN_CUT_AWAY)
 			return FLASH_PROTECTION_MAJOR
 
@@ -703,7 +654,7 @@ var/list/rank_prefix = list(\
 
 //Used by various things that knock people out by applying blunt trauma to the head.
 //Checks that the species has a "head" (brain containing organ) and that hit_zone refers to it.
-/mob/living/carbon/human/proc/headcheck(var/target_zone, var/brain_tag = "brain")
+/mob/living/carbon/human/proc/headcheck(var/target_zone, var/brain_tag = O_BRAIN)
 	if(!species.has_organ[brain_tag])
 		return 0
 
@@ -727,7 +678,7 @@ var/list/rank_prefix = list(\
 	if(species.has_fine_manipulation)
 		return 1
 	if(!silent)
-		src << "<span class='warning'>You don't have the dexterity to use that!</span>"
+		src << SPAN_WARNING("You don't have the dexterity to use that!")
 	return 0
 
 /mob/living/carbon/human/abiotic(var/full_body = 0)
@@ -761,7 +712,7 @@ var/list/rank_prefix = list(\
 
 /mob/living/carbon/human/proc/check_has_mouth()
 	// Todo, check stomach organ when implemented.
-	var/obj/item/organ/external/head/H = get_organ("head")
+	var/obj/item/organ/external/head/H = get_organ(BP_HEAD)
 	if(!H || !H.can_intake_reagents)
 		return 0
 	return 1
@@ -774,13 +725,13 @@ var/list/rank_prefix = list(\
 		return
 	if(!lastpuke)
 		lastpuke = 1
-		src << "<span class='warning'>You feel nauseous...</span>"
+		src << SPAN_WARNING("You feel nauseous...")
 		spawn(150)	//15 seconds until second warning
-			src << "<span class='warning'>You feel like you are about to throw up!</span>"
+			src << SPAN_WARNING("You feel like you are about to throw up!")
 			spawn(100)	//and you have 10 more for mad dash to the bucket
 				Stun(5)
 
-				src.visible_message("<span class='warning'>[src] throws up!</span>","<span class='warning'>You throw up!</span>")
+				src.visible_message(SPAN_WARNING("[src] throws up!"),SPAN_WARNING("You throw up!"))
 				playsound(loc, 'sound/effects/splat.ogg', 50, 1)
 
 				var/turf/location = loc
@@ -805,23 +756,17 @@ var/list/rank_prefix = list(\
 		src.verbs -= /mob/living/carbon/human/proc/morph
 		return
 
-	var/new_facial = input("Please select facial hair color.", "Character Generation",rgb(r_facial,g_facial,b_facial)) as color
+	var/new_facial = input("Please select facial hair color.", "Character Generation",facial_color) as color
 	if(new_facial)
-		r_facial = hex2num(copytext(new_facial, 2, 4))
-		g_facial = hex2num(copytext(new_facial, 4, 6))
-		b_facial = hex2num(copytext(new_facial, 6, 8))
+		facial_color = new_facial
 
-	var/new_hair = input("Please select hair color.", "Character Generation",rgb(r_hair,g_hair,b_hair)) as color
-	if(new_facial)
-		r_hair = hex2num(copytext(new_hair, 2, 4))
-		g_hair = hex2num(copytext(new_hair, 4, 6))
-		b_hair = hex2num(copytext(new_hair, 6, 8))
+	var/new_hair = input("Please select hair color.", "Character Generation",hair_color) as color
+	if(new_hair)
+		hair_color = new_hair
 
-	var/new_eyes = input("Please select eye color.", "Character Generation",rgb(r_eyes,g_eyes,b_eyes)) as color
+	var/new_eyes = input("Please select eye color.", "Character Generation",eyes_color) as color
 	if(new_eyes)
-		r_eyes = hex2num(copytext(new_eyes, 2, 4))
-		g_eyes = hex2num(copytext(new_eyes, 4, 6))
-		b_eyes = hex2num(copytext(new_eyes, 6, 8))
+		eyes_color = new_eyes
 		update_eyes()
 
 	var/new_tone = input("Please select skin tone level: 1-220 (1=albino, 35=caucasian, 150=black, 220='very' black)", "Character Generation", "[35-s_tone]")  as text
@@ -957,10 +902,10 @@ var/list/rank_prefix = list(\
 
 	// Fix up all organs.
 	// This will ignore any prosthetics in the prefs currently.
-	species.create_organs(src)
+	rebuild_organs()
 
 	if(!client || !key) //Don't boot out anyone already in the mob.
-		for (var/obj/item/organ/brain/H in world)
+		for (var/obj/item/organ/internal/brain/H in world)
 			if(H.brainmob)
 				if(H.brainmob.real_name == src.real_name)
 					if(H.brainmob.mind)
@@ -977,11 +922,11 @@ var/list/rank_prefix = list(\
 	..()
 
 /mob/living/carbon/human/proc/is_lung_ruptured()
-	var/obj/item/organ/lungs/L = internal_organs_by_name["lungs"]
+	var/obj/item/organ/internal/lungs/L = internal_organs_by_name[O_LUNGS]
 	return L && L.is_bruised()
 
 /mob/living/carbon/human/proc/rupture_lung()
-	var/obj/item/organ/lungs/L = internal_organs_by_name["lungs"]
+	var/obj/item/organ/internal/lungs/L = internal_organs_by_name[O_LUNGS]
 
 	if(L && !L.is_bruised())
 		src.custom_pain("You feel a stabbing pain in your chest!", 1)
@@ -1038,12 +983,30 @@ var/list/rank_prefix = list(\
 
 /mob/living/carbon/human/clean_blood(var/clean_feet)
 	.=..()
+
+	if(gloves)
+		if(gloves.clean_blood())
+			update_inv_gloves()
+		gloves.germ_level = 0
+	else
+		if(bloody_hands)
+			bloody_hands = 0
+			update_inv_gloves()
+		germ_level = 0
+
 	gunshot_residue = null
-	if(clean_feet && !shoes)
-		feet_blood_color = null
-		feet_blood_DNA = null
-		update_inv_shoes(1)
-		return 1
+
+	if(clean_feet)
+		if(shoes)
+			if(shoes.clean_blood())
+				update_inv_shoes()
+		else
+			if(feet_blood_DNA && feet_blood_DNA.len)
+				feet_blood_color = null
+				feet_blood_DNA.Cut()
+				update_inv_shoes()
+
+	return
 
 /mob/living/carbon/human/get_visible_implants(var/class = 0)
 
@@ -1071,17 +1034,16 @@ var/list/rank_prefix = list(\
 			if(!istype(O,/obj/item/weapon/implant) && prob(5)) //Moving with things stuck in you could be bad.
 				// All kinds of embedded objects cause bleeding.
 				if(species.flags & NO_PAIN)
-					src << "<span class='warning'>You feel [O] moving inside your [organ.name].</span>"
+					src << SPAN_WARNING("You feel [O] moving inside your [organ.name].")
 				else
 					var/msg = pick( \
-						"<span class='warning'>A spike of pain jolts your [organ.name] as you bump [O] inside.</span>", \
-						"<span class='warning'>Your movement jostles [O] in your [organ.name] painfully.</span>", \
-						"<span class='warning'>Your movement jostles [O] in your [organ.name] painfully.</span>")
+						SPAN_WARNING("A spike of pain jolts your [organ.name] as you bump [O] inside."), \
+						SPAN_WARNING("Your movement jostles [O] in your [organ.name] painfully."), \
+						SPAN_WARNING("Your movement jostles [O] in your [organ.name] painfully."))
 					src << msg
 
 				organ.take_damage(rand(1,3), 0, 0)
-				if(!(organ.status & ORGAN_ROBOT) && !(species.flags & NO_BLOOD)) //There is no blood in protheses.
-					organ.status |= ORGAN_BLEEDING
+				if(organ.setBleeding())
 					src.adjustToxLoss(rand(1,3))
 
 /mob/living/carbon/human/verb/check_pulse()
@@ -1096,23 +1058,23 @@ var/list/rank_prefix = list(\
 	if(usr == src)
 		self = 1
 	if(!self)
-		usr.visible_message("<span class='notice'>[usr] kneels down, puts \his hand on [src]'s wrist and begins counting their pulse.</span>",\
+		usr.visible_message(SPAN_NOTICE("[usr] kneels down, puts \his hand on [src]'s wrist and begins counting their pulse."),\
 		"You begin counting [src]'s pulse")
 	else
-		usr.visible_message("<span class='notice'>[usr] begins counting their pulse.</span>",\
+		usr.visible_message(SPAN_NOTICE("[usr] begins counting their pulse."),\
 		"You begin counting your pulse.")
 
 	if(pulse())
 		usr << "<span class='notice'>[self ? "You have a" : "[src] has a"] pulse! Counting...</span>"
 	else
-		usr << "<span class='danger'>[src] has no pulse!</span>"	//it is REALLY UNLIKELY that a dead person would check his own pulse
+		usr << SPAN_DANGER("[src] has no pulse!")	//it is REALLY UNLIKELY that a dead person would check his own pulse
 		return
 
 	usr << "You must[self ? "" : " both"] remain still until counting is finished."
 	if(do_mob(usr, src, 60))
 		usr << "<span class='notice'>[self ? "Your" : "[src]'s"] pulse is [src.get_pulse(GETPULSE_HAND)].</span>"
 	else
-		usr << "<span class='warning'>You failed to check the pulse. Try again.</span>"
+		usr << SPAN_WARNING("You failed to check the pulse. Try again.")
 
 /mob/living/carbon/human/proc/set_species(var/new_species, var/default_colour)
 //	world << "set species"
@@ -1151,20 +1113,16 @@ var/list/rank_prefix = list(\
 
 	if(species.base_color && default_colour)
 		//Apply colour.
-		r_skin = hex2num(copytext(species.base_color,2,4))
-		g_skin = hex2num(copytext(species.base_color,4,6))
-		b_skin = hex2num(copytext(species.base_color,6,8))
+		skin_color = species.base_color
 	else
-		r_skin = 0
-		g_skin = 0
-		b_skin = 0
+		skin_color = "#000000"
 
 	if(species.holder_type)
 		holder_type = species.holder_type
 
 	icon_state = lowertext(species.name)
 
-	species.create_organs(src)
+	rebuild_organs()
 	src.sync_organ_dna()
 	species.handle_post_spawn(src)
 
@@ -1193,6 +1151,77 @@ var/list/rank_prefix = list(\
 	else
 		return 0
 
+#define MODIFICATION_ORGANIC 1
+#define MODIFICATION_SILICON 2
+#define MODIFICATION_REMOVED 3
+
+//Needed for augmentation
+/mob/living/carbon/human/proc/rebuild_organs(var/from_preference = 0)
+	if(!species)
+		return 0
+
+	for(var/obj/item/organ/organ in (organs|internal_organs))
+		qdel(organ)
+
+	if(organs.len)
+		organs.Cut()
+	if(internal_organs.len)
+		internal_organs.Cut()
+	if(organs_by_name.len)
+		organs_by_name.Cut()
+	if(internal_organs_by_name.len)
+		internal_organs_by_name.Cut()
+
+
+	if(from_preference)
+		var/datum/preferences/Pref
+		if(istype(from_preference, /datum/preferences))
+			Pref = from_preference
+		else if(client)
+			Pref = client.prefs
+		else
+			return
+
+		var/datum/body_modification/BM = null
+
+		for(var/tag in species.has_limbs)
+			BM = Pref.get_modification(tag)
+			var/datum/organ_description/OD = species.has_limbs[tag]
+			var/datum/body_modification/PBM = Pref.get_modification(OD.parent_organ)
+			if(PBM && (PBM.nature == MODIFICATION_SILICON || PBM.nature == MODIFICATION_REMOVED))
+				BM = PBM
+			if(BM.is_allowed(tag, Pref))
+				BM.create_organ(src, OD, Pref.modifications_colors[tag])
+			else
+				OD.create_organ(src)
+
+		for(var/tag in species.has_organ)
+			BM = Pref.get_modification(tag)
+			if(BM.is_allowed(tag, Pref))
+				BM.create_organ(src, species.has_organ[tag], Pref.modifications_colors[tag])
+			else
+				var/organ_type = species.has_organ[tag]
+				new organ_type(src)
+
+	else
+		var/organ_type = null
+
+		for(var/limb_tag in species.has_limbs)
+			var/datum/organ_description/OD = species.has_limbs[limb_tag]
+			OD.create_organ(src)
+
+		for(var/organ_tag in species.has_organ)
+			organ_type = species.has_organ[organ_tag]
+			new organ_type(src)
+
+	species.organs_spawned(src)
+
+	update_body()
+
+#undef MODIFICATION_REMOVED
+#undef MODIFICATION_ORGANIC
+#undef MODIFICATION_SILICON
+
 /mob/living/carbon/human/proc/bloody_doodle()
 	set category = "IC"
 	set name = "Write in blood"
@@ -1208,26 +1237,26 @@ var/list/rank_prefix = list(\
 		verbs -= /mob/living/carbon/human/proc/bloody_doodle
 
 	if (src.gloves)
-		src << "<span class='warning'>Your [src.gloves] are getting in the way.</span>"
+		src << SPAN_WARNING("Your [src.gloves] are getting in the way.")
 		return
 
 	var/turf/simulated/T = src.loc
 	if (!istype(T)) //to prevent doodling out of mechs and lockers
-		src << "<span class='warning'>You cannot reach the floor.</span>"
+		src << SPAN_WARNING("You cannot reach the floor.")
 		return
 
 	var/direction = input(src,"Which way?","Tile selection") as anything in list("Here","North","South","East","West")
 	if (direction != "Here")
 		T = get_step(T,text2dir(direction))
 	if (!istype(T))
-		src << "<span class='warning'>You cannot doodle there.</span>"
+		src << SPAN_WARNING("You cannot doodle there.")
 		return
 
 	var/num_doodles = 0
 	for (var/obj/effect/decal/cleanable/blood/writing/W in T)
 		num_doodles++
 	if (num_doodles > 4)
-		src << "<span class='warning'>There is no space to write on!</span>"
+		src << SPAN_WARNING("There is no space to write on!")
 		return
 
 	var/max_length = bloody_hands * 30 //tweeter style
@@ -1240,7 +1269,7 @@ var/list/rank_prefix = list(\
 
 		if (length(message) > max_length)
 			message += "-"
-			src << "<span class='warning'>You ran out of blood to write with!</span>"
+			src << SPAN_WARNING("You ran out of blood to write with!")
 
 		var/obj/effect/decal/cleanable/blood/writing/W = new(T)
 		W.basecolor = (hand_blood_color) ? hand_blood_color : "#A10808"
@@ -1253,7 +1282,7 @@ var/list/rank_prefix = list(\
 
 	if(!target_zone)
 		if(!user)
-			target_zone = pick("chest","chest","chest","left leg","right leg","left arm", "right arm", "head")
+			target_zone = pick(BP_ALL + BP_CHEST + BP_CHEST)
 		else
 			target_zone = user.targeted_organ
 
@@ -1262,12 +1291,12 @@ var/list/rank_prefix = list(\
 	if(!affecting)
 		. = 0
 		fail_msg = "They are missing that limb."
-	else if (affecting.status & ORGAN_ROBOT)
+	else if (affecting.robotic >= ORGAN_ROBOT)
 		. = 0
 		fail_msg = "That limb is robotic."
 	else
 		switch(target_zone)
-			if("head")
+			if(BP_HEAD)
 				if(head && head.item_flags & THICKMATERIAL)
 					. = 0
 			else
@@ -1275,7 +1304,7 @@ var/list/rank_prefix = list(\
 					. = 0
 	if(!. && error_msg && user)
 		if(!fail_msg)
-			fail_msg = "There is no exposed flesh or thin material [target_zone == "head" ? "on their head" : "on their body"] to inject into."
+			fail_msg = "There is no exposed flesh or thin material [target_zone == BP_HEAD ? "on their head" : "on their body"] to inject into."
 		user << "<span class='alert'>[fail_msg]</span>"
 
 /mob/living/carbon/human/print_flavor_text(var/shrink = 1)
@@ -1308,15 +1337,11 @@ var/list/rank_prefix = list(\
 	..()
 
 /mob/living/carbon/human/has_brain()
-	if(internal_organs_by_name["brain"])
-		var/obj/item/organ/brain = internal_organs_by_name["brain"]
-		if(brain && istype(brain))
-			return 1
-	return 0
+	return istype(internal_organs_by_name[O_BRAIN], /obj/item/organ/internal/brain)
 
 /mob/living/carbon/human/has_eyes()
-	if(internal_organs_by_name["eyes"])
-		var/obj/item/organ/eyes = internal_organs_by_name["eyes"]
+	if(internal_organs_by_name[O_EYES])
+		var/obj/item/organ/internal/eyes = internal_organs_by_name[O_EYES]
 		if(eyes && istype(eyes) && !(eyes.status & ORGAN_CUT_AWAY))
 			return 1
 	return 0
@@ -1364,9 +1389,9 @@ var/list/rank_prefix = list(\
 	var/obj/item/organ/external/current_limb = organs_by_name[choice]
 
 	if(self)
-		src << "<span class='warning'>You brace yourself to relocate your [current_limb.joint]...</span>"
+		src << SPAN_WARNING("You brace yourself to relocate your [current_limb.joint]...")
 	else
-		U << "<span class='warning'>You begin to relocate [S]'s [current_limb.joint]...</span>"
+		U << SPAN_WARNING("You begin to relocate [S]'s [current_limb.joint]...")
 
 	if(!do_after(U, 30, src))
 		return
@@ -1374,16 +1399,11 @@ var/list/rank_prefix = list(\
 		return
 
 	if(self)
-		src << "<span class='danger'>You pop your [current_limb.joint] back in!</span>"
+		src << SPAN_DANGER("You pop your [current_limb.joint] back in!")
 	else
-		U << "<span class='danger'>You pop [S]'s [current_limb.joint] back in!</span>"
-		S << "<span class='danger'>[U] pops your [current_limb.joint] back in!</span>"
+		U << SPAN_DANGER("You pop [S]'s [current_limb.joint] back in!")
+		S << SPAN_DANGER("[U] pops your [current_limb.joint] back in!")
 	current_limb.undislocate()
-
-/mob/living/carbon/human/drop_from_inventory(var/obj/item/W, var/atom/Target = null)
-	if(W in organs)
-		return
-	..()
 
 /mob/living/carbon/human/reset_view(atom/A, update_hud = 1)
 	..()
@@ -1394,7 +1414,7 @@ var/list/rank_prefix = list(\
 /mob/living/carbon/human/can_stand_overridden()
 	if(wearing_rig && wearing_rig.ai_can_move_suit(check_for_ai = 1))
 		// Actually missing a leg will screw you up. Everything else can be compensated for.
-		for(var/limbcheck in list("l_leg","r_leg"))
+		for(var/limbcheck in list(BP_L_LEG ,BP_R_LEG))
 			var/obj/item/organ/affecting = get_organ(limbcheck)
 			if(!affecting)
 				return 0
@@ -1407,48 +1427,6 @@ var/list/rank_prefix = list(\
 		get_scooped(H, (usr == src))
 		return
 	return ..()
-
-//Puts the item into our active hand if possible. returns 1 on success.
-/mob/living/carbon/human/put_in_active_hand(var/obj/item/W)
-	return (hand ? put_in_l_hand(W) : put_in_r_hand(W))
-
-//Puts the item into our inactive hand if possible. returns 1 on success.
-/mob/living/carbon/human/put_in_inactive_hand(var/obj/item/W)
-	return (hand ? put_in_r_hand(W) : put_in_l_hand(W))
-
-/mob/living/carbon/human/put_in_hands(var/obj/item/W)
-	if(!W)
-		return 0
-	if(put_in_active_hand(W))
-		update_inv_l_hand()
-		update_inv_r_hand()
-		return 1
-	else if(put_in_inactive_hand(W))
-		update_inv_l_hand()
-		update_inv_r_hand()
-		return 1
-	else
-		return ..()
-
-/mob/living/carbon/human/put_in_l_hand(var/obj/item/W)
-	if(!..() || l_hand)
-		return 0
-	W.forceMove(src)
-	l_hand = W
-	W.equipped(src,slot_l_hand)
-	W.add_fingerprint(src)
-	update_inv_l_hand()
-	return 1
-
-/mob/living/carbon/human/put_in_r_hand(var/obj/item/W)
-	if(!..() || r_hand)
-		return 0
-	W.forceMove(src)
-	r_hand = W
-	W.equipped(src,slot_r_hand)
-	W.add_fingerprint(src)
-	update_inv_r_hand()
-	return 1
 
 /mob/living/carbon/human/verb/pull_punches()
 	set name = "Pull Punches"
@@ -1480,8 +1458,30 @@ var/list/rank_prefix = list(\
 //			output for machines^	^^^^^^^output for people^^^^^^^^^
 
 /mob/living/carbon/human/proc/pulse()
-	var/obj/item/organ/heart/H = internal_organs_by_name["heart"]
+	var/obj/item/organ/internal/heart/H = internal_organs_by_name[O_HEART]
 	if(!H)
 		return PULSE_NONE
 	else
 		return H.pulse
+
+/mob/living/carbon/human/verb/lookup()
+	set name = "Look up"
+	set desc = "If you want to know what's above."
+	set category = "IC"
+
+	if(!is_physically_disabled())
+		var/turf/above = GetAbove(src)
+		if(shadow)
+			if(client.eye == shadow)
+				reset_view(0)
+				return
+			if(istype(above, /turf/simulated/open))
+				src << SPAN_NOTICE("You look up.")
+				if(client)
+					reset_view(shadow)
+				return
+		src << SPAN_NOTICE("You can see [above].")
+	else
+		src << SPAN_NOTICE("You can't do it right now.")
+	return
+

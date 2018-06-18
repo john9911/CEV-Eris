@@ -42,9 +42,10 @@
 		var/area/A = control_area
 		if(A && istype(A))
 			A.turret_controls -= src
-	..()
+	. = ..()
 
-/obj/machinery/turretid/initialize()
+/obj/machinery/turretid/Initialize()
+	. = ..()
 	if(!control_area)
 		control_area = get_area(src)
 	else if(istext(control_area))
@@ -65,11 +66,11 @@
 
 /obj/machinery/turretid/proc/isLocked(mob/user)
 	if(ailock && issilicon(user))
-		user << "<span class='notice'>There seems to be a firewall preventing you from accessing this device.</span>"
+		user << SPAN_NOTICE("There seems to be a firewall preventing you from accessing this device.")
 		return 1
 
 	if(locked && !issilicon(user))
-		user << "<span class='notice'>Access denied.</span>"
+		user << SPAN_NOTICE("Access denied.")
 		return 1
 
 	return 0
@@ -88,7 +89,7 @@
 		if(src.allowed(usr))
 			playsound(loc, 'sound/machines/id_swipe.ogg', 100, 1)
 			if(emagged)
-				user << "<span class='notice'>The turret control is unresponsive.</span>"
+				user << SPAN_NOTICE("The turret control is unresponsive.")
 			else
 				locked = !locked
 				user << "<span class='notice'>You [ locked ? "lock" : "unlock"] the panel.</span>"
@@ -97,7 +98,7 @@
 
 /obj/machinery/turretid/emag_act(var/remaining_charges, var/mob/user)
 	if(!emagged)
-		user << "<span class='danger'>You short out the turret controls' access analysis module.</span>"
+		user << SPAN_DANGER("You short out the turret controls' access analysis module.")
 		emagged = 1
 		locked = 0
 		ailock = 0

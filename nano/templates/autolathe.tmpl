@@ -1,0 +1,147 @@
+<!-- 
+Title: Autolathe
+Used In File(s): \code\game\machinery\autolathe.dm
+ -->
+<div class="statusDisplay">
+	<div class="item">
+		<div class="floatLeft" style="width:59%; border-right:1px solid #40628a;  margin-right:-1px">
+			<div class="item">
+				<div class="itemLabelWidest"><b>Loaded materials</b></div>
+			</div>
+			{{for data.materials}}
+				<div class="item">
+					<div class="itemLabelNarrow">{{:value.name}}</div> 
+					<div class="itemContentNarrow">{{:value.count}}</div>
+					<div class="itemLabelNarrow">{{:helper.link('', 'eject', {'eject_material' : value.name}, null, 'statusValue')}}</b></div>
+				</div>
+			{{empty}}
+				<div class="item">
+					<div class="itemLabelNarrow">empty</div> 
+				</div>
+			{{/for}}
+		</div>
+		<div class="floatLeft" style="width:39%; border-left:1px solid #40628a; padding-left:5px;">
+			<div class="item">
+				<div class="itemLabelWidest"><b>Inserted beaker</b></div>
+			</div>
+			{{if data.container}}
+				{{for data.reagents}}
+					<div class="item">
+						<div class="itemLabelWider">{{:value.name}} </div>
+						<div class="itemContentWidest">{{:value.count}}</div>
+					</div>
+				{{empty}}
+					<div class="item">
+						<div class="itemLabelWidest">empty</div>
+					</div>
+				{{/for}}
+				<div class="item">
+					<div class="itemContentWidest">{{:helper.link('', 'eject', {'eject_container' : 1}, null, 'statusValue')}}</b></div>
+				</div>
+			{{else}}
+				<div class="item">
+					<div class="itemLabelWidest">not inserted</div>
+				</div>
+				<div class="item">
+					<div class="itemContentWidest">{{:helper.link('insert', 'eject', {'insert_beaker' : 1}, null, 'statusValue')}}</b></div>
+				</div>
+			{{/if}}
+		</div>
+	</div>
+</div>
+<div class="statusDisplay">
+	<div class="item">
+		{{:helper.link('INSERT MATERIALS', '', {'insert' : 1}, null, 'bigButton')}}
+	</div>
+</div>
+<div class="statusDisplay">
+	<div class="item">
+		{{if data.disk}}
+			{{if data.uses < 0}}
+				<div class="itemContentWide"><b>Disk: {{:data.disk}}. Disk is unlimited.</b></div>
+			{{else}}
+				<div class="itemContentWide"><b>Disk: {{:data.disk}}. Uses left: {{:data.uses}}.</b></div>
+			{{/if}}
+			<div class="itemlabelNarrow">{{:helper.link('', 'eject', {'eject_disk' : 1}, null, 'statusValue')}}</b></div>
+		{{else}}
+			<div class="itemContentWide"><b>Disk: not inserted.</b></div>
+			<div class="itemlabelNarrow">{{:helper.link('insert', 'eject', {'insert_disk' : 1}, null, 'statusValue')}}</b></div>
+		{{/if}}
+	</div>
+</div>
+<div class="item">
+	<div class="itemContent" style="width:100%">
+		{{if data.busy}}
+		<span style="text-align: center;">
+			<div class="item">
+				<div class="itemLabelWidest">Printing {{:data.busyname}} ({{:data.busynow}}/{{:data.busytotal}})</div>
+				{{if data.diskerr}}
+					<div class="itemContentWidest"><span class="bad">Design data not found.</span></div>
+				{{else}}
+					{{if data.uses == 0}}
+						<div class="itemContentWidest"><span class="bad">Disk license is out.</span></div>
+					{{else}}
+						{{if data.resout}}
+							<div class="itemContentWidest"><span class="bad">Not enough resources.</span></div>
+						{{else}}
+							<div class="itemContentWidest"><span class="good"><b>Printing...</b></span></div>
+						{{/if}}
+					{{/if}}
+				{{/if}}
+				<div class="blockWidest">
+					<div class="item">
+						<div class="itemLabelWidest"><b>Materials</b></div>
+						{{for data.req_materials}}
+							<div class="item">
+								<div class="itemLabel">{{:value.name}}</div>
+								<div class="itemContentSmall">{{:value.req}}</div>
+							</div>
+						{{/for}}
+					</div>
+				</div>
+				<div class="blockWidest">
+					<div class="item">
+						<div class="itemLabelWidest"><b>Reagents</b></div>
+						{{for data.req_reagents}}
+							<div class="item">
+								<div class="itemLabel">{{:value.name}}</div>
+								<div class="itemContentSmall">{{:value.req}}</div>
+							</div>
+						{{/for}}
+					</div>
+				</div>
+				<div class="itemContentWidest">{{:helper.link('Abort', 'close', {'abort_print' : 1}, null, 'statusValue')}}</div>
+			</div>
+		</span>
+		{{else}}
+			{{if !data.disk}}
+				<div class="blockWidest">
+					<span style="text-align: center;">
+						<div class="bad">No disk.</div>
+					</span>
+				</div>
+			{{else}}
+				{{if data.uses == 0}}
+					<div class="blockWidest">
+						<span style="text-align: center;">
+							<div class="bad">Disk license is out. Insert a new one./div>
+						</span>
+					</div>
+				{{else}}
+					{{for data.recipes}}
+						<div class="blockWidest">
+							<div class="item">
+								<div class="itemLabelWidest">{{:value.name}}</div> 
+								<div class="itemLabelNarrow">Print: </div>
+								<div class="itemContentNarrow">{{:helper.link('x1', 'plus', {'print_one' : value.type}, null, 'statusValue')}}</div>
+								<div class="itemContentNarrow">{{:helper.link('xN', 'plus', {'print_several' : value.type}, null, 'statusValue')}}</div>
+							</div>
+						</div>
+					{{/for}}
+				{{/if}}
+			{{/if}}
+		{{/if}}
+	</div>
+</div>
+
+

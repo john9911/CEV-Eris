@@ -4,8 +4,9 @@
 	name = "antibody scanner"
 	desc = "Scans living beings for antibodies in their blood."
 	icon_state = "health"
-	w_class = 2.0
+	w_class = ITEM_SIZE_SMALL
 	item_state = "electronic"
+	matter = list(MATERIAL_PLASTIC = 1, MATERIAL_GLASS = 1)
 	flags = CONDUCT
 
 /obj/item/device/antibody_scanner/attack(mob/M as mob, mob/user as mob)
@@ -59,7 +60,7 @@
 		return
 	..()
 	if(prob(50))
-		user << "<span class='danger'>\The [src] shatters!</span>"
+		user << SPAN_DANGER("\The [src] shatters!")
 		if(virus2.infectionchance > 0)
 			for(var/mob/living/carbon/target in view(1, get_turf(src)))
 				if(airborne_can_reach(get_turf(src), get_turf(target)))
@@ -97,9 +98,9 @@
 
 /obj/item/weapon/diseasedisk
 	name = "blank GNA disk"
-	icon = 'icons/obj/cloning.dmi'
-	icon_state = "datadisk0"
-	w_class = 1
+	icon = 'icons/obj/discs.dmi'
+	icon_state = "purple"
+	w_class = ITEM_SIZE_TINY
 	var/datum/disease2/effectholder/effect = null
 	var/list/species = null
 	var/stage = 1

@@ -38,10 +38,10 @@
 /obj/machinery/power/am_control_unit/Destroy()//Perhaps damage and run stability checks rather than just qdel on the others
 	for(var/obj/machinery/am_shielding/AMS in linked_shielding)
 		qdel(AMS)
-	..()
+	. = ..()
 
 
-/obj/machinery/power/am_control_unit/process()
+/obj/machinery/power/am_control_unit/Process()
 	if(exploding)
 		explosion(get_turf(src),8,12,18,12)
 		if(src) qdel(src)
@@ -132,42 +132,41 @@
 	//No other icons for it atm
 
 
-/obj/machinery/power/am_control_unit/attackby(obj/item/W, mob/user)
-	if(!istype(W) || !user) return
-	if(istype(W, /obj/item/weapon/wrench))
-		if(!anchored)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			user.visible_message("[user.name] secures the [src.name] to the floor.", \
-				"You secure the anchor bolts to the floor.", \
-				"You hear a ratchet")
-			src.anchored = 1
-			connect_to_network()
-		else if(!linked_shielding.len > 0)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			user.visible_message("[user.name] unsecures the [src.name].", \
-				"You remove the anchor bolts.", \
-				"You hear a ratchet")
-			src.anchored = 0
-			disconnect_from_network()
-		else
-			user << "\red Once bolted and linked to a shielding unit it the [src.name] is unable to be moved!"
-		return
+/obj/machinery/power/am_control_unit/attackby(obj/item/I, mob/user)
 
-	if(istype(W, /obj/item/weapon/am_containment))
+	if(QUALITY_BOLT_TURNING in I.tool_qualities)
+		if(anchored || linked_shielding.len)
+			user << "\red Once bolted and linked to a shielding unit it the [src.name] is unable to be moved!"
+		if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_BOLT_TURNING, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+			if(!anchored)
+				user.visible_message("[user.name] secures the [src.name] to the floor.", \
+					"You secure the anchor bolts to the floor.", \
+					"You hear a ratchet")
+				src.anchored = 1
+				connect_to_network()
+			else if(!linked_shielding.len > 0)
+				user.visible_message("[user.name] unsecures the [src.name].", \
+					"You remove the anchor bolts.", \
+					"You hear a ratchet")
+				src.anchored = 0
+				disconnect_from_network()
+			return
+
+	if(istype(I, /obj/item/weapon/am_containment))
 		if(fueljar)
 			user << "\red There is already a [fueljar] inside!"
 			return
-		fueljar = W
-		user.remove_from_mob(W)
-		W.loc = src
+		fueljar = I
+		user.remove_from_mob(I)
+		I.loc = src
 		user.update_icons()
-		user.visible_message("[user.name] loads an [W.name] into the [src.name].", \
-				"You load an [W.name].", \
+		user.visible_message("[user.name] loads an [I.name] into the [src.name].", \
+				"You load an [I.name].", \
 				"You hear a thunk.")
 		return
 
-	if(W.force >= 20)
-		stability -= W.force/2
+	if(I.force >= 20)
+		stability -= I.force/2
 		check_stability()
 	..()
 	return
@@ -247,7 +246,7 @@
 
 /obj/machinery/power/am_control_unit/interact(mob/user)
 	if((get_dist(src, user) > 1) || (stat & (BROKEN|NOPOWER)))
-		if(!istype(user, /mob/living/silicon/ai))
+		if(!isAI(user))
 			user.unset_machine()
 			user << browse(null, "window=AMcontrol")
 			return
@@ -287,7 +286,7 @@
 /obj/machinery/power/am_control_unit/Topic(href, href_list)
 	..()
 	//Ignore input if we are broken or guy is not touching us, AI can control from a ways away
-	if(stat & (BROKEN|NOPOWER) || (get_dist(src, usr) > 1 && !istype(usr, /mob/living/silicon/ai)))
+	if(stat & (BROKEN|NOPOWER) || (get_dist(src, usr) > 1 && !isAI(usr)))
 		usr.unset_machine()
 		usr << browse(null, "window=AMcontrol")
 		return

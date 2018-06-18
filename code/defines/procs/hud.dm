@@ -35,7 +35,6 @@ proc/process_sec_hud(var/mob/M, var/advanced_mode, var/mob/Alt)
 		if(advanced_mode)
 			P.Client.images += perp.hud_list[WANTED_HUD]
 			P.Client.images += perp.hud_list[IMPTRACK_HUD]
-			P.Client.images += perp.hud_list[IMPLOYAL_HUD]
 			P.Client.images += perp.hud_list[IMPCHEM_HUD]
 
 datum/arranged_hud_process
@@ -64,7 +63,7 @@ proc/can_process_hud(var/mob/M)
 mob/proc/handle_hud_glasses() //Used in the life.dm of mobs that can use HUDs.
 	if(client)
 		for(var/image/hud in client.images)
-			if(copytext(hud.icon_state,1,4) == "hud")
+			if(copytext(hud.icon_state, 1, 4) == "hud")
 				client.images -= hud
 	med_hud_users -= src
 	sec_hud_users -= src
@@ -74,7 +73,7 @@ mob/proc/in_view(var/turf/T)
 
 /mob/observer/eye/in_view(var/turf/T)
 	var/list/viewed = new
-	for(var/mob/living/carbon/human/H in mob_list)
+	for(var/mob/living/carbon/human/H in SSmobs.mob_list)
 		if(get_dist(H, T) <= 7)
 			viewed += H
 	return viewed

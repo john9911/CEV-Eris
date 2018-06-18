@@ -20,7 +20,7 @@
 		FG1.cleanup()
 	if(FG2 && !FG2.clean_up)
 		FG2.cleanup()
-	..()
+	. = ..()
 
 /obj/machinery/containment_field/attack_hand(mob/user as mob)
 	if(get_dist(src, user) > 1)
@@ -34,10 +34,10 @@
 	return 0
 
 /obj/machinery/containment_field/HasProximity(atom/movable/AM as mob|obj)
-	if(istype(AM,/mob/living/silicon) && prob(40))
+	if(issilicon(AM) && prob(40))
 		shock(AM)
 		return 1
-	if(istype(AM,/mob/living/carbon) && prob(50))
+	if(iscarbon(AM) && prob(50))
 		shock(AM)
 		return 1
 	return 0

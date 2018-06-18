@@ -4,7 +4,6 @@
 	name = "combat drone"
 	desc = "An automated combat drone armed with state of the art weaponry and shielding."
 	icon_state = "drone3"
-	icon_living = "drone3"
 	icon_dead = "drone_dead"
 	ranged = 1
 	rapid = 1
@@ -270,7 +269,7 @@
 			C.name = "Corrupted drone morality core"
 			C.origin_tech = list(TECH_ILLEGAL = rand(3,6))
 
-	..()
+	. = ..()
 
 /obj/item/projectile/beam/drone
 	damage = 15

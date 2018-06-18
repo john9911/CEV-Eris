@@ -6,7 +6,7 @@
 	name = "Space helmet"
 	icon_state = "space"
 	desc = "A special helmet designed for work in a hazardous, low-pressure environment."
-	item_flags = STOPPRESSUREDAMAGE | THICKMATERIAL | AIRTIGHT
+	item_flags = STOPPRESSUREDAMAGE | THICKMATERIAL | AIRTIGHT | COVER_PREVENT_MANIPULATION
 	flags_inv = BLOCKHAIR
 	item_state_slots = list(
 		slot_l_hand_str = "s_helmet",
@@ -15,7 +15,7 @@
 	permeability_coefficient = 0.01
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 100, rad = 50)
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE|BLOCKHAIR
-	body_parts_covered = HEAD|FACE|EYES
+	body_parts_covered = HEAD|FACE|EYES|EARS
 	cold_protection = HEAD
 	min_cold_protection_temperature = SPACE_HELMET_MIN_COLD_PROTECTION_TEMPERATURE
 	siemens_coefficient = 0.9
@@ -30,8 +30,8 @@
 	brightness_on = 4
 	on = 0
 
-/obj/item/clothing/head/helmet/space/initialize()
-	..()
+/obj/item/clothing/head/helmet/space/Initialize()
+	. = ..()
 	if(camera_networks && camera_networks.len)
 		verbs += /obj/item/clothing/head/helmet/space/proc/toggle_camera
 
@@ -49,9 +49,9 @@
 		camera.set_status(!camera.status)
 		if(camera.status)
 			camera.c_tag = FindNameFromID(usr)
-			usr << "<span class='notice'>User scanned as [camera.c_tag]. Camera activated.</span>"
+			usr << SPAN_NOTICE("User scanned as [camera.c_tag]. Camera activated.")
 		else
-			usr << "<span class='notice'>Camera deactivated.</span>"
+			usr << SPAN_NOTICE("Camera deactivated.")
 
 /obj/item/clothing/head/helmet/space/examine(var/mob/user)
 	if(..(user, 1) && camera_networks && camera_networks.len)
@@ -62,12 +62,15 @@
 	desc = "A suit that protects against low pressure environments. \"NSS EXODUS\" is written in large block letters on the back."
 	icon_state = "space"
 	item_state = "s_suit"
-	w_class = 4//bulky item
+	w_class = ITEM_SIZE_LARGE//bulky item
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.02
-	item_flags = STOPPRESSUREDAMAGE | THICKMATERIAL
+	item_flags = STOPPRESSUREDAMAGE | THICKMATERIAL | COVER_PREVENT_MANIPULATION
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
-	allowed = list(/obj/item/device/flashlight,/obj/item/weapon/tank/emergency_oxygen,/obj/item/device/suit_cooling_unit)
+	allowed = list(
+		/obj/item/device/lighting/toggleable/flashlight,/obj/item/weapon/tank/emergency_oxygen,
+		/obj/item/device/suit_cooling_unit, /obj/item/weapon/tank/oxygen
+	)
 	slowdown = 3
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 100, rad = 50)
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT|HIDETAIL

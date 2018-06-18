@@ -3,7 +3,7 @@
 	icon = 'icons/obj/tank.dmi'
 	item_state = "assembly"
 	throwforce = WEAPON_FORCE_NORMAL
-	w_class = 3.0
+	w_class = ITEM_SIZE_NORMAL
 	throw_speed = 2
 	throw_range = 4
 	flags = CONDUCT | PROXMOVE
@@ -23,35 +23,50 @@
 		overlays += bombassembly.overlays
 		overlays += "bomb_assembly"
 
-/obj/item/device/onetankbomb/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/device/analyzer))
-		bombtank.attackby(W, user)
-		return
-	if(istype(W, /obj/item/weapon/wrench) && !status)	//This is basically bomb assembly code inverted. apparently it works.
+/obj/item/device/onetankbomb/attackby(obj/item/I, mob/user)
 
-		user << "<span class='notice'>You disassemble [src].</span>"
-
-		bombassembly.loc = user.loc
-		bombassembly.master = null
-		bombassembly = null
-
-		bombtank.loc = user.loc
-		bombtank.master = null
-		bombtank = null
-
-		qdel(src)
-		return
-	if((istype(W, /obj/item/weapon/weldingtool) && W:welding))
-		if(!status)
-			status = 1
-			bombers += "[key_name(user)] welded a single tank bomb. Temp: [bombtank.air_contents.temperature-T0C]"
-			message_admins("[key_name_admin(user)] welded a single tank bomb. Temp: [bombtank.air_contents.temperature-T0C]")
-			user << "<span class='notice'>A pressure hole has been bored to [bombtank] valve. \The [bombtank] can now be ignited.</span>"
-		else
-			status = 0
-			bombers += "[key_name(user)] unwelded a single tank bomb. Temp: [bombtank.air_contents.temperature-T0C]"
-			user << "<span class='notice'>The hole has been closed.</span>"
 	add_fingerprint(user)
+
+	var/tool_type = I.get_tool_type(user, QUALITY_BOLT_TURNING, QUALITY_WELDING)
+	switch(tool_type)
+
+		if(QUALITY_BOLT_TURNING)
+			if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY))
+				user << SPAN_NOTICE("You disassemble [src].")
+
+				bombassembly.loc = user.loc
+				bombassembly.master = null
+				bombassembly = null
+
+				bombtank.loc = user.loc
+				bombtank.master = null
+				bombtank = null
+
+				qdel(src)
+			return
+
+		if(QUALITY_WELDING)
+			if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY))
+				if(!status)
+					status = 1
+					bombers += "[key_name(user)] welded a single tank bomb. Temp: [bombtank.air_contents.temperature-T0C]"
+					message_admins("[key_name_admin(user)] welded a single tank bomb. Temp: [bombtank.air_contents.temperature-T0C]")
+					user << SPAN_NOTICE("A pressure hole has been bored to [bombtank] valve. \The [bombtank] can now be ignited.")
+					return
+				else
+					status = 0
+					bombers += "[key_name(user)] unwelded a single tank bomb. Temp: [bombtank.air_contents.temperature-T0C]"
+					user << SPAN_NOTICE("The hole has been closed.")
+					return
+			return
+
+		if(ABORT_CHECK)
+			return
+
+	if(istype(I, /obj/item/device/scanner/analyzer))
+		bombtank.attackby(I, user)
+		return
+
 	..()
 
 /obj/item/device/onetankbomb/attack_self(mob/user as mob) //pressing the bomb accesses its assembly
@@ -80,7 +95,7 @@
 	var/mob/M = user
 	if(!S.secured)										//Check if the assembly is secured
 		return
-	if(isigniter(S.a_left) == isigniter(S.a_right))		//Check if either part of the assembly has an igniter, but if both parts are igniters, then fuck it
+	if(is_igniter(S.left_assembly) == is_igniter(S.right_assembly))		//Check if either part of the assembly has an igniter, but if both parts are igniters, then fuck it
 		return
 
 	var/obj/item/device/onetankbomb/R = new /obj/item/device/onetankbomb(loc)

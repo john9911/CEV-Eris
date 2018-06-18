@@ -14,7 +14,7 @@
 		possibleNets["Engineering"] = access_ce
 		possibleNets["SS13"] = access_hos
 		possibleNets["Mining"] = access_mining
-		possibleNets["Cargo"] = access_qm
+		possibleNets["Cargo"] = access_merchant
 		possibleNets["Research"] = access_rd
 		possibleNets["Medbay"] = access_cmo
 		..()
@@ -38,7 +38,7 @@
 
 	attackby(var/obj/item/I, var/mob/user)//if(health > 50)
 		..()
-		else if(istype(I,/obj/item/weapon/screwdriver))
+		else if(istype(I,/obj/item/weapon/tool/screwdriver))
 			secured = !secured
 			user.visible_message("<span class='notice'>The [src] can [secured ? "no longer" : "now"] be modified.</span>")
 			updateBuildPath()
@@ -108,8 +108,8 @@
 /obj/item/weapon/circuitboard/camera/emag_act(var/remaining_charges, var/mob/user)
 	if(network)
 		authorised = 1
-		user << "<span class='notice'>You authorised the circuit network!</span>"
+		user << SPAN_NOTICE("You authorised the circuit network!")
 		updateDialog()
 		return 1
 	else
-		user << "<span class='warning'>You must select a camera network circuit!</span>"
+		user << SPAN_WARNING("You must select a camera network circuit!")

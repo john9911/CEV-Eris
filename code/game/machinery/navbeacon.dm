@@ -114,20 +114,21 @@ var/global/list/navbeacons			// no I don't like putting this in, but it will do 
 		if(!T.is_plating())
 			return		// prevent intraction when T-scanner revealed
 
-		if(istype(I, /obj/item/weapon/screwdriver))
-			open = !open
+		if(QUALITY_SCREW_DRIVING in I.tool_qualities)
+			if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_SCREW_DRIVING, FAILCHANCE_EASY, required_stat = STAT_PRD))
+				open = !open
 
-			user.visible_message("[user] [open ? "opens" : "closes"] the beacon's cover.", "You [open ? "open" : "close"] the beacon's cover.")
+				user.visible_message("[user] [open ? "opens" : "closes"] the beacon's cover.", "You [open ? "open" : "close"] the beacon's cover.")
 
-			updateicon()
+				updateicon()
 
-		else if (istype(I, /obj/item/weapon/card/id)||istype(I, /obj/item/device/pda))
+		else if(I.GetID())
 			if(open)
 				if (src.allowed(user))
 					src.locked = !src.locked
 					user << "Controls are now [src.locked ? "locked." : "unlocked."]"
 				else
-					user << "<span class='warning'>Access denied.</span>"
+					user << SPAN_WARNING("Access denied.")
 				updateDialog()
 			else
 				user << "You must open the cover first!"
@@ -195,7 +196,7 @@ Transponder Codes:<UL>"}
 		..()
 		if (usr.stat)
 			return
-		if ((in_range(src, usr) && istype(src.loc, /turf)) || (istype(usr, /mob/living/silicon)))
+		if ((in_range(src, usr) && istype(src.loc, /turf)) || (issilicon(usr)))
 			if(open && !locked)
 				usr.set_machine(src)
 
@@ -254,4 +255,4 @@ Transponder Codes:<UL>"}
 	navbeacons.Remove(src)
 	if(radio_controller)
 		radio_controller.remove_object(src, freq)
-	..()
+	. = ..()

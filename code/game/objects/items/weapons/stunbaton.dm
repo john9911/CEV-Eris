@@ -9,40 +9,36 @@
 	sharp = 0
 	edge = 0
 	throwforce = WEAPON_FORCE_PAINFULL
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 	origin_tech = list(TECH_COMBAT = 2)
 	attack_verb = list("beaten")
 	var/stunforce = 0
 	var/agonyforce = 60
-	var/status = 0		//whether the thing is on or not
-	var/obj/item/weapon/cell/bcell = null
-	var/hitcost = 1000	//oh god why do power cells carry so much charge? We probably need to make a distinction between "industrial" sized power cells for APCs and power cells for everything else.
+	var/status = FALSE		//whether the thing is on or not
+	var/hitcost = 100
+	var/obj/item/weapon/cell/cell = null
+	var/suitable_cell = /obj/item/weapon/cell/medium
 
 /obj/item/weapon/melee/baton/New()
 	..()
+	if(!cell && suitable_cell)
+		cell = new suitable_cell(src)
 	update_icon()
 	return
 
-/obj/item/weapon/melee/baton/loaded/New() //this one starts with a cell pre-installed.
-	..()
-	bcell = new/obj/item/weapon/cell/high(src)
-	update_icon()
-	return
-
-/obj/item/weapon/melee/baton/proc/deductcharge(var/chrgdeductamt)
-	if(bcell)
-		if(bcell.checked_use(chrgdeductamt))
-			return 1
+/obj/item/weapon/melee/baton/proc/deductcharge(var/power_drain)
+	if(cell)
+		if(cell.checked_use(power_drain))
+			return TRUE
 		else
-			status = 0
+			status = FALSE
 			update_icon()
-			return 0
-	return null
+			return FALSE
 
 /obj/item/weapon/melee/baton/update_icon()
 	if(status)
 		icon_state = "[initial(name)]_active"
-	else if(!bcell)
+	else if(!cell)
 		icon_state = "[initial(name)]_nocell"
 	else
 		icon_state = "[initial(name)]"
@@ -56,51 +52,29 @@
 	if(!..(user, 1))
 		return
 
-	if(bcell)
-		user <<"<span class='notice'>The baton is [round(bcell.percent())]% charged.</span>"
-	if(!bcell)
-		user <<"<span class='warning'>The baton does not have a power source installed.</span>"
-
-/obj/item/weapon/melee/baton/attackby(obj/item/weapon/W, mob/user)
-	if(istype(W, /obj/item/weapon/cell))
-		if(!bcell)
-			user.drop_item()
-			W.loc = src
-			bcell = W
-			user << "<span class='notice'>You install a cell in [src].</span>"
-			update_icon()
-		else
-			user << "<span class='notice'>[src] already has a cell.</span>"
-
-	else if(istype(W, /obj/item/weapon/screwdriver))
-		if(bcell)
-			bcell.update_icon()
-			bcell.loc = get_turf(src.loc)
-			bcell = null
-			user << "<span class='notice'>You remove the cell from the [src].</span>"
-			status = 0
-			update_icon()
-			return
-		..()
-	return
+	if(cell)
+		user <<SPAN_NOTICE("The baton is [round(cell.percent())]% charged.")
+	if(!cell)
+		user <<SPAN_WARNING("The baton does not have a power source installed.")
 
 /obj/item/weapon/melee/baton/attack_self(mob/user)
-	if(bcell && bcell.charge > hitcost)
+	if(cell && cell.charge > hitcost)
 		status = !status
-		user << "<span class='notice'>[src] is now [status ? "on" : "off"].</span>"
+		user << SPAN_NOTICE("[src] is now [status ? "on" : "off"].")
+		tool_qualities = status ? list(QUALITY_PULSING = 1) : null
 		playsound(loc, "sparks", 75, 1, -1)
 		update_icon()
 	else
-		status = 0
-		if(!bcell)
-			user << "<span class='warning'>[src] does not have a power source!</span>"
+		status = FALSE
+		if(!cell)
+			user << SPAN_WARNING("[src] does not have a power source!")
 		else
-			user << "<span class='warning'>[src] is out of charge.</span>"
+			user << SPAN_WARNING("[src] is out of charge.")
 	add_fingerprint(user)
 
 /obj/item/weapon/melee/baton/attack(mob/M, mob/user)
 	if(status && (CLUMSY in user.mutations) && prob(50))
-		user << "<span class='danger'>You accidentally hit yourself with the [src]!</span>"
+		user << SPAN_DANGER("You accidentally hit yourself with the [src]!")
 		user.Weaken(30)
 		deductcharge(hitcost)
 		return
@@ -131,14 +105,14 @@
 		//we can't really extract the actual hit zone from ..(), unfortunately. Just act like they attacked the area they intended to.
 	else if(!status)
 		if(affecting)
-			target.visible_message("<span class='warning'>[target] has been prodded in the [affecting.name] with [src] by [user]. Luckily it was off.</span>")
+			target.visible_message(SPAN_WARNING("[target] has been prodded in the [affecting.name] with [src] by [user]. Luckily it was off."))
 		else
-			target.visible_message("<span class='warning'>[target] has been prodded with [src] by [user]. Luckily it was off.</span>")
+			target.visible_message(SPAN_WARNING("[target] has been prodded with [src] by [user]. Luckily it was off."))
 	else
 		if(affecting)
-			target.visible_message("<span class='danger'>[target] has been prodded in the [affecting.name] with [src] by [user]!</span>")
+			target.visible_message(SPAN_DANGER("[target] has been prodded in the [affecting.name] with [src] by [user]!"))
 		else
-			target.visible_message("<span class='danger'>[target] has been prodded with [src] by [user]!</span>")
+			target.visible_message(SPAN_DANGER("[target] has been prodded with [src] by [user]!"))
 		playsound(loc, 'sound/weapons/Egloves.ogg', 50, 1, -1)
 
 	//stun effects
@@ -153,8 +127,8 @@
 			H.forcesay(hit_appends)
 
 /obj/item/weapon/melee/baton/emp_act(severity)
-	if(bcell)
-		bcell.emp_act(severity)	//let's not duplicate code everywhere if we don't have to please.
+	if(cell)
+		cell.emp_act(severity)	//let's not duplicate code everywhere if we don't have to please.
 	..()
 
 //secborg stun baton module
@@ -162,11 +136,19 @@
 	//try to find our power cell
 	var/mob/living/silicon/robot/R = loc
 	if (istype(R))
-		bcell = R.cell
+		cell = R.cell
 	return ..()
 
 /obj/item/weapon/melee/baton/robot/attackby(obj/item/weapon/W, mob/user)
 	return
+
+/obj/item/weapon/melee/baton/MouseDrop(over_object)
+	if((src.loc == usr) && istype(over_object, /obj/screen/inventory/hand) && eject_item(cell, usr))
+		cell = null
+
+/obj/item/weapon/melee/baton/attackby(obj/item/C, mob/living/user)
+	if(istype(C, suitable_cell) && !cell && insert_item(C, user))
+		src.cell = C
 
 //Makeshift stun baton. Replacement for stun gloves.
 /obj/item/weapon/melee/baton/cattleprod
@@ -178,6 +160,6 @@
 	throwforce = WEAPON_FORCE_NORMAL
 	stunforce = 0
 	agonyforce = 60	//same force as a stunbaton, but uses way more charge.
-	hitcost = 2500
+	hitcost = 150
 	attack_verb = list("poked")
 	slot_flags = null

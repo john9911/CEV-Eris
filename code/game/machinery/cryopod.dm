@@ -110,7 +110,7 @@
 			user << "<span class='notice'>\The [I] is no longer in storage.</span>"
 			return
 
-		visible_message("<span class='notice'>The console beeps happily as it disgorges \the [I].</span>", 3)
+		visible_message("<span class='notice'>The console beeps happily as it disgorges \the [I].</span>")
 
 		I.forceMove(get_turf(src))
 		frozen_items -= I
@@ -122,7 +122,7 @@
 			user << "<span class='notice'>There is nothing to recover from storage.</span>"
 			return
 
-		visible_message("<span class='notice'>The console beeps happily as it disgorges the desired objects.</span>", 3)
+		visible_message("<span class='notice'>The console beeps happily as it disgorges the desired objects.</span>")
 
 		for(var/obj/item/I in frozen_items)
 			I.forceMove(get_turf(src))
@@ -133,17 +133,16 @@
 
 /obj/item/weapon/circuitboard/cryopodcontrol
 	name = "Circuit board (Cryogenic Oversight Console)"
-	build_path = "/obj/machinery/computer/cryopod"
+	build_path = /obj/machinery/computer/cryopod
 	origin_tech = list(TECH_DATA = 3)
 
 /obj/item/weapon/circuitboard/robotstoragecontrol
 	name = "Circuit board (Robotic Storage Console)"
-	build_path = "/obj/machinery/computer/cryopod/robot"
+	build_path = /obj/machinery/computer/cryopod/robot
 	origin_tech = list(TECH_DATA = 3)
 
 //Decorative structures to go alongside cryopods.
 /obj/structure/cryofeed
-
 	name = "cryogenic feed"
 	desc = "A bewildering tangle of machinery and pipes."
 	icon = 'icons/obj/Cryogenic2.dmi'
@@ -216,10 +215,10 @@
 	if(occupant)
 		occupant.forceMove(loc)
 		occupant.resting = 1
-	..()
+	. = ..()
 
-/obj/machinery/cryopod/initialize()
-	..()
+/obj/machinery/cryopod/Initialize()
+	. = ..()
 
 	find_control_computer()
 
@@ -254,7 +253,7 @@
 	return 1
 
 //Lifted from Unity stasis.dm and refactored. ~Zuhayr
-/obj/machinery/cryopod/process()
+/obj/machinery/cryopod/Process()
 	if(occupant)
 		//Allow a ten minute gap between entering the pod and actually despawning.
 		if(world.time - time_entered < time_till_despawn)
@@ -302,7 +301,6 @@
 	items -= announce // or the autosay radio.
 
 	for(var/obj/item/W in items)
-
 		var/preserve = null
 		// Snowflaaaake.
 		if(istype(W, /obj/item/device/mmi))
@@ -340,13 +338,7 @@
 
 	job_master.FreeRole(job)
 
-	if(occupant.mind.objectives.len)
-		qdel(occupant.mind.objectives)
-		occupant.mind.special_role = null
-	//else
-		//if(ticker.mode.name == "AutoTraitor")
-			//var/datum/game_mode/traitor/autotraitor/current_mode = ticker.mode
-			//current_mode.possible_traitors.Remove(occupant)
+	clear_antagonist(occupant.mind)
 
 	// Delete them from datacore.
 
@@ -368,12 +360,12 @@
 
 
 	//Make an announcement and log the person entering storage.
-	control_computer.frozen_crew += "[occupant.real_name], [occupant.mind.role_alt_title] - [stationtime2text()]"
-	control_computer._admin_logs += "[key_name(occupant)] ([occupant.mind.role_alt_title]) at [stationtime2text()]"
-	log_and_message_admins("[key_name(occupant)] ([occupant.mind.role_alt_title]) entered cryostorage.")
+	control_computer.frozen_crew += "[occupant.real_name], [occupant.mind.assigned_role] - [stationtime2text()]"
+	control_computer._admin_logs += "[key_name(occupant)] ([occupant.mind.assigned_role]) at [stationtime2text()]"
+	log_and_message_admins("[key_name(occupant)] ([occupant.mind.assigned_role]) entered cryostorage.")
 
-	announce.autosay("[occupant.real_name], [occupant.mind.role_alt_title], [on_store_message]", "[on_store_name]")
-	visible_message("<span class='notice'>\The [initial(name)] hums and hisses as it moves [occupant.real_name] into storage.</span>", 3)
+	announce.autosay("[occupant.real_name], [occupant.mind.assigned_role], [on_store_message]", "[on_store_name]")
+	visible_message("<span class='notice'>\The [initial(name)] hums and hisses as it moves [occupant.real_name] into storage.</span>")
 
 	//This should guarantee that ghosts don't spawn.
 	occupant.ckey = null
@@ -383,60 +375,58 @@
 	set_occupant(null)
 
 
-/obj/machinery/cryopod/attackby(var/obj/item/weapon/G as obj, var/mob/user as mob)
+/obj/machinery/cryopod/affect_grab(var/mob/user, var/mob/target)
+	put_inside(target, user)
+	return TRUE
 
-	if(istype(G, /obj/item/weapon/grab))
-		var/obj/item/weapon/grab/grab = G
-		if(occupant)
-			user << "<span class='notice'>\The [src] is in use.</span>"
-			return
+/obj/machinery/cryopod/MouseDrop_T(var/mob/living/L, mob/living/user)
+	if(istype(L) && istype(user))
+		put_inside(L, user)
 
-		if(!ismob(grab.affecting))
-			return
+/obj/machinery/cryopod/proc/put_inside(var/mob/living/affecting, var/mob/living/user)
+	if(occupant)
+		user << "<span class='notice'>\The [src] is in use.</span>"
+		return
 
-		if(!check_occupant_allowed(grab.affecting))
-			return
+	if(!ismob(affecting) || !Adjacent(affecting) || !Adjacent(user))
+		return
 
-		var/willing = null //We don't want to allow people to be forced into despawning.
-		var/mob/M = G:affecting
+	if(!check_occupant_allowed(affecting))
+		return
 
-		if(M.client)
-			if(alert(M,"Would you like to enter long-term storage?",,"Yes","No") == "Yes")
-				if(!M || !grab || !grab.affecting) return
-				willing = 1
-		else
+	var/willing = null //We don't want to allow people to be forced into despawning.
+
+	if(affecting != user && affecting.client)
+		if(alert(affecting,"Would you like to enter long-term storage?",,"Yes","No") == "Yes")
+			if(!affecting)
+				return
 			willing = 1
+	else
+		willing = 1
 
-		if(willing)
+	if(willing)
 
-			visible_message("[user] starts putting [grab.affecting:name] into \the [src].", 3)
+		visible_message("[user] starts putting [affecting] into \the [src].")
 
-			if(do_after(user, 20, src))
-				if(!M || !grab || !grab.affecting) return
+		if(!do_after(user, 20, src))
+			return
 
-				M.forceMove(src)
+		if(!user || !Adjacent(user))
+			return
+		if(!affecting || !Adjacent(affecting))
+			return
 
-				if(M.client)
-					M.client.perspective = EYE_PERSPECTIVE
-					M.client.eye = src
+		set_occupant(affecting)
 
-			icon_state = occupied_icon_state
+		// Book keeping!
+		var/turf/location = get_turf(src)
+		log_admin("[key_name_admin(affecting)] has entered a stasis pod. (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[location.x];Y=[location.y];Z=[location.z]'>JMP</a>)")
+		message_admins("<span class='notice'>[key_name_admin(affecting)] has entered a stasis pod.</span>")
+		if(user == affecting)
+			src.add_fingerprint(affecting)
 
-			M << "<span class='notice'>[on_enter_occupant_message]</span>"
-			M << "<span class='notice'><b>If you ghost, log out or close your client now, your character will shortly be permanently removed from the round.</b></span>"
-			set_occupant(M)
-			time_entered = world.time
-			if(ishuman(M) && applies_stasis)
-				var/mob/living/carbon/human/H = M
-				H.in_stasis = 1
-
-			// Book keeping!
-			var/turf/location = get_turf(src)
-			log_admin("[key_name_admin(M)] has entered a stasis pod. (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[location.x];Y=[location.y];Z=[location.z]'>JMP</a>)")
-			message_admins("<span class='notice'>[key_name_admin(M)] has entered a stasis pod.</span>")
-
-			//Despawning occurs when process() is called with an occupant without a client.
-			src.add_fingerprint(M)
+		//Despawning occurs when process() is called with an occupant without a client.
+		src.add_fingerprint(user)
 
 /obj/machinery/cryopod/verb/eject()
 	set name = "Eject Pod"
@@ -445,12 +435,12 @@
 	if(usr.stat != 0)
 		return
 
-	icon_state = base_icon_state
-
 	//Eject any items that aren't meant to be in the pod.
 	var/list/items = src.contents
-	if(occupant) items -= occupant
-	if(announce) items -= announce
+	if(occupant)
+		items -= occupant
+	if(announce)
+		items -= announce
 
 	for(var/obj/item/W in items)
 		W.forceMove(get_turf(src))
@@ -478,7 +468,7 @@
 			usr << "You're too busy getting your life sucked out of you."
 			return
 
-	visible_message("[usr] starts climbing into \the [src].", 3)
+	visible_message("[usr] starts climbing into \the [src].")
 
 	if(do_after(usr, 20, src))
 
@@ -490,20 +480,7 @@
 			return
 
 		usr.stop_pulling()
-		usr.client.perspective = EYE_PERSPECTIVE
-		usr.client.eye = src
-		usr.forceMove(src)
 		set_occupant(usr)
-		if(ishuman(usr) && applies_stasis)
-			var/mob/living/carbon/human/H = occupant
-			H.in_stasis = 1
-
-		icon_state = occupied_icon_state
-
-		usr << "<span class='notice'>[on_enter_occupant_message]</span>"
-		usr << "<span class='notice'><b>If you ghost, log out or close your client now, your character will shortly be permanently removed from the round.</b></span>"
-
-		time_entered = world.time
 
 		src.add_fingerprint(usr)
 
@@ -514,22 +491,30 @@
 	if(!occupant)
 		return
 
-	if(occupant.client)
-		occupant.client.eye = src.occupant.client.mob
-		occupant.client.perspective = MOB_PERSPECTIVE
-
-	occupant.forceMove(get_turf(src))
-	if(ishuman(occupant) && applies_stasis)
-		var/mob/living/carbon/human/H = occupant
-		H.in_stasis = 0
 	set_occupant(null)
 
-	icon_state = base_icon_state
 
-	return
-
-/obj/machinery/cryopod/proc/set_occupant(var/occupant)
-	src.occupant = occupant
+/obj/machinery/cryopod/proc/set_occupant(var/mob/living/new_occupant)
 	name = initial(name)
-	if(occupant)
+	if(new_occupant)
+		occupant = new_occupant
 		name = "[name] ([occupant])"
+		time_entered = world.time
+		if(ishuman(occupant) && applies_stasis)
+			var/mob/living/carbon/human/H = occupant
+			H.in_stasis = 1
+		new_occupant.forceMove(src)
+		icon_state = occupied_icon_state
+
+		occupant << SPAN_NOTICE("[on_enter_occupant_message]")
+		occupant << SPAN_NOTICE("<b>If you ghost, log out or close your client now, your character will shortly be permanently removed from the round.</b>")
+
+	else
+		icon_state = base_icon_state
+		if(occupant)
+			occupant.forceMove(get_turf(src))
+			occupant.reset_view(null)
+			if(ishuman(occupant) && applies_stasis)
+				var/mob/living/carbon/human/H = occupant
+				H.in_stasis = 0
+		occupant = null

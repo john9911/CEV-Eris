@@ -3,12 +3,10 @@
 	desc = "A part of a space worm."
 	icon = 'icons/mob/animal.dmi'
 	icon_state = "spaceworm"
-	icon_living = "spaceworm"
-	icon_dead = "spacewormdead"
 	status_flags = 0
 
 	speak_emote = list("transmits") //not supposed to be used under AI control
-	emote_hear = list("transmits")  //I'm just adding it so it doesn't runtime if controlled by player who speaks
+	emote_see = list("transmits")  //I'm just adding it so it doesn't runtime if controlled by player who speaks
 
 	response_help  = "touches"
 	response_disarm = "flails at"
@@ -49,8 +47,7 @@
 	head
 		name = "space worm head"
 		icon_state = "spacewormhead"
-		icon_living = "spacewormhead"
-		icon_dead = "spacewormdead"
+		icon_dead = "spaceworm_dead"
 
 		maxHealth = 20
 		health = 20
@@ -101,7 +98,7 @@
 	Destroy() //if a chunk a destroyed, make a new worm out of the split halves
 		if(previous)
 			previous.Detach()
-		..()
+		. = ..()
 
 	Move()
 		var/attachementNextPosition = loc

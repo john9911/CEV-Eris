@@ -1,9 +1,9 @@
 /obj/item/weapon/gun/projectile/heavysniper
-	name = "anti-materiel rifle"
-	desc = "A portable anti-armour rifle fitted with a scope, the HI PTR-7 Rifle was originally designed to used against armoured exosuits. It is capable of punching through windows and non-reinforced walls with ease. Fires armor piercing 14.5mm shells."
+	name = "NT AMR \"Penetrator\""
+	desc = "A portable anti-armour rifle fitted with a scope, it was originally designed to used against armoured exosuits. It is capable of punching through windows and non-reinforced walls with ease. Fires armor piercing 14.5mm shells."
 	icon_state = "heavysniper"
 	item_state = "l6closednomag" //placeholder
-	w_class = 4
+	w_class = ITEM_SIZE_LARGE
 	force = WEAPON_FORCE_PAINFULL
 	slot_flags = SLOT_BACK
 	origin_tech = list(TECH_COMBAT = 8, TECH_MATERIAL = 2, TECH_ILLEGAL = 8)
@@ -14,11 +14,9 @@
 	load_method = SINGLE_CASING
 	max_shells = 1
 	ammo_type = /obj/item/ammo_casing/a145
-	//+2 accuracy over the LWAP because only one shot
-	accuracy = -1
-	scoped_accuracy = 2
 	fire_sound = 'sound/weapons/guns/fire/sniper_fire.ogg'
 	reload_sound 	= 'sound/weapons/guns/interact/rifle_load.ogg'
+	matter = list(MATERIAL_PLASTEEL = 40, MATERIAL_PLASTIC = 20)
 	var/bolt_open = 0
 
 /obj/item/weapon/gun/projectile/heavysniper/update_icon()
@@ -32,14 +30,14 @@
 	bolt_open = !bolt_open
 	if(bolt_open)
 		if(chambered)
-			user << "<span class='notice'>You work the bolt open, ejecting [chambered]!</span>"
+			user << SPAN_NOTICE("You work the bolt open, ejecting [chambered]!")
 			chambered.loc = get_turf(src)
 			loaded -= chambered
 			chambered = null
 		else
-			user << "<span class='notice'>You work the bolt open.</span>"
+			user << SPAN_NOTICE("You work the bolt open.")
 	else
-		user << "<span class='notice'>You work the bolt closed.</span>"
+		user << SPAN_NOTICE("You work the bolt closed.")
 		playsound(src.loc, 'sound/weapons/guns/interact/rifle_boltforward.ogg', 75, 1)
 		bolt_open = 0
 	add_fingerprint(user)
@@ -47,7 +45,7 @@
 
 /obj/item/weapon/gun/projectile/heavysniper/special_check(mob/user)
 	if(bolt_open)
-		user << "<span class='warning'>You can't fire [src] while the bolt is open!</span>"
+		user << SPAN_WARNING("You can't fire [src] while the bolt is open!")
 		return 0
 	return ..()
 

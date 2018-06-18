@@ -17,7 +17,7 @@
 	// This makes sure that turfs are not changed to space when one side is part of a zone
 	if(N == /turf/space)
 		var/turf/below = GetBelow(src)
-		if(istype(below) && (air_master.has_valid_zone(below) || air_master.has_valid_zone(src)))
+		if(istype(below) && (TURF_HAS_VALID_ZONE(below) || TURF_HAS_VALID_ZONE(src)))
 			N = /turf/simulated/open
 
 	var/obj/fire/old_fire = fire
@@ -49,11 +49,8 @@
 		if(tell_universe)
 			universe.OnTurfChange(W)
 
-		if(air_master)
-			air_master.mark_for_update(src) //handle the addition of the new turf.
-
-		for(var/turf/space/S in range(W,1))
-			S.update_starlight()
+		if(SSair)
+			SSair.mark_for_update(src) //handle the addition of the new turf.
 
 		W.levelupdate()
 		. = W
@@ -68,14 +65,14 @@
 		if(tell_universe)
 			universe.OnTurfChange(W)
 
-		if(air_master)
-			air_master.mark_for_update(src)
-
-		for(var/turf/space/S in range(W,1))
-			S.update_starlight()
+		if(SSair)
+			SSair.mark_for_update(src)
 
 		W.levelupdate()
 		. =  W
+
+	for(var/turf/space/SP in trange(1, src))
+		SP.update_starlight()
 
 	lighting_overlay = old_lighting_overlay
 	affecting_lights = old_affecting_lights
@@ -90,10 +87,47 @@
 			continue
 		corners[i] = new/datum/lighting_corner(src, LIGHTING_CORNER_DIAGONAL[i])
 
+	if(force_lighting_update)
+		if(old_lighting_overlay)
+			var/atom/movable/lighting_overlay/old_overlay = old_lighting_overlay
+			old_overlay.Destroy() // This is fastest way to fix double overlays for mine turfs.. Deleting overlay.
+			lighting_build_overlay() // Rebuild overlay!
+
 	if((old_opacity != opacity) || (dynamic_lighting != old_dynamic_lighting) || force_lighting_update)
-		reconsider_lights()
+		reconsider_lights() //  Without this turf will be pitch black at lighting_build_overlay(). Updating affecting lights.
+
 	if(dynamic_lighting != old_dynamic_lighting)
 		if(dynamic_lighting)
 			lighting_build_overlay()
 		else
 			lighting_clear_overlay()
+
+	update_openspace()
+
+/turf/proc/transport_properties_from(turf/other)
+	if(!istype(other, src.type))
+		return 0
+	src.set_dir(other.dir)
+	src.icon_state = other.icon_state
+	src.icon = other.icon
+	src.overlays = other.overlays.Copy()
+	src.underlays = other.underlays.Copy()
+	src.opacity = other.opacity
+	if(hasvar(src, "blocks_air"))
+		src.blocks_air = other.blocks_air
+	if(other.decals)
+		src.decals = other.decals.Copy()
+		src.update_icon()
+	return 1
+
+//I would name this copy_from() but we remove the other turf from their air zone for some reason
+/turf/simulated/transport_properties_from(turf/simulated/other)
+	if(!..())
+		return 0
+
+	if(other.zone)
+		if(!src.air)
+			src.make_air()
+		src.air.copy_from(other.zone.air)
+		other.zone.remove(other)
+	return 1

@@ -3,7 +3,8 @@
 /////////////////////////////////////////////
 /obj/effect/effect/smoke/chem
 	icon = 'icons/effects/chemsmoke.dmi'
-	opacity = 0
+	opacity = 0 // NOTE currently lighting broken for smokes (actually for any similar feature - its okay with a single cloud, but not when "millions" of them created at once) -
+	// - with opacity and until someone comes with proper fix, setting this to TRUE must be avoided.
 	layer = 6
 	time_to_live = 300
 	pass_flags = PASSTABLE | PASSGRILLE | PASSGLASS //PASSGLASS is fine here, it's just so the visual effect can "flow" around glass
@@ -12,21 +13,17 @@
 
 /obj/effect/effect/smoke/chem/New(var/newloc, smoke_duration, turf/dest_turf = null, icon/cached_icon = null)
 	time_to_live = smoke_duration
-	
+
 	..()
-	
+
 	create_reagents(500)
-	
+
 	if(cached_icon)
 		icon = cached_icon
-	
+
 	set_dir(pick(cardinal))
 	pixel_x = -32 + rand(-8, 8)
 	pixel_y = -32 + rand(-8, 8)
-	
-	//switching opacity on after the smoke has spawned, and then turning it off before it is deleted results in cleaner
-	//lighting and view range updates (Is this still true with the new lighting system?)
-	opacity = 1
 
 	//float over to our destination, if we have one
 	destination = dest_turf
@@ -34,9 +31,8 @@
 		walk_to(src, destination)
 
 /obj/effect/effect/smoke/chem/Destroy()
-	opacity = 0
 	fadeOut()
-	..()
+	. = ..()
 
 /obj/effect/effect/smoke/chem/Move()
 	var/list/oldlocs = view(1, src)
@@ -64,7 +60,7 @@
 // Fades out the smoke smoothly using it's alpha variable.
 /obj/effect/effect/smoke/chem/proc/fadeOut(var/frames = 16)
 	if(!alpha) return //already transparent
-	
+
 	frames = max(frames, 1) //We will just assume that by 0 frames, the coder meant "during one frame".
 	var/alpha_step = round(alpha / frames)
 	while(alpha > 0)
@@ -164,7 +160,7 @@
 		for(var/turf/T in targetTurfs)
 			chemholder.reagents.touch_turf(T)
 			for(var/atom/A in T.contents)
-				if(istype(A, /obj/effect/effect/smoke/chem) || istype(A, /mob))
+				if(istype(A, /obj/effect/effect/smoke/chem) || ismob(A))
 					continue
 				else if(isobj(A) && !A.simulated)
 					chemholder.reagents.touch_obj(A)

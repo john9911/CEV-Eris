@@ -19,7 +19,8 @@
 	density = 1
 	opacity = 1
 
-/obj/structure/bookcase/initialize()
+/obj/structure/bookcase/Initialize()
+	. = ..()
 	for(var/obj/item/I in loc)
 		if(istype(I, /obj/item/weapon/book))
 			I.loc = src
@@ -36,15 +37,15 @@
 			return
 		else
 			name = ("bookcase ([newname])")
-	else if(istype(O,/obj/item/weapon/wrench))
+	else if(istype(O,/obj/item/weapon/tool/wrench))
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 100, 1)
-		user << (anchored ? "<span class='notice'>You unfasten \the [src] from the floor.</span>" : "<span class='notice'>You secure \the [src] to the floor.</span>")
+		user << (anchored ? SPAN_NOTICE("You unfasten \the [src] from the floor.") : SPAN_NOTICE("You secure \the [src] to the floor."))
 		anchored = !anchored
-	else if(istype(O,/obj/item/weapon/screwdriver))
+	else if(istype(O,/obj/item/weapon/tool/screwdriver))
 		playsound(loc, 'sound/items/Screwdriver.ogg', 75, 1)
-		user << "<span class='notice'>You begin dismantling \the [src].</span>"
+		user << SPAN_NOTICE("You begin dismantling \the [src].")
 		if(do_after(user,25,src))
-			user << "<span class='notice'>You dismantle \the [src].</span>"
+			user << SPAN_NOTICE("You dismantle \the [src].")
 			new /obj/item/stack/material/wood(get_turf(src), amount = 3)
 			for(var/obj/item/weapon/book/b in contents)
 				b.loc = (get_turf(src))
@@ -140,7 +141,7 @@
 	icon_state ="book"
 	throw_speed = 1
 	throw_range = 5
-	w_class = 3		 //upped to three because books are, y'know, pretty big. (and you could hide them inside eachother recursively forever)
+	w_class = ITEM_SIZE_NORMAL		 //upped to three because books are, y'know, pretty big. (and you could hide them inside eachother recursively forever)
 	attack_verb = list("bashed", "whacked", "educated")
 	var/dat			 // Actual page content
 	var/due_date = 0 // Game time in 1/10th seconds
@@ -151,14 +152,19 @@
 	var/obj/item/store	//What's in the book?
 
 /obj/item/weapon/book/attack_self(var/mob/user as mob)
+	playsound(src.loc, pick('sound/items/BOOK_Turn_Page_1.ogg',\
+		'sound/items/BOOK_Turn_Page_2.ogg',\
+		'sound/items/BOOK_Turn_Page_3.ogg',\
+		'sound/items/BOOK_Turn_Page_4.ogg',\
+		), rand(40,80), 1)
 	if(carved)
 		if(store)
-			user << "<span class='notice'>[store] falls out of [title]!</span>"
+			user << SPAN_NOTICE("[store] falls out of [title]!")
 			store.loc = get_turf(src.loc)
 			store = null
 			return
 		else
-			user << "<span class='notice'>The pages of [title] have been cut out!</span>"
+			user << SPAN_NOTICE("The pages of [title] have been cut out!")
 			return
 	if(src.dat)
 		user << browse("<TT><I>Penned by [author].</I></TT> <BR>" + "[dat]", "window=book")
@@ -167,22 +173,22 @@
 	else
 		user << "This book is completely blank!"
 
-/obj/item/weapon/book/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/item/weapon/book/attackby(obj/item/I, mob/user)
 	if(carved)
 		if(!store)
-			if(W.w_class < 3)
+			if(I.w_class < ITEM_SIZE_NORMAL)
 				user.drop_item()
-				W.loc = src
-				store = W
-				user << "<span class='notice'>You put [W] in [title].</span>"
+				I.loc = src
+				store = I
+				user << SPAN_NOTICE("You put [I] in [title].")
 				return
 			else
-				user << "<span class='notice'>[W] won't fit in [title].</span>"
+				user << SPAN_NOTICE("[I] won't fit in [title].")
 				return
 		else
-			user << "<span class='notice'>There's already something in [title]!</span>"
+			user << SPAN_NOTICE("There's already something in [title]!")
 			return
-	if(istype(W, /obj/item/weapon/pen))
+	if(istype(I, /obj/item/weapon/pen))
 		if(unique)
 			user << "These pages don't seem to take the ink well. Looks like you can't modify it."
 			return
@@ -212,49 +218,49 @@
 					src.author = newauthor
 			else
 				return
-	else if(istype(W, /obj/item/weapon/barcodescanner))
-		var/obj/item/weapon/barcodescanner/scanner = W
+	else if(istype(I, /obj/item/weapon/barcodescanner))
+		var/obj/item/weapon/barcodescanner/scanner = I
 		if(!scanner.computer)
-			user << "[W]'s screen flashes: 'No associated computer found!'"
+			user << "[I]'s screen flashes: 'No associated computer found!'"
 		else
 			switch(scanner.mode)
 				if(0)
 					scanner.book = src
-					user << "[W]'s screen flashes: 'Book stored in buffer.'"
+					user << "[I]'s screen flashes: 'Book stored in buffer.'"
 				if(1)
 					scanner.book = src
 					scanner.computer.buffer_book = src.name
-					user << "[W]'s screen flashes: 'Book stored in buffer. Book title stored in associated computer buffer.'"
+					user << "[I]'s screen flashes: 'Book stored in buffer. Book title stored in associated computer buffer.'"
 				if(2)
 					scanner.book = src
 					for(var/datum/borrowbook/b in scanner.computer.checkouts)
 						if(b.bookname == src.name)
 							scanner.computer.checkouts.Remove(b)
-							user << "[W]'s screen flashes: 'Book stored in buffer. Book has been checked in.'"
+							user << "[I]'s screen flashes: 'Book stored in buffer. Book has been checked in.'"
 							return
-					user << "[W]'s screen flashes: 'Book stored in buffer. No active check-out record found for current title.'"
+					user << "[I]'s screen flashes: 'Book stored in buffer. No active check-out record found for current title.'"
 				if(3)
 					scanner.book = src
 					for(var/obj/item/weapon/book in scanner.computer.inventory)
 						if(book == src)
-							user << "[W]'s screen flashes: 'Book stored in buffer. Title already present in inventory, aborting to avoid duplicate entry.'"
+							user << "[I]'s screen flashes: 'Book stored in buffer. Title already present in inventory, aborting to avoid duplicate entry.'"
 							return
 					scanner.computer.inventory.Add(src)
-					user << "[W]'s screen flashes: 'Book stored in buffer. Title added to general inventory.'"
-	else if(istype(W, /obj/item/weapon/material/knife) || istype(W, /obj/item/weapon/wirecutters))
+					user << "[I]'s screen flashes: 'Book stored in buffer. Title added to general inventory.'"
+	else if(QUALITY_CUTTING in I.tool_qualities)
 		if(carved)	return
-		user << "<span class='notice'>You begin to carve out [title].</span>"
+		user << SPAN_NOTICE("You begin to carve out [title].")
 		if(do_after(user, 30, src))
-			user << "<span class='notice'>You carve out the pages from [title]! You didn't want to read it anyway.</span>"
+			user << SPAN_NOTICE("You carve out the pages from [title]! You didn't want to read it anyway.")
 			carved = 1
 			return
 	else
 		..()
 
 /obj/item/weapon/book/attack(mob/living/carbon/M as mob, mob/living/carbon/user as mob)
-	if(user.targeted_organ == "eyes")
-		user.visible_message("<span class='notice'>You open up the book and show it to [M]. </span>", \
-			"<span class='notice'> [user] opens up a book and shows it to [M]. </span>")
+	if(user.targeted_organ == O_EYES)
+		user.visible_message(SPAN_NOTICE("You open up the book and show it to [M]. "), \
+			SPAN_NOTICE(" [user] opens up a book and shows it to [M]. "))
 		M << browse("<TT><I>Penned by [author].</I></TT> <BR>" + "[dat]", "window=book")
 		user.setClickCooldown(DEFAULT_QUICK_COOLDOWN) //to prevent spam
 
@@ -268,7 +274,7 @@
 	icon_state ="scanner"
 	throw_speed = 1
 	throw_range = 5
-	w_class = 2.0
+	w_class = ITEM_SIZE_SMALL
 	var/obj/machinery/librarycomp/computer // Associated computer - Modes 1 to 3 use this
 	var/obj/item/weapon/book/book	 //  Currently scanned book
 	var/mode = 0 					// 0 - Scan only, 1 - Scan and Set Buffer, 2 - Scan and Attempt to Check In, 3 - Scan and Attempt to Add to Inventory

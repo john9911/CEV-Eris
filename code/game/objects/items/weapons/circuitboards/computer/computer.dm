@@ -58,11 +58,6 @@
 	build_path = /obj/machinery/computer/drone_control
 	origin_tech = list(TECH_DATA = 3)
 
-/obj/item/weapon/circuitboard/cloning
-	name = T_BOARD("cloning control console")
-	build_path = /obj/machinery/computer/cloning
-	origin_tech = list(TECH_DATA = 3, TECH_BIO = 3)
-
 /obj/item/weapon/circuitboard/arcade/battle
 	name = T_BOARD("battle arcade machine")
 	build_path = /obj/machinery/computer/arcade/battle
@@ -127,6 +122,14 @@
 /obj/item/weapon/circuitboard/splicer
 	name = T_BOARD("disease splicer")
 	build_path = /obj/machinery/computer/diseasesplicer
+
+/obj/item/weapon/circuitboard/helm
+	name = T_BOARD("helm control console")
+	build_path = /obj/machinery/computer/helm
+
+/obj/item/weapon/circuitboard/nav
+	name = T_BOARD("navigation console")
+	build_path = /obj/machinery/computer/navigation
 
 /obj/item/weapon/circuitboard/ordercomp
 	name = T_BOARD("supply ordering console")

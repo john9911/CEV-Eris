@@ -1,5 +1,6 @@
 //added by cael from old bs12
-//not sure if there's an immediate place for secure wall lockers, but i'm sure the players will think of something
+//not sure if there's an immediate place for secure wall lockers,
+// but i'm sure the players will think of something
 
 /obj/structure/closet/walllocker
 	desc = "A wall mounted storage locker."
@@ -8,8 +9,6 @@
 	icon_state = "wall-locker"
 	density = 0
 	anchored = 1
-	icon_closed = "wall-locker"
-	icon_opened = "wall-lockeropen"
 
 //spawns endless (3 sets) amounts of breathmask, emergency oxy tank and crowbar
 
@@ -28,8 +27,9 @@
 	return
 
 /obj/structure/closet/walllocker/emerglocker/attack_hand(mob/user as mob)
-	if (istype(user, /mob/living/silicon/ai))	//Added by Strumpetplaya - AI shouldn't be able to
-		return									//activate emergency lockers.  This fixes that.  (Does this make sense, the AI can't call attack_hand, can it? --Mloc)
+	if (isAI(user))	//Added by Strumpetplaya - AI shouldn't be able to
+		return		//activate emergency lockers.  This fixes that.
+					//(Does this make sense, the AI can't call attack_hand, can it? --Mloc)
 	if(!amount)
 		usr << "<spawn class='notice'>It's empty.."
 		return

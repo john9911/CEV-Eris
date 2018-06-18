@@ -51,9 +51,9 @@
 		node1 = null
 		node2 = null
 
-		..()
+		. = ..()
 
-	process()
+	Process()
 		..()
 		if(anchored && !(stat&BROKEN))
 			kin_energy *= 1 - kin_loss
@@ -89,7 +89,7 @@
 			overlays += image('icons/obj/pipeturbine.dmi', "hi-turb")
 
 	attackby(obj/item/weapon/W as obj, mob/user as mob)
-		if(istype(W, /obj/item/weapon/wrench))
+		if(istype(W, /obj/item/weapon/tool/wrench))
 			anchored = !anchored
 			user << "<span class='notice'>You [anchored ? "secure" : "unsecure"] the bolts holding \the [src] to the floor.</span>"
 
@@ -99,13 +99,13 @@
 				else if(dir & (EAST|WEST))
 					initialize_directions = NORTH|SOUTH
 
-				initialize()
+				atmos_init()
 				build_network()
 				if (node1)
-					node1.initialize()
+					node1.atmos_init()
 					node1.build_network()
 				if (node2)
-					node2.initialize()
+					node2.atmos_init()
 					node2.build_network()
 			else
 				if(node1)
@@ -157,19 +157,19 @@
 
 		return null
 
-	initialize()
+	atmos_init()
 		if(node1 && node2) return
 
 		var/node2_connect = turn(dir, -90)
 		var/node1_connect = turn(dir, 90)
 
-		for(var/obj/machinery/atmospherics/target in get_step(src,node1_connect))
-			if(target.initialize_directions & get_dir(target,src))
+		for(var/obj/machinery/atmospherics/target in get_step(src, node1_connect))
+			if(target.initialize_directions & get_dir(target, src))
 				node1 = target
 				break
 
-		for(var/obj/machinery/atmospherics/target in get_step(src,node2_connect))
-			if(target.initialize_directions & get_dir(target,src))
+		for(var/obj/machinery/atmospherics/target in get_step(src, node2_connect))
+			if(target.initialize_directions & get_dir(target, src))
 				node2 = target
 				break
 
@@ -245,11 +245,11 @@
 	proc/updateConnection()
 		turbine = null
 		if(src.loc && anchored)
-			turbine = locate(/obj/machinery/atmospherics/pipeturbine) in get_step(src,dir)
-			if (turbine.stat & (BROKEN) || !turbine.anchored || turn(turbine.dir,180) != dir)
+			turbine = locate(/obj/machinery/atmospherics/pipeturbine) in get_step(src, dir)
+			if (turbine.stat & (BROKEN) || !turbine.anchored || turn(turbine.dir, 180) != dir)
 				turbine = null
 
-	process()
+	Process()
 		updateConnection()
 		if(!turbine || !anchored || stat & (BROKEN))
 			return
@@ -260,7 +260,7 @@
 
 
 	attackby(obj/item/weapon/W as obj, mob/user as mob)
-		if(istype(W, /obj/item/weapon/wrench))
+		if(istype(W, /obj/item/weapon/tool/wrench))
 			anchored = !anchored
 			turbine = null
 			user << "<span class='notice'>You [anchored ? "secure" : "unsecure"] the bolts holding \the [src] to the floor.</span>"

@@ -33,8 +33,30 @@
 
 	// Whether or not the accessory can be affected by colouration
 	var/do_colouration = 1
+/*
+ADMIN_VERB_ADD(/client/proc/validate_hairs, R_DEBUG, null)
+/client/proc/validate_hairs()
+	set name = "Validate hairs"
+	set category = "Debug"
 
-
+	var/list/variants = list(
+		"hair"   = /datum/sprite_accessory/hair,
+		"facial" = /datum/sprite_accessory/facial_hair
+	)
+	var/input = input("Select list") as null|anything in variants
+	if(!input)
+		return
+	usr << "[capitalize(input)]:"
+	for(var/path in subtypesof(variants[input]))
+		var/datum/sprite_accessory/hair = path
+		var/name = initial(hair.name)
+		var/icon_state = initial(hair.icon_state)
+		var/icon = initial(hair.icon)
+		if(icon_state in icon_states(icon))
+			usr << SPAN_NOTICE("[name]: icon exist")
+		else
+			usr << SPAN_WARNING("[name]: icon NOT exist!")
+*/
 /*
 ////////////////////////////
 /  =--------------------=  /
@@ -45,382 +67,644 @@
 
 /datum/sprite_accessory/hair
 
-	icon = 'icons/mob/Human_face.dmi'	  // default icon for all hairs
-
-	bald
-		name = "Bald"
-		icon_state = "bald"
-		gender = MALE
-
-	short
-		name = "Short Hair"	  // try to capatilize the names please~
-		icon_state = "hair_a" // you do not need to define _s or _l sub-states, game automatically does this for you
-
-	cut
-		name = "Cut Hair"
-		icon_state = "hair_c"
-
-	flair
-		name = "Flaired Hair"
-		icon_state = "hair_flair"
-
-	long
-		name = "Shoulder-length Hair"
-		icon_state = "hair_b"
-
-	longalt
-		name = "Shoulder-length Hair Alt"
-		icon_state = "hair_longfringe"
-
-	/*longish
-		name = "Longer Hair"
-		icon_state = "hair_b2"*/
-
-	longer
-		name = "Long Hair"
-		icon_state = "hair_vlong"
-
-	longeralt
-		name = "Long Hair Alt"
-		icon_state = "hair_vlongfringe"
-
-	longest
-		name = "Very Long Hair"
-		icon_state = "hair_longest"
-
-	longfringe
-		name = "Long Fringe"
-		icon_state = "hair_longfringe"
-
-	longestalt
-		name = "Longer Fringe"
-		icon_state = "hair_vlongfringe"
-
-	halfbang
-		name = "Half-banged Hair"
-		icon_state = "hair_halfbang"
-
-	halfbangalt
-		name = "Half-banged Hair Alt"
-		icon_state = "hair_halfbang_alt"
-
-	ponytail1
-		name = "Ponytail 1"
-		icon_state = "hair_ponytail"
-
-	ponytail2
-		name = "Ponytail 2"
-		icon_state = "hair_pa"
-		gender = FEMALE
-
-	ponytail3
-		name = "Ponytail 3"
-		icon_state = "hair_ponytail3"
-
-	ponytail4
-		name = "Ponytail 4"
-		icon_state = "hair_ponytail4"
-		gender = FEMALE
-
-	sideponytail
-		name = "Side Ponytail"
-		icon_state = "hair_stail"
-		gender = FEMALE
-
-	parted
-		name = "Parted"
-		icon_state = "hair_parted"
-
-	pompadour
-		name = "Pompadour"
-		icon_state = "hair_pompadour"
-		gender = MALE
-
-	quiff
-		name = "Quiff"
-		icon_state = "hair_quiff"
-		gender = MALE
-
-	bedhead
-		name = "Bedhead"
-		icon_state = "hair_bedhead"
-
-	bedhead2
-		name = "Bedhead 2"
-		icon_state = "hair_bedheadv2"
-
-	bedhead3
-		name = "Bedhead 3"
-		icon_state = "hair_bedheadv3"
-
-	beehive
-		name = "Beehive"
-		icon_state = "hair_beehive"
-		gender = FEMALE
-
-	beehive2
-		name = "Beehive 2"
-		icon_state = "hair_beehive2"
-		gender = FEMALE
-
-	bobcurl
-		name = "Bobcurl"
-		icon_state = "hair_bobcurl"
-		gender = FEMALE
-
-	bob
-		name = "Bob"
-		icon_state = "hair_bobcut"
-		gender = FEMALE
-
-	bowl
-		name = "Bowl"
-		icon_state = "hair_bowlcut"
-		gender = MALE
-
-	buzz
-		name = "Buzzcut"
-		icon_state = "hair_buzzcut"
-		gender = MALE
-
-	crew
-		name = "Crewcut"
-		icon_state = "hair_crewcut"
-		gender = MALE
-
-	combover
-		name = "Combover"
-		icon_state = "hair_combover"
-		gender = MALE
-
-	father
-		name = "Father"
-		icon_state = "hair_father"
-		gender = MALE
-
-	reversemohawk
-		name = "Reverse Mohawk"
-		icon_state = "hair_reversemohawk"
-		gender = MALE
-
-	devillock
-		name = "Devil Lock"
-		icon_state = "hair_devilock"
-
-	dreadlocks
-		name = "Dreadlocks"
-		icon_state = "hair_dreads"
-
-	curls
-		name = "Curls"
-		icon_state = "hair_curls"
-
-	afro
-		name = "Afro"
-		icon_state = "hair_afro"
-
-	afro2
-		name = "Afro 2"
-		icon_state = "hair_afro2"
-
-	afro_large
-		name = "Big Afro"
-		icon_state = "hair_bigafro"
-		gender = MALE
-
-	sargeant
-		name = "Flat Top"
-		icon_state = "hair_sargeant"
-		gender = MALE
-
-	emo
-		name = "Emo"
-		icon_state = "hair_emo"
-
-	longemo
-		name = "Long Emo"
-		icon_state = "hair_emolong"
-		gender = FEMALE
-
-	shortovereye
-		name = "Overeye Short"
-		icon_state = "hair_shortovereye"
-
-	longovereye
-		name = "Overeye Long"
-		icon_state = "hair_longovereye"
-
-	fag
-		name = "Flow Hair"
-		icon_state = "hair_f"
-
-	feather
-		name = "Feather"
-		icon_state = "hair_feather"
-
-	hitop
-		name = "Hitop"
-		icon_state = "hair_hitop"
-		gender = MALE
-
-	mohawk
-		name = "Mohawk"
-		icon_state = "hair_d"
-
-	jensen
-		name = "Adam Jensen Hair"
-		icon_state = "hair_jensen"
-		gender = MALE
-
-	gelled
-		name = "Gelled Back"
-		icon_state = "hair_gelled"
-		gender = FEMALE
-
-	gentle
-		name = "Gentle"
-		icon_state = "hair_gentle"
-		gender = FEMALE
-
-	spiky
-		name = "Spiky"
-		icon_state = "hair_spikey"
-
-	kusangi
-		name = "Kusanagi Hair"
-		icon_state = "hair_kusanagi"
-
-	kagami
-		name = "Pigtails"
-		icon_state = "hair_kagami"
-		gender = FEMALE
-
-	himecut
-		name = "Hime Cut"
-		icon_state = "hair_himecut"
-		gender = FEMALE
-
-	braid
-		name = "Floorlength Braid"
-		icon_state = "hair_braid"
-		gender = FEMALE
-
-	mbraid
-		name = "Medium Braid"
-		icon_state = "hair_shortbraid"
-		gender = FEMALE
-
-	braid2
-		name = "Long Braid"
-		icon_state = "hair_hbraid"
-		gender = FEMALE
-
-	odango
-		name = "Odango"
-		icon_state = "hair_odango"
-		gender = FEMALE
-
-	ombre
-		name = "Ombre"
-		icon_state = "hair_ombre"
-		gender = FEMALE
-
-	updo
-		name = "Updo"
-		icon_state = "hair_updo"
-		gender = FEMALE
-
-	skinhead
-		name = "Skinhead"
-		icon_state = "hair_skinhead"
-
-	balding
-		name = "Balding Hair"
-		icon_state = "hair_e"
-		gender = MALE // turnoff!
-
-	familyman
-		name = "The Family Man"
-		icon_state = "hair_thefamilyman"
-		gender = MALE
-
-	mahdrills
-		name = "Drillruru"
-		icon_state = "hair_drillruru"
-		gender = FEMALE
-
-	dandypomp
-		name = "Dandy Pompadour"
-		icon_state = "hair_dandypompadour"
-		gender = MALE
-
-	poofy
-		name = "Poofy"
-		icon_state = "hair_poofy"
-		gender = FEMALE
-
-	crono
-		name = "Chrono"
-		icon_state = "hair_toriyama"
-		gender = MALE
-
-	vegeta
-		name = "Vegeta"
-		icon_state = "hair_toriyama2"
-		gender = MALE
-
-	cia
-		name = "CIA"
-		icon_state = "hair_cia"
-		gender = MALE
-
-	mulder
-		name = "Mulder"
-		icon_state = "hair_mulder"
-		gender = MALE
-
-	scully
-		name = "Scully"
-		icon_state = "hair_scully"
-		gender = FEMALE
-
-	nitori
-		name = "Nitori"
-		icon_state = "hair_nitori"
-		gender = FEMALE
-
-	joestar
-		name = "Joestar"
-		icon_state = "hair_joestar"
-		gender = MALE
-
-	volaju
-		name = "Volaju"
-		icon_state = "hair_volaju"
-
-	longeralt2
-		name = "Long Hair Alt 2"
-		icon_state = "hair_longeralt2"
-
-	shortbangs
-		name = "Short Bangs"
-		icon_state = "hair_shortbangs"
-
-	halfshaved
-		name = "Half-Shaved Emo"
-		icon_state = "hair_halfshaved"
-
-	bun
-		name = "Bun"
-		icon_state = "hair_bun"
-
-	doublebun
-		name = "Double-Bun"
-		icon_state = "hair_doublebun"
-
-	bald
-		name = "Bald"
-		icon_state = "bald"
+	icon = 'icons/mob/hair.dmi'	  // default icon for all hairs
+
+/datum/sprite_accessory/hair/bald
+	name = "Bald"
+	icon_state = "bald"
+	gender = MALE
+
+/datum/sprite_accessory/hair/afro
+	name = "Afro"
+	icon_state = "afro"
+
+/datum/sprite_accessory/hair/afro_large
+	name = "Big Afro"
+	icon_state = "bigafro"
+	gender = MALE
+
+/datum/sprite_accessory/hair/afro2
+	name = "Afro 2"
+	icon_state = "afro2"
+
+/datum/sprite_accessory/hair/test
+	name = "Asymmetrical Bob"
+	icon_state = "asymmbob"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/balding
+	name = "Balding Hair"
+	icon_state = "balding"
+	gender = MALE
+
+/datum/sprite_accessory/hair/bedhead
+	name = "Bedhead"
+	icon_state = "bedhead"
+
+/datum/sprite_accessory/hair/bedhead2
+	name = "Bedhead 2"
+	icon_state = "bedheadv2"
+
+/datum/sprite_accessory/hair/bedhead3
+	name = "Bedhead 3"
+	icon_state = "bedheadv3"
+
+/datum/sprite_accessory/hair/beehive
+	name = "Beehive"
+	icon_state = "beehive"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/beehive2
+	name = "Beehive 2"
+	icon_state = "beehive2"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/birdnest
+	name = "Birdnest"
+	icon_state = "birdnest"
+
+/datum/sprite_accessory/hair/birdnest2
+	name = "Birdnest 2"
+	icon_state = "birdnest2"
+
+/datum/sprite_accessory/hair/blackswordsman
+	name = "Mercenary"
+	icon_state = "blackswordsman"
+
+/datum/sprite_accessory/hair/bob
+	name = "Bob"
+	icon_state = "bobcut"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/bobcurl
+	name = "Bobcurl"
+	icon_state = "bobcurl"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/bowl1
+	name = "Bowl 1"
+	icon_state = "bowlcut1"
+	gender = MALE
+
+/datum/sprite_accessory/hair/bowl2
+	name = "Bowl 2"
+	icon_state = "bowlcut2"
+	gender = MALE
+
+/datum/sprite_accessory/hair/braid
+	name = "Floorlength Braid"
+	icon_state = "braid"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/braid2
+	name = "Long Braid"
+	icon_state = "hbraid"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/buisness
+	name = "Buisness Hair"
+	icon_state = "business"
+
+/datum/sprite_accessory/hair/buisness2
+	name = "Buisness Hair 2"
+	icon_state = "business2"
+
+/datum/sprite_accessory/hair/buisness3
+	name = "Buisness Hair 3"
+	icon_state = "business3"
+
+/datum/sprite_accessory/hair/buisness4
+	name = "Buisness Hair 4"
+	icon_state = "business4"
+
+/datum/sprite_accessory/hair/bun
+	name = "Bun"
+	icon_state = "bun"
+
+/datum/sprite_accessory/hair/bun_casual
+	name = "Casual Bun"
+	icon_state = "bunalt"
+
+/datum/sprite_accessory/hair/bun2
+	name = "Bun 2"
+	icon_state = "bun2"
+
+/datum/sprite_accessory/hair/bun3
+	name = "Bun 3"
+	icon_state = "bun3"
+
+/datum/sprite_accessory/hair/buzz
+	name = "Buzzcut"
+	icon_state = "buzzcut"
+	gender = MALE
+
+/datum/sprite_accessory/hair/chop
+	name = "Chop"
+	icon_state = "chop"
+
+/datum/sprite_accessory/hair/cia
+	name = "CIA"
+	icon_state = "cia"
+
+/datum/sprite_accessory/hair/combover
+	name = "Combover"
+	icon_state = "combover"
+	gender = MALE
+
+/datum/sprite_accessory/hair/cofeehouse
+	name = "Coffee House"
+	icon_state = "coffeehouse"
+	gender = MALE
+
+/datum/sprite_accessory/hair/crew
+	name = "Crewcut"
+	icon_state = "crewcut"
+	gender = MALE
+
+/datum/sprite_accessory/hair/crono
+	name = "Chrono"
+	icon_state = "toriyama"
+
+/datum/sprite_accessory/hair/curls
+	name = "Curls"
+	icon_state = "curls"
+
+/datum/sprite_accessory/hair/cut
+	name = "Cut Hair"
+	icon_state = "cuthair"
+
+/datum/sprite_accessory/hair/dandypomp
+	name = "Dandy Pompadour"
+	icon_state = "dandypompadour"
+
+/datum/sprite_accessory/hair/devillock
+	name = "Devil Lock"
+	icon_state = "devilock"
+	gender = MALE
+
+/datum/sprite_accessory/hair/doublebun
+	name = "Double-Bun"
+	icon_state = "doublebun"
+
+/datum/sprite_accessory/hair/dreadlocks
+	name = "Dreadlocks"
+	icon_state = "dreads"
+
+/datum/sprite_accessory/hair/eighties
+	name = "80's"
+	icon_state = "80s"
+
+/datum/sprite_accessory/hair/emo
+	name = "Emo"
+	icon_state = "emo"
+
+/datum/sprite_accessory/hair/fag
+	name = "Flow Hair"
+	icon_state = "flowhair"
+
+/datum/sprite_accessory/hair/familyman
+	name = "The Family Man"
+	icon_state = "thefamilyman"
+	gender = MALE
+
+/datum/sprite_accessory/hair/father
+	name = "Father"
+	icon_state = "father"
+	gender = MALE
+
+/datum/sprite_accessory/hair/feather
+	name = "Feather"
+	icon_state = "feather"
+
+/datum/sprite_accessory/hair/femcut
+	name = "Cut Hair Alt"
+	icon_state = "femc"
+
+/datum/sprite_accessory/hair/flair
+	name = "Flaired Hair"
+	icon_state = "flair"
+
+/datum/sprite_accessory/hair/fringeemo
+	name = "Emo Fringe"
+	icon_state = "emofringe"
+
+/datum/sprite_accessory/hair/fringetail
+	name = "Fringetail"
+	icon_state = "fringetail"
+
+/datum/sprite_accessory/hair/gelled
+	name = "Gelled Back"
+	icon_state = "gelled"
+
+/datum/sprite_accessory/hair/gentle
+	name = "Gentle"
+	icon_state = "gentle"
+
+/datum/sprite_accessory/hair/halfbang
+	name = "Half-banged Hair"
+	icon_state = "halfbang"
+
+/datum/sprite_accessory/hair/halfbangalt
+	name = "Half-banged Hair Alt"
+	icon_state = "halfbang_alt"
+
+/datum/sprite_accessory/hair/halfshaved
+	name = "Half-Shaved"
+	icon_state = "halfshaved"
+
+/datum/sprite_accessory/hair/halfshavedemo
+	name = "Half-Shaved Emo"
+	icon_state = "halfshaved_emo"
+
+/datum/sprite_accessory/hair/hamasaki
+	name = "Hamaski Hair"
+	icon_state = "hamasaki"
+
+/datum/sprite_accessory/hair/hbangs
+	name = "Combed Hair"
+	icon_state = "hbangs"
+
+/datum/sprite_accessory/hair/hbangsalt
+	name = "Combed Hair Alt"
+	icon_state = "hbangs_alt"
+
+/datum/sprite_accessory/hair/highpony
+	name = "High Ponytail"
+	icon_state = "highponytail"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/himecut
+	name = "Hime Cut"
+	icon_state = "himecut"
+
+/datum/sprite_accessory/hair/himecutalt
+	name = "Hime Cut Alt"
+	icon_state = "himecut_alt"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/hitop
+	name = "Hitop"
+	icon_state = "hitop"
+	gender = MALE
+
+/datum/sprite_accessory/hair/jensen
+	name = "Adam Jensen Hair"
+	icon_state = "jensen"
+	gender = MALE
+
+/datum/sprite_accessory/hair/joestar
+	name = "Joestar"
+	icon_state = "joestar"
+	gender = MALE
+
+/datum/sprite_accessory/hair/kagami
+	name = "Pigtails"
+	icon_state = "kagami"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/kare
+	name = "Kare"
+	icon_state = "kare"
+
+/datum/sprite_accessory/hair/kusangi
+	name = "Kusanagi Hair"
+	icon_state = "kusanagi"
+
+/datum/sprite_accessory/hair/ladylike
+	name = "Ladylike"
+	icon_state = "ladylike"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/ladylike2
+	name = "Ladylike alt"
+	icon_state = "ladylike2"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/longemo
+	name = "Long Emo"
+	icon_state = "emolong"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/longer
+	name = "Long Hair"
+	icon_state = "vlong"
+
+/datum/sprite_accessory/hair/longeralt2
+	name = "Long Hair Alt"
+	icon_state = "longeralt2"
+
+/datum/sprite_accessory/hair/longest
+	name = "Very Long Hair"
+	icon_state = "longest"
+
+/datum/sprite_accessory/hair/longestalt
+	name = "Longer Fringe"
+	icon_state = "vlongfringe"
+
+/datum/sprite_accessory/hair/longfringe
+	name = "Long Fringe"
+	icon_state = "longfringe"
+
+/datum/sprite_accessory/hair/longovereye
+	name = "Overeye Long"
+	icon_state = "longovereye"
+
+/datum/sprite_accessory/hair/manbun
+	name = "Man Bun"
+	icon_state = "manbun"
+
+/datum/sprite_accessory/hair/mahdrills
+	name = "Drillruru"
+	icon_state = "drillruru"
+
+/datum/sprite_accessory/hair/mbraid
+	name = "Medium Braid"
+	icon_state = "shortbraid"
+
+/datum/sprite_accessory/hair/mbraidalt
+	name = "Medium Braid Alt"
+	icon_state = "mediumbraid"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/messy_bun
+	name = "Messy Bun"
+	icon_state = "messybun"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/modern
+	name = "Modern"
+	icon_state = "modern"
+
+/datum/sprite_accessory/hair/mohawk
+	name = "Mohawk"
+	icon_state = "mohawk"
+
+/datum/sprite_accessory/hair/mulder
+	name = "Mulder"
+	icon_state = "mulder"
+
+/datum/sprite_accessory/hair/nia
+	name = "Nia"
+	icon_state = "nia"
+
+/datum/sprite_accessory/hair/nitori
+	name = "Nitori"
+	icon_state = "nitori"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/odango
+	name = "Odango"
+	icon_state = "odango"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/ombre
+	name = "Ombre"
+	icon_state = "ombre"
+
+/datum/sprite_accessory/hair/oxton
+	name = "Oxton"
+	icon_state = "oxton"
+
+/datum/sprite_accessory/hair/parted
+	name = "Parted"
+	icon_state = "parted"
+
+/datum/sprite_accessory/hair/pixie
+	name = "Pixie"
+	icon_state = "pixie"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/pompadour
+	name = "Pompadour"
+	icon_state = "pompadour"
+	gender = MALE
+
+/datum/sprite_accessory/hair/ponytail1
+	name = "Ponytail 1"
+	icon_state = "ponytail"
+
+/datum/sprite_accessory/hair/ponytail2
+	name = "Ponytail 2"
+	icon_state = "ponytail2"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/ponytail3
+	name = "Ponytail 3"
+	icon_state = "ponytail3"
+
+/datum/sprite_accessory/hair/ponytail4
+	name = "Ponytail 4"
+	icon_state = "ponytail4"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/ponytail5
+	name = "Ponytail 5"
+	icon_state = "ponytail5"
+
+/datum/sprite_accessory/hair/ponytail6
+	name = "Ponytail 6"
+	icon_state = "ponytail6"
+
+/datum/sprite_accessory/hair/ponytail7
+	name = "Ponytail 7"
+	icon_state = "ponytail7"
+
+/datum/sprite_accessory/hair/poofy
+	name = "Poofy"
+	icon_state = "poofy"
+
+/datum/sprite_accessory/hair/poofy2
+	name = "Poofy Alt"
+	icon_state = "poofy2"
+
+/datum/sprite_accessory/hair/quiff
+	name = "Quiff"
+	icon_state = "quiff"
+	gender = MALE
+
+/datum/sprite_accessory/hair/ramona
+	name = "Ramona"
+	icon_state = "ramona"
+
+/datum/sprite_accessory/hair/reversemohawk
+	name = "Reverse Mohawk"
+	icon_state = "reversemohawk"
+	gender = MALE
+
+/datum/sprite_accessory/hair/ronin
+	name = "Ronin"
+	icon_state = "ronin"
+	gender = MALE
+
+/datum/sprite_accessory/hair/rows
+	name = "Rows"
+	icon_state = "rows1"
+
+/datum/sprite_accessory/hair/rows2
+	name = "Rows Alt"
+	icon_state = "rows2"
+
+/datum/sprite_accessory/hair/rows3
+	name = "Rows Bun"
+	icon_state = "rows3"
+
+/datum/sprite_accessory/hair/sargeant
+	name = "Flat Top"
+	icon_state = "sargeant"
+	gender = MALE
+
+/datum/sprite_accessory/hair/scully
+	name = "Scully"
+	icon_state = "scully"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/shavedmohawk
+	name = "Shaved Mohawk"
+	icon_state = "shavedmohawk"
+	gender = MALE
+
+/datum/sprite_accessory/hair/shavedpart
+	name = "Shaved Part"
+	icon_state = "shavedpart"
+	gender = MALE
+
+/datum/sprite_accessory/hair/short
+	name = "Short Hair"
+	icon_state = "short"
+
+/datum/sprite_accessory/hair/short2
+	name = "Short Hair 2"
+	icon_state = "short2"
+
+/datum/sprite_accessory/hair/short3
+	name = "Short Hair 3"
+	icon_state = "short3"
+
+/datum/sprite_accessory/hair/shortbangs
+	name = "Short Bangs"
+	icon_state = "shortbangs"
+
+/datum/sprite_accessory/hair/shortovereye
+	name = "Overeye Short"
+	icon_state = "shortovereye"
+
+/datum/sprite_accessory/hair/shoulderlength
+	name = "Shoulder-length Hair"
+	icon_state = "shoulderlen"
+
+/datum/sprite_accessory/hair/sidepart
+	name = "Sidepart Hair"
+	icon_state = "sidepart"
+
+/datum/sprite_accessory/hair/sideponytail
+	name = "Side Ponytail"
+	icon_state = "stail"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/sideponytail2
+	name = "One Shoulder"
+	icon_state = "oneshoulder"
+
+/datum/sprite_accessory/hair/sideponytail3
+	name = "Tress Shoulder"
+	icon_state = "tressshoulder"
+
+/datum/sprite_accessory/hair/sideponytail4
+	name = "Side Ponytail 2"
+	icon_state = "ponytailf"
+
+/datum/sprite_accessory/hair/sideswept
+	name = "Side Swipe"
+	icon_state = "sideswipe"
+
+/datum/sprite_accessory/hair/skinhead
+	name = "Skinhead"
+	icon_state = "skinhead"
+
+/datum/sprite_accessory/hair/smessy
+	name = "Messy Hair"
+	icon_state = "smessy"
+
+/datum/sprite_accessory/hair/sleeze
+	name = "Sleeze"
+	icon_state = "sleeze"
+
+/datum/sprite_accessory/hair/spiky
+	name = "Spiky"
+	icon_state = "spikey"
+
+/datum/sprite_accessory/hair/stylo
+	name = "Stylo"
+	icon_state = "stylo"
+
+/datum/sprite_accessory/hair/spikyponytail
+	name = "Spiky Ponytail"
+	icon_state = "spikyponytail"
+
+/datum/sprite_accessory/hair/topknot
+	name = "Top Knot"
+	icon_state = "topknot"
+
+/datum/sprite_accessory/hair/thinning
+	name = "Thinning"
+	icon_state = "thinning"
+	gender = MALE
+
+/datum/sprite_accessory/hair/thinningrear
+	name = "Thinning Rear"
+	icon_state = "thinningrear"
+	gender = MALE
+
+/datum/sprite_accessory/hair/thinningfront
+	name = "Thinning Front"
+	icon_state = "thinningfront"
+	gender = MALE
+
+/datum/sprite_accessory/hair/undercut
+	name = "Undercut"
+	icon_state = "undercut"
+	gender = MALE
+
+/datum/sprite_accessory/hair/unkept
+	name = "Unkept"
+	icon_state = "unkept"
+
+/datum/sprite_accessory/hair/updo
+	name = "Updo"
+	icon_state = "updo"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/vegeta
+	name = "Vegeta"
+	icon_state = "toriyama2"
+	gender = MALE
+
+/datum/sprite_accessory/hair/veryshortovereye
+	name = "Overeye Very Short"
+	icon_state = "veryshortovereye"
+
+/datum/sprite_accessory/hair/veryshortovereyealternate
+	name = "Overeye Very Short, Alternate"
+	icon_state = "veryshortovereyealternate"
+
+/datum/sprite_accessory/hair/volaju
+	name = "Volaju"
+	icon_state = "volaju"
+
+/datum/sprite_accessory/hair/wisp
+	name = "Wisp"
+	icon_state = "wisp"
+	gender = FEMALE
+
+/datum/sprite_accessory/hair/zieglertail
+	name = "Zieglertail"
+	icon_state = "ziegler"
+
+/datum/sprite_accessory/hair/zone
+	name = "Zone Braid"
+	icon_state = "zone"
+	gender = FEMALE
+
 
 
 /*
@@ -433,91 +717,114 @@
 
 /datum/sprite_accessory/facial_hair
 
-	icon = 'icons/mob/Human_face.dmi'
+	icon = 'icons/mob/hair_facial.dmi'
 	gender = MALE // barf (unless you're a dorf, dorfs dig chix /w beards :P)
 
-	shaved
-		name = "Shaved"
-		icon_state = "bald"
-		gender = NEUTER
+/datum/sprite_accessory/facial_hair/shaved
+	name = "Shaved"
+	icon_state = "shaved"
+	gender = NEUTER
 
-	watson
-		name = "Watson Mustache"
-		icon_state = "facial_watson"
+/datum/sprite_accessory/facial_hair/watson
+	name = "Watson Mustache"
+	icon_state = "watson"
 
-	hogan
-		name = "Hulk Hogan Mustache"
-		icon_state = "facial_hogan" //-Neek
+/datum/sprite_accessory/facial_hair/hogan
+	name = "Hulk Hogan Mustache"
+	icon_state = "hogan" //-Neek
 
-	vandyke
-		name = "Van Dyke Mustache"
-		icon_state = "facial_vandyke"
+/datum/sprite_accessory/facial_hair/vandyke
+	name = "Van Dyke Mustache"
+	icon_state = "vandyke"
 
-	chaplin
-		name = "Square Mustache"
-		icon_state = "facial_chaplin"
+/datum/sprite_accessory/facial_hair/chaplin
+	name = "Square Mustache"
+	icon_state = "chaplin"
 
-	selleck
-		name = "Selleck Mustache"
-		icon_state = "facial_selleck"
+/datum/sprite_accessory/facial_hair/selleck
+	name = "Selleck Mustache"
+	icon_state = "selleck"
 
-	neckbeard
-		name = "Neckbeard"
-		icon_state = "facial_neckbeard"
+/datum/sprite_accessory/facial_hair/neckbeard
+	name = "Neckbeard"
+	icon_state = "neckbeard"
 
-	fullbeard
-		name = "Full Beard"
-		icon_state = "facial_fullbeard"
+/datum/sprite_accessory/facial_hair/fullbeard
+	name = "Full Beard"
+	icon_state = "fullbeard"
 
-	longbeard
-		name = "Long Beard"
-		icon_state = "facial_longbeard"
+/datum/sprite_accessory/facial_hair/longbeard
+	name = "Long Beard"
+	icon_state = "longbeard"
 
-	vlongbeard
-		name = "Very Long Beard"
-		icon_state = "facial_wise"
+/datum/sprite_accessory/facial_hair/vlongbeard
+	name = "Very Long Beard"
+	icon_state = "wise"
 
-	elvis
-		name = "Elvis Sideburns"
-		icon_state = "facial_elvis"
-	abe
-		name = "Abraham Lincoln Beard"
-		icon_state = "facial_abe"
+/datum/sprite_accessory/facial_hair/elvis
+	name = "Elvis Sideburns"
+	icon_state = "elvis"
 
-	chinstrap
-		name = "Chinstrap"
-		icon_state = "facial_chin"
+/datum/sprite_accessory/facial_hair/abe
+	name = "Abraham Lincoln Beard"
+	icon_state = "abe"
 
-	hip
-		name = "Hipster Beard"
-		icon_state = "facial_hip"
+/datum/sprite_accessory/facial_hair/chinstrap
+	name = "Chinstrap"
+	icon_state = "chin"
 
-	gt
-		name = "Goatee"
-		icon_state = "facial_gt"
+/datum/sprite_accessory/facial_hair/hip
+	name = "Hipster Beard"
+	icon_state = "hip"
 
-	jensen
-		name = "Adam Jensen Beard"
-		icon_state = "facial_jensen"
+/datum/sprite_accessory/facial_hair/gt
+	name = "Goatee"
+	icon_state = "gt"
 
-	volaju
-		name = "Volaju"
-		icon_state = "facial_volaju"
+/datum/sprite_accessory/facial_hair/jensen
+	name = "Adam Jensen Beard"
+	icon_state = "jensen"
 
-	dwarf
-		name = "Dwarf Beard"
-		icon_state = "facial_dwarf"
+/datum/sprite_accessory/facial_hair/volaju
+	name = "Volaju"
+	icon_state = "volaju"
 
-//skin styles - WIP
-//going to have to re-integrate this with surgery
-//let the icon_state hold an icon preview for now
-/datum/sprite_accessory/skin
-	icon = 'icons/mob/human_races/r_human.dmi'
+/datum/sprite_accessory/facial_hair/dwarf
+	name = "Dwarf Beard"
+	icon_state = "dwarf"
 
-	human
-		name = "Default human skin"
-		icon_state = "default"
+/datum/sprite_accessory/facial_hair/threeOclock
+	name = "3 O'clock Shadow"
+	icon_state = "3oclock"
 
-	human_tatt01
-		name = "Tatt01 human skin"
-		icon_state = "tatt1"
+/datum/sprite_accessory/facial_hair/threeOclockstache
+	name = "3 O'clock Shadow and Moustache"
+	icon_state = "3oclockmoustache"
+
+/datum/sprite_accessory/facial_hair/fiveOclock
+	name = "5 O'clock Shadow"
+	icon_state = "5oclock"
+
+/datum/sprite_accessory/facial_hair/fiveOclockstache
+	name = "5 O'clock Shadow and Moustache"
+	icon_state = "5oclockmoustache"
+
+/datum/sprite_accessory/facial_hair/sevenOclock
+	name = "7 O'clock Shadow"
+	icon_state = "7oclock"
+
+/datum/sprite_accessory/facial_hair/sevenOclockstache
+	name = "7 O'clock Shadow and Moustache"
+	icon_state = "7oclockmoustache"
+
+/datum/sprite_accessory/facial_hair/mutton
+	name = "Mutton Chops"
+	icon_state = "mutton"
+
+/datum/sprite_accessory/facial_hair/muttonmu
+	name = "Mutton Chops and Moustache"
+	icon_state = "muttonmu"
+
+/datum/sprite_accessory/facial_hair/walrus
+	name = "Walrus Moustache"
+	icon_state = "walrus"

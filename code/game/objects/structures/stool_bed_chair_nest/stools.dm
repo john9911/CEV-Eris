@@ -8,7 +8,7 @@ var/global/list/stool_cache = list() //haha stool
 	icon_state = "stool_preview" //set for the map
 	force = 10
 	throwforce = 10
-	w_class = 5
+	w_class = ITEM_SIZE_HUGE
 	var/base_icon = "stool_base"
 	var/material/material
 	var/material/padding_material
@@ -19,7 +19,7 @@ var/global/list/stool_cache = list() //haha stool
 /obj/item/weapon/stool/New(var/newloc, var/new_material, var/new_padding_material)
 	..(newloc)
 	if(!new_material)
-		new_material = DEFAULT_WALL_MATERIAL
+		new_material = MATERIAL_STEEL
 	material = get_material_by_name(new_material)
 	if(new_padding_material)
 		padding_material = get_material_by_name(new_padding_material)
@@ -70,11 +70,11 @@ var/global/list/stool_cache = list() //haha stool
 	update_icon()
 
 /obj/item/weapon/stool/attack(mob/M as mob, mob/user as mob)
-	if (prob(5) && istype(M,/mob/living))
-		user.visible_message("<span class='danger'>[user] breaks [src] over [M]'s back!</span>")
+	if (prob(5) && isliving(M))
+		user.visible_message(SPAN_DANGER("[user] breaks [src] over [M]'s back!"))
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
 		user.do_attack_animation(M)
-		
+
 		user.remove_from_mob(src)
 		dismantle()
 		qdel(src)
@@ -106,7 +106,7 @@ var/global/list/stool_cache = list() //haha stool
 	qdel(src)
 
 /obj/item/weapon/stool/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench))
+	if(istype(W, /obj/item/weapon/tool/wrench))
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
 		dismantle()
 		qdel(src)
@@ -136,7 +136,7 @@ var/global/list/stool_cache = list() //haha stool
 		user << "You add padding to \the [src]."
 		add_padding(padding_type)
 		return
-	else if (istype(W, /obj/item/weapon/wirecutters))
+	else if (istype(W, /obj/item/weapon/tool/wirecutters))
 		if(!padding_material)
 			user << "\The [src] has no padding to remove."
 			return

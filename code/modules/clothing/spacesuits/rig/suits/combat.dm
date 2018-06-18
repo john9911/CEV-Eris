@@ -12,7 +12,10 @@
 	offline_vision_restriction = 1
 
 	helm_type = /obj/item/clothing/head/helmet/space/rig/combat
-	allowed = list(/obj/item/weapon/gun,/obj/item/device/flashlight,/obj/item/weapon/tank,/obj/item/device/suit_cooling_unit,/obj/item/weapon/melee/baton)
+	allowed = list(
+		/obj/item/weapon/gun,/obj/item/device/lighting/toggleable/flashlight,/obj/item/weapon/tank,
+		/obj/item/device/suit_cooling_unit,/obj/item/weapon/melee/baton
+	)
 
 
 /obj/item/weapon/rig/combat/equipped
@@ -31,7 +34,8 @@
 //Ironhammer rig suit
 
 /obj/item/clothing/head/helmet/space/rig/ihs_combat
-	light_overlay = "helmet_light_dual_green"
+	light_overlay = "sec_light"
+	light_color = "#ca181d"
 
 /obj/item/weapon/rig/ihs_combat
 	name = "ironhammer hardsuit control module"
@@ -45,7 +49,10 @@
 	offline_vision_restriction = 0
 
 	helm_type = /obj/item/clothing/head/helmet/space/rig/ihs_combat
-	allowed = list(/obj/item/weapon/gun,/obj/item/device/flashlight,/obj/item/weapon/tank,/obj/item/device/suit_cooling_unit,/obj/item/weapon/melee/baton)
+	allowed = list(
+		/obj/item/weapon/gun,/obj/item/device/lighting/toggleable/flashlight,/obj/item/weapon/tank,
+		/obj/item/device/suit_cooling_unit,/obj/item/weapon/melee/baton
+	)
 
 
 /obj/item/weapon/rig/ihs_combat/equipped

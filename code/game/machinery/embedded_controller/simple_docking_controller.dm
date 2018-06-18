@@ -3,10 +3,11 @@
 	name = "docking hatch controller"
 	var/tag_door
 	var/datum/computer/file/embedded_program/docking/simple/docking_program
+	var/progtype = /datum/computer/file/embedded_program/docking/simple/
 
-/obj/machinery/embedded_controller/radio/simple_docking_controller/initialize()
-	..()
-	docking_program = new/datum/computer/file/embedded_program/docking/simple(src)
+/obj/machinery/embedded_controller/radio/simple_docking_controller/Initialize()
+	. = ..()
+	docking_program = new progtype(src)
 	program = docking_program
 
 /obj/machinery/embedded_controller/radio/simple_docking_controller/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
@@ -29,22 +30,22 @@
 
 /obj/machinery/embedded_controller/radio/simple_docking_controller/Topic(href, href_list)
 	if(..())
-		return 1
+		return TRUE
 
 	usr.set_machine(src)
 	src.add_fingerprint(usr)
 
-	var/clean = 0
+	var/clean = FALSE
 	switch(href_list["command"])	//anti-HTML-hacking checks
 		if("force_door")
-			clean = 1
+			clean = TRUE
 		if("toggle_override")
-			clean = 1
+			clean = TRUE
 
 	if(clean)
 		program.receive_user_command(href_list["command"])
 
-	return 0
+	return FALSE
 
 
 //A docking controller program for a simple door based docking port

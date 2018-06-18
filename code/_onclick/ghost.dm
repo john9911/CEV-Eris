@@ -6,9 +6,9 @@
 	if(!client) return
 	client.inquisitive_ghost = !client.inquisitive_ghost
 	if(client.inquisitive_ghost)
-		src << "<span class='notice'>You will now examine everything you click on.</span>"
+		src << SPAN_NOTICE("You will now examine everything you click on.")
 	else
-		src << "<span class='notice'>You will no longer examine things you click on.</span>"
+		src << SPAN_NOTICE("You will no longer examine things you click on.")
 
 /mob/observer/ghost/DblClickOn(var/atom/A, var/params)
 	if(client.buildmode)
@@ -57,6 +57,7 @@
 	if(target)
 		user.loc = get_turf(target)
 
+/*
 /obj/machinery/gateway/centerstation/attack_ghost(mob/user as mob)
 	if(awaygate)
 		user.loc = awaygate.loc
@@ -68,6 +69,7 @@
 		user.loc = stationgate.loc
 	else
 		user << "[src] has no destination."
+*/
 
 // -------------------------------------------
 // This was supposed to be used by adminghosts

@@ -18,28 +18,28 @@
 
 		return
 
-	initialize()
+	atmos_init()
 		if(!partner)
-			var/partner_connect = turn(dir,180)
+			var/partner_connect = turn(dir, 180)
 
-			for(var/obj/machinery/atmospherics/unary/heat_exchanger/target in get_step(src,partner_connect))
-				if(target.dir & get_dir(src,target))
+			for(var/obj/machinery/atmospherics/unary/heat_exchanger/target in get_step(src, partner_connect))
+				if(target.dir & get_dir(src, target))
 					partner = target
 					partner.partner = src
 					break
 
 		..()
 
-	process()
+	Process()
 		..()
 		if(!partner)
 			return 0
 
-		if(!air_master || air_master.current_cycle <= update_cycle)
+		if(!SSair || SSair.times_fired <= update_cycle)
 			return 0
 
-		update_cycle = air_master.current_cycle
-		partner.update_cycle = air_master.current_cycle
+		update_cycle = SSair.times_fired
+		partner.update_cycle = SSair.times_fired
 
 		var/air_heat_capacity = air_contents.heat_capacity()
 		var/other_air_heat_capacity = partner.air_contents.heat_capacity()
@@ -66,24 +66,24 @@
 		return 1
 
 	attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-		if (!istype(W, /obj/item/weapon/wrench))
+		if (!istype(W, /obj/item/weapon/tool/wrench))
 			return ..()
 		var/turf/T = src.loc
 		if (level==1 && isturf(T) && !T.is_plating())
-			user << "<span class='warning'>You must remove the plating first.</span>"
+			user << SPAN_WARNING("You must remove the plating first.")
 			return 1
 		var/datum/gas_mixture/int_air = return_air()
 		var/datum/gas_mixture/env_air = loc.return_air()
 		if ((int_air.return_pressure()-env_air.return_pressure()) > 2*ONE_ATMOSPHERE)
-			user << "<span class='warning'>You cannot unwrench \the [src], it is too exerted due to internal pressure.</span>"
+			user << SPAN_WARNING("You cannot unwrench \the [src], it is too exerted due to internal pressure.")
 			add_fingerprint(user)
 			return 1
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-		user << "<span class='notice'>You begin to unfasten \the [src]...</span>"
+		user << SPAN_NOTICE("You begin to unfasten \the [src]...")
 		if (do_after(user, 40, src))
 			user.visible_message( \
-				"<span class='notice'>\The [user] unfastens \the [src].</span>", \
-				"<span class='notice'>You have unfastened \the [src].</span>", \
+				SPAN_NOTICE("\The [user] unfastens \the [src]."), \
+				SPAN_NOTICE("You have unfastened \the [src]."), \
 				"You hear a ratchet.")
 			new /obj/item/pipe(loc, make_from=src)
 			qdel(src)

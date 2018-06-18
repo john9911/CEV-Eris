@@ -1,13 +1,17 @@
-#ifdef USE_OPENSPACE
-
-/mob
+/mob  // TODO: rewrite as obj.
 	var/mob/shadow/shadow
 
 /mob/shadow
 	plane = OPENSPACE_PLANE
 	name = "shadow"
 	desc = "Z-level shadow"
+	anchored = 1
+	unacidable = 1
+	density = 0
 	var/mob/owner = null
+
+/mob/shadow/can_fall()
+	return FALSE
 
 /mob/shadow/New(var/mob/L)
 	if(!istype(L))
@@ -37,11 +41,11 @@
 		shadow.sync_icon(src)
 
 /mob/living/Move()
-	..()
+	. = ..()
 	check_shadow()
 
 /mob/living/forceMove()
-	..()
+	. = ..()
 	check_shadow()
 
 /mob/living/proc/check_shadow()
@@ -58,15 +62,16 @@
 	if(M.shadow)
 		qdel(M.shadow)
 		M.shadow = null
+		var/client/C = M.client
+		if(C && C.eye == shadow)
+			M.reset_view(0)
 
 /mob/living/update_icons()
-	..()
+	. = ..()
 	if(shadow)
 		shadow.sync_icon(src)
 
 /mob/set_dir(new_dir)
-	..()
+	. = ..()
 	if(shadow)
 		shadow.set_dir(new_dir)
-
-#endif

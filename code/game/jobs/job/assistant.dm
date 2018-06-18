@@ -3,20 +3,18 @@
 	flag = ASSISTANT
 	department = "Civilian"
 	department_flag = CIVILIAN
-	faction = "Station"
+	faction = "CEV Eris"
 	total_positions = -1
 	spawn_positions = -1
 	supervisors = "absolutely everyone"
 	selection_color = "#dddddd"
 	economic_modifier = 1
-	access = list()			//See /datum/job/assistant/get_access()
-	minimal_access = list()	//See /datum/job/assistant/get_access()
-	alt_titles = list("Technical Assistant","Medical Intern","Research Assistant","Visitor")
+	also_known_languages = list(LANGUAGE_CYRILLIC = 15)
+	access = list(access_maint_tunnels)
 	uniform = /obj/item/clothing/under/rank/assistant
 	suit = /obj/item/clothing/suit/storage/ass_jacket
 
-/datum/job/assistant/get_access()
-	if(config.assistant_maint)
-		return list(access_maint_tunnels)
-	else
-		return list()
+/obj/landmark/join/start/assistant
+	name = "Assistant"
+	icon_state = "player-grey"
+	join_tag = /datum/job/assistant

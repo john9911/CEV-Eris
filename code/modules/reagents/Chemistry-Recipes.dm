@@ -96,7 +96,7 @@
 
 	return progress
 
-/datum/chemical_reaction/proc/process(var/datum/reagents/holder)
+/datum/chemical_reaction/Process(var/datum/reagents/holder)
 	//determine how far the reaction can proceed
 	var/list/reaction_limits = list()
 	for(var/reactant in required_reagents)
@@ -136,7 +136,7 @@
 		var/turf/T = get_turf(container)
 		var/list/seen = viewers(4, T)
 		for(var/mob/M in seen)
-			M.show_message("<span class='notice'>\icon[container] [mix_message]</span>", 1)
+			M.show_message(SPAN_NOTICE("\icon[container] [mix_message]"), 1)
 		playsound(T, reaction_sound, 80, 1)
 
 //obtains any special data that will be provided to the reaction products
@@ -338,9 +338,9 @@
 	name = "Bicaridine"
 	id = "bicaridine"
 	result = "bicaridine"
-	required_reagents = list("inaprovaline" = 1, "carbon" = 1)
+	required_reagents = list("inaprovaline" = 2, "blattedin" = 1)
 	inhibitors = list("sugar" = 1) // Messes up with inaprovaline
-	result_amount = 2
+	result_amount = 3
 
 /datum/chemical_reaction/hyperzine
 	name = "Hyperzine"
@@ -627,7 +627,7 @@
 	name = "EMP Pulse"
 	id = "emp_pulse"
 	result = null
-	required_reagents = list("uranium" = 1, "iron" = 1) // Yes, laugh, it's the best recipe I could think of that makes a little bit of sense
+	required_reagents = list(MATERIAL_URANIUM = 1, "iron" = 1) // Yes, laugh, it's the best recipe I could think of that makes a little bit of sense
 	result_amount = 2
 
 /datum/chemical_reaction/emp_pulse/on_reaction(var/datum/reagents/holder, var/created_volume)
@@ -704,7 +704,7 @@
 	var/location = get_turf(holder.my_atom)
 
 	for(var/mob/M in viewers(5, location))
-		M << "<span class='warning'>The solution spews out foam!</span>"
+		M << SPAN_WARNING("The solution spews out foam!")
 
 	var/datum/effect/effect/system/foam_spread/s = new()
 	s.set_up(created_volume, location, holder, 0)
@@ -723,7 +723,7 @@
 	var/location = get_turf(holder.my_atom)
 
 	for(var/mob/M in viewers(5, location))
-		M << "<span class='warning'>The solution spews out a metalic foam!</span>"
+		M << SPAN_WARNING("The solution spews out a metalic foam!")
 
 	var/datum/effect/effect/system/foam_spread/s = new()
 	s.set_up(created_volume, location, holder, 1)
@@ -741,7 +741,7 @@
 	var/location = get_turf(holder.my_atom)
 
 	for(var/mob/M in viewers(5, location))
-		M << "<span class='warning'>The solution spews out a metalic foam!</span>"
+		M << SPAN_WARNING("The solution spews out a metalic foam!")
 
 	var/datum/effect/effect/system/foam_spread/s = new()
 	s.set_up(created_volume, location, holder, 2)
@@ -1013,7 +1013,7 @@
 	required = /obj/item/slime_extract/grey
 
 /datum/chemical_reaction/slime/spawn/on_reaction(var/datum/reagents/holder)
-	holder.my_atom.visible_message("<span class='warning'>Infused with plasma, the core begins to quiver and grow, and soon a new baby slime emerges from it!</span>")
+	holder.my_atom.visible_message(SPAN_WARNING("Infused with plasma, the core begins to quiver and grow, and soon a new baby slime emerges from it!"))
 	var/mob/living/carbon/slime/S = new /mob/living/carbon/slime
 	S.loc = get_turf(holder.my_atom)
 	..()
@@ -1121,7 +1121,7 @@
 	playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
 	for(var/mob/living/M in range (get_turf(holder.my_atom), 7))
 		M.bodytemperature -= 140
-		M << "<span class='warning'>You feel a chill!</span>"
+		M << SPAN_WARNING("You feel a chill!")
 
 //Orange
 /datum/chemical_reaction/slime/casp
@@ -1172,7 +1172,7 @@
 	required = /obj/item/slime_extract/yellow
 
 /datum/chemical_reaction/slime/cell/on_reaction(var/datum/reagents/holder, var/created_volume)
-	var/obj/item/weapon/cell/slime/P = new /obj/item/weapon/cell/slime
+	var/obj/item/weapon/cell/large/slime/P = new /obj/item/weapon/cell/large/slime
 	P.loc = get_turf(holder.my_atom)
 
 /datum/chemical_reaction/slime/glow
@@ -1186,7 +1186,7 @@
 
 /datum/chemical_reaction/slime/glow/on_reaction(var/datum/reagents/holder, var/created_volume)
 	..()
-	var/obj/item/device/flashlight/slime/F = new /obj/item/device/flashlight/slime
+	var/obj/item/device/slimelight/F = new /obj/item/device/slimelight
 	F.loc = get_turf(holder.my_atom)
 
 //Purple
@@ -1247,7 +1247,7 @@
 	..()
 	for(var/mob/living/carbon/slime/slime in viewers(get_turf(holder.my_atom), null))
 		slime.rabid = 1
-		slime.visible_message("<span class='warning'>The [slime] is driven into a frenzy!</span>")
+		slime.visible_message(SPAN_WARNING("The [slime] is driven into a frenzy!"))
 
 //Pink
 /datum/chemical_reaction/slime/ppotion
@@ -1452,14 +1452,14 @@
 	name = "Goldschlager"
 	id = "goldschlager"
 	result = "goldschlager"
-	required_reagents = list("vodka" = 10, "gold" = 1)
+	required_reagents = list("vodka" = 10, MATERIAL_GOLD = 1)
 	result_amount = 10
 
 /datum/chemical_reaction/patron
 	name = "Patron"
 	id = "patron"
 	result = "patron"
-	required_reagents = list("tequilla" = 10, "silver" = 1)
+	required_reagents = list("tequilla" = 10, MATERIAL_SILVER = 1)
 	result_amount = 10
 
 /datum/chemical_reaction/bilk
@@ -1487,7 +1487,7 @@
 	name = "Nuka Cola"
 	id = "nuka_cola"
 	result = "nuka_cola"
-	required_reagents = list("uranium" = 1, "cola" = 5)
+	required_reagents = list(MATERIAL_URANIUM = 1, "cola" = 5)
 	result_amount = 5
 
 /datum/chemical_reaction/moonshine
@@ -1707,7 +1707,7 @@
 	name = "Atomic Bomb"
 	id = "atomicbomb"
 	result = "atomicbomb"
-	required_reagents = list("b52" = 10, "uranium" = 1)
+	required_reagents = list("b52" = 10, MATERIAL_URANIUM = 1)
 	result_amount = 10
 
 /datum/chemical_reaction/margarita
@@ -1735,7 +1735,7 @@
 	name = "Three Mile Island Iced Tea"
 	id = "threemileisland"
 	result = "threemileisland"
-	required_reagents = list("longislandicedtea" = 10, "uranium" = 1)
+	required_reagents = list("longislandicedtea" = 10, MATERIAL_URANIUM = 1)
 	result_amount = 10
 
 /datum/chemical_reaction/whiskeysoda
@@ -1763,7 +1763,7 @@
 	name = "Manhattan Project"
 	id = "manhattan_proj"
 	result = "manhattan_proj"
-	required_reagents = list("manhattan" = 10, "uranium" = 1)
+	required_reagents = list("manhattan" = 10, MATERIAL_URANIUM = 1)
 	result_amount = 10
 
 /datum/chemical_reaction/vodka_tonic

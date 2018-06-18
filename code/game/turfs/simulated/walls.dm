@@ -30,7 +30,7 @@
 	..(newloc)
 	icon_state = "blank"
 	if(!materialtype)
-		materialtype = DEFAULT_WALL_MATERIAL
+		materialtype = MATERIAL_STEEL
 	material = get_material_by_name(materialtype)
 	if(!isnull(rmaterialtype))
 		reinf_material = get_material_by_name(rmaterialtype)
@@ -41,20 +41,23 @@
 /turf/simulated/wall/Destroy()
 	processing_turfs -= src
 	dismantle_wall(null,null,1)
-	..()
+	. = ..()
 
-/turf/simulated/wall/process()
+/turf/simulated/wall/Process()
 	// Calling parent will kill processing
 	if(!radiate())
 		return PROCESS_KILL
 
 /turf/simulated/wall/bullet_act(var/obj/item/projectile/Proj)
 	if(istype(Proj,/obj/item/projectile/beam))
-		burn(2500)
+		burn(500)//TODO : fucking write these two procs not only for plasma (see plasma in materials.dm:283) ~
 	else if(istype(Proj,/obj/item/projectile/ion))
 		burn(500)
 
-	var/proj_damage = Proj.get_structure_damage()
+	//cut some projectile damage here and not in projectile.dm, becouse we need not to all things what are using get_str_dam() becomes thin and weak.
+	//in general, bullets have 35-95 damage, and they are plased in ~30 bullets magazines, so 50*30 = 150, but plasteel walls have only 400 hp =|
+	//but you may also increase materials thickness or etc.
+	var/proj_damage = Proj.get_structure_damage() / 3//Yo may replace 3 to 5-6 to make walls fucking stronk as a Poland
 
 	//cap the amount of damage, so that things like emitters can't destroy walls in one hit.
 	var/damage = min(proj_damage, 100)
@@ -93,18 +96,18 @@
 	. = ..(user)
 
 	if(!damage)
-		user << "<span class='notice'>It looks fully intact.</span>"
+		user << SPAN_NOTICE("It looks fully intact.")
 	else
 		var/dam = damage / material.integrity
 		if(dam <= 0.3)
-			user << "<span class='warning'>It looks slightly damaged.</span>"
+			user << SPAN_WARNING("It looks slightly damaged.")
 		else if(dam <= 0.6)
-			user << "<span class='warning'>It looks moderately damaged.</span>"
+			user << SPAN_WARNING("It looks moderately damaged.")
 		else
-			user << "<span class='danger'>It looks heavily damaged.</span>"
+			user << SPAN_DANGER("It looks heavily damaged.")
 
 	if(locate(/obj/effect/overlay/wallrot) in src)
-		user << "<span class='warning'>There is fungus growing on [src].</span>"
+		user << SPAN_WARNING("There is fungus growing on [src].")
 
 //Damage
 
@@ -120,7 +123,7 @@
 		return
 	F.burn_tile()
 	F.icon_state = "wall_thermite"
-	visible_message("<span class='danger'>\The [src] spontaneously combusts!.</span>") //!!OH SHIT!!
+	visible_message(SPAN_DANGER("\The [src] spontaneously combusts!.")) //!!OH SHIT!!
 	return
 
 /turf/simulated/wall/proc/take_damage(dam)
@@ -223,7 +226,7 @@
 	var/turf/simulated/floor/F = src
 	F.burn_tile()
 	F.icon_state = "wall_thermite"
-	user << "<span class='warning'>The thermite starts melting through the wall.</span>"
+	user << SPAN_WARNING("The thermite starts melting through the wall.")
 
 	spawn(100)
 		if(O)
@@ -241,11 +244,11 @@
 	return total_radiation
 
 /turf/simulated/wall/proc/burn(temperature)
-	if(material.combustion_effect(src, temperature, 0.7))
+	if(material.combustion_effect(src, temperature, 0.7))//it wont return something in any way, this proc is commented and it belongs to plasma material.(see materials.dm:283)
 		spawn(2)
 			new /obj/structure/girder(src)
 			src.ChangeTurf(/turf/simulated/floor)
-			for(var/turf/simulated/wall/W in range(3,src))
+			for(var/turf/simulated/wall/W in trange(3, src) - src)
 				W.burn((temperature/4))
 			for(var/obj/machinery/door/airlock/plasma/D in range(3,src))
 				D.ignite(temperature/4)

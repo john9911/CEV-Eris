@@ -63,7 +63,6 @@
 	data["current_security_level"] = security_level
 	data["current_security_level_title"] = num2seclevel(security_level)
 
-	data["def_SEC_LEVEL_DELTA"] = SEC_LEVEL_DELTA
 	data["def_SEC_LEVEL_BLUE"] = SEC_LEVEL_BLUE
 	data["def_SEC_LEVEL_GREEN"] = SEC_LEVEL_GREEN
 
@@ -74,14 +73,16 @@
 	if(current_viewing_message)
 		data["message_current"] = current_viewing_message
 
-	if(emergency_shuttle.location())
-		data["have_shuttle"] = 1
-		if(emergency_shuttle.online())
-			data["have_shuttle_called"] = 1
-		else
-			data["have_shuttle_called"] = 0
-	else
-		data["have_shuttle"] = 0
+	var/list/processed_evac_options = list()
+	if(!isnull(evacuation_controller))
+		for (var/datum/evacuation_option/EO in evacuation_controller.available_evac_options())
+			var/list/option = list()
+			option["option_text"] = EO.option_text
+			option["option_target"] = EO.option_target
+			option["needs_syscontrol"] = EO.needs_syscontrol
+			option["silicon_allowed"] = EO.silicon_allowed
+			processed_evac_options[++processed_evac_options.len] = option
+	data["evac_options"] = processed_evac_options
 
 	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
 	if(!ui)
@@ -135,31 +136,31 @@
 				if(program)
 					if(is_autenthicated(user) && program.computer_emagged && !issilicon(usr) && ntn_comm)
 						if(centcomm_message_cooldown)
-							usr << "<span class='warning'>Arrays recycling. Please stand by.</span>"
+							usr << SPAN_WARNING("Arrays recycling. Please stand by.")
 							nanomanager.update_uis(src)
 							return
 						var/input = sanitize(input(usr, "Please choose a message to transmit to \[ABNORMAL ROUTING CORDINATES\] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination. Transmission does not guarantee a response. There is a 30 second delay before you may send another message, be clear, full and concise.", "To abort, send an empty message.", "") as null|text)
 						if(!input || !can_still_topic())
 							nanomanager.update_uis(src)
 							return
-						usr << "<span class='notice'>No response from the remote server. Please, contact your system administrator.</span>"
+						usr << SPAN_NOTICE("No response from the remote server. Please, contact your system administrator.")
 						log_say("[key_name(usr)] has made an illegal announcement: [input]")
 						centcomm_message_cooldown = 1
 			else if(href_list["target"] == "regular")
 				if(is_autenthicated(user) && !issilicon(usr) && ntn_comm)
 					if(centcomm_message_cooldown)
-						usr << "<span class='warning'>Arrays recycling. Please stand by.</span>"
+						usr << SPAN_WARNING("Arrays recycling. Please stand by.")
 						nanomanager.update_uis(src)
 						return
 					if(!is_relay_online())//Contact Centcom has a check, Syndie doesn't to allow for Traitor funs.
-						usr <<"<span class='warning'>No Emergency Bluespace Relay detected. Unable to transmit message.</span>"
+						usr <<SPAN_WARNING("No Emergency Bluespace Relay detected. Unable to transmit message.")
 						nanomanager.update_uis(src)
 						return
 					var/input = sanitize(input("Please choose a message to transmit to [boss_short] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination.  Transmission does not guarantee a response. There is a 30 second delay before you may send another message, be clear, full and concise.", "To abort, send an empty message.", "") as null|text)
 					if(!input || !can_still_topic())
 						nanomanager.update_uis(src)
 						return
-					usr << "<span class='notice'>No response from the remote server. Please, contact your system administrator.</span>"
+					usr << SPAN_NOTICE("No response from the remote server. Please, contact your system administrator.")
 					log_say("[key_name(usr)] has made an IA [boss_short] announcement: [input]")
 					centcomm_message_cooldown = 1
 
@@ -222,9 +223,9 @@
 			if(is_autenthicated(user) && ntn_comm)
 				if(program && program.computer && program.computer.nano_printer)
 					if(!program.computer.nano_printer.print_text(current_viewing_message["contents"],current_viewing_message["title"]))
-						usr << "<span class='notice'>Hardware error: Printer was unable to print the file. It may be out of paper.</span>"
+						usr << SPAN_NOTICE("Hardware error: Printer was unable to print the file. It may be out of paper.")
 					else
-						program.computer.visible_message("<span class='notice'>\The [program.computer] prints out paper.</span>")
+						program.computer.visible_message(SPAN_NOTICE("\The [program.computer] prints out paper."))
 
 	nanomanager.update_uis(src)
 
@@ -277,7 +278,7 @@ proc/post_comm_message(var/message_title, var/message_text)
 		l.Add(message)
 
 	//Old console support
-	for (var/obj/machinery/computer/communications/comm in machines)
+	for (var/obj/machinery/computer/communications/comm in SSmachines.machinery)
 		if (!(comm.stat & (BROKEN | NOPOWER)) && comm.prints_intercept)
 			var/obj/item/weapon/paper/intercept = new /obj/item/weapon/paper( comm.loc )
 			intercept.name = message_title

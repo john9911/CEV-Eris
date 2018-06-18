@@ -15,15 +15,8 @@
 	var/mob/pulledby = null
 	var/item_state = null // Used to specify the item state for the on-mob overlays.
 
-	var/auto_init = 1
-
-/atom/movable/New()
-	..()
-	if(auto_init && ticker && ticker.current_state == GAME_STATE_PLAYING)
-		initialize()
-
 /atom/movable/Del()
-	if(isnull(gcDestroyed) && loc)
+	if(isnull(gc_destroyed) && loc)
 		testing("GC: -- [type] was deleted via del() rather than qdel() --")
 		crash_with("GC: -- [type] was deleted via del() rather than qdel() --") // stick a stack trace in the runtime logs
 //	else if(isnull(gcDestroyed))
@@ -41,10 +34,6 @@
 		if (pulledby.pulling == src)
 			pulledby.pulling = null
 		pulledby = null
-
-/atom/movable/proc/initialize()
-	if(!isnull(gcDestroyed))
-		crash_with("GC: -- [type] had initialize() called after qdel() --")
 
 /atom/movable/Bump(var/atom/A, yes)
 	if(src.throwing)
@@ -102,7 +91,7 @@
 
 //called when src is thrown into hit_atom
 /atom/movable/proc/throw_impact(atom/hit_atom, var/speed)
-	if(istype(hit_atom,/mob/living))
+	if(isliving(hit_atom))
 		var/mob/living/M = hit_atom
 		M.hitby(src,speed)
 
@@ -118,7 +107,7 @@
 		if(T.density)
 			spawn(2)
 				step(src, turn(src.last_move, 180))
-			if(istype(src,/mob/living))
+			if(isliving(src))
 				var/mob/living/M = src
 				M.turf_collision(T, speed)
 
@@ -127,7 +116,7 @@
 	if(src.throwing)
 		for(var/atom/A in get_turf(src))
 			if(A == src) continue
-			if(istype(A,/mob/living))
+			if(isliving(A))
 				if(A:lying) continue
 				src.throw_impact(A,speed)
 			if(isobj(A))
@@ -167,8 +156,6 @@
 	var/area/a = get_area(src.loc)
 	if(dist_x > dist_y)
 		var/error = dist_x/2 - dist_y
-
-
 
 		while(src && target &&((((src.x < target.x && dx == EAST) || (src.x > target.x && dx == WEST)) && dist_travelled < range) || (a && a.has_gravity == 0)  || istype(src.loc, /turf/space)) && src.throwing && istype(src.loc, /turf))
 			// only stop when we've gone the whole distance (or max throw range) and are on a non-space tile, or hit something, or hit the end of the map, or someone picks it up
@@ -230,7 +217,8 @@
 
 	//done throwing, either because it hit something or it finished moving
 	var/turf/new_loc = get_turf(src)
-	if(isobj(src)) src.throw_impact(new_loc,speed)
+	if(isobj(src))
+		src.throw_impact(new_loc,speed)
 	new_loc.Entered(src)
 	src.throwing = 0
 	src.thrower = null
@@ -258,46 +246,40 @@
 	return
 
 /atom/movable/proc/touch_map_edge()
+/*
 	if(z in config.sealed_levels)
 		return
+*/
 
 	if(config.use_overmap)
 		overmap_spacetravel(get_turf(src), src)
 		return
 
 	var/move_to_z = src.get_transit_zlevel()
+	var/move_to_x = x
+	var/move_to_y = y
 	if(move_to_z)
-		z = move_to_z
-
 		if(x <= TRANSITIONEDGE)
-			x = world.maxx - TRANSITIONEDGE - 2
-			y = rand(TRANSITIONEDGE + 2, world.maxy - TRANSITIONEDGE - 2)
+			move_to_x = world.maxx - TRANSITIONEDGE - 2
+			move_to_y = rand(TRANSITIONEDGE + 2, world.maxy - TRANSITIONEDGE - 2)
 
 		else if (x >= (world.maxx - TRANSITIONEDGE + 1))
-			x = TRANSITIONEDGE + 1
-			y = rand(TRANSITIONEDGE + 2, world.maxy - TRANSITIONEDGE - 2)
+			move_to_x = TRANSITIONEDGE + 1
+			move_to_y = rand(TRANSITIONEDGE + 2, world.maxy - TRANSITIONEDGE - 2)
 
 		else if (y <= TRANSITIONEDGE)
-			y = world.maxy - TRANSITIONEDGE -2
-			x = rand(TRANSITIONEDGE + 2, world.maxx - TRANSITIONEDGE - 2)
+			move_to_y = world.maxy - TRANSITIONEDGE -2
+			move_to_x = rand(TRANSITIONEDGE + 2, world.maxx - TRANSITIONEDGE - 2)
 
 		else if (y >= (world.maxy - TRANSITIONEDGE + 1))
-			y = TRANSITIONEDGE + 1
-			x = rand(TRANSITIONEDGE + 2, world.maxx - TRANSITIONEDGE - 2)
+			move_to_y = TRANSITIONEDGE + 1
+			move_to_x = rand(TRANSITIONEDGE + 2, world.maxx - TRANSITIONEDGE - 2)
 
-		if(ticker && istype(ticker.mode, /datum/game_mode/nuclear)) //only really care if the game mode is nuclear
-			var/datum/game_mode/nuclear/G = ticker.mode
-			G.check_nuke_disks()
-
-		spawn(0)
-			if(loc) loc.Entered(src)
-
-//This list contains the z-level numbers which can be accessed via space travel and the percentile chances to get there.
-var/list/accessible_z_levels = list("1" = 5, "3" = 10, "4" = 15, "6" = 60)
+		forceMove(locate(move_to_x, move_to_y, move_to_z))
 
 //by default, transition randomly to another zlevel
 /atom/movable/proc/get_transit_zlevel()
-	var/list/candidates = accessible_z_levels.Copy()
+	var/list/candidates = maps_data.accessable_levels.Copy()
 	candidates.Remove("[src.z]")
 
 	if(!candidates.len)

@@ -54,7 +54,7 @@
 /*
  * Detective
  */
-/obj/item/clothing/under/inspector
+/obj/item/clothing/under/rank/inspector
 	name = "inspector's suit"
 	desc = "Casual turtleneck and jeans, civilian clothes of Ironhammer Inspector."
 	icon_state = "insp_under"
@@ -65,7 +65,7 @@
 
 
 
-/obj/item/clothing/under/det
+/obj/item/clothing/under/rank/det
 	name = "inspector's suit"
 	desc = "A rumpled white dress shirt paired with well-worn grey slacks, complete with a blue striped tie and a faux-gold tie clip."
 	icon_state = "detective"
@@ -76,7 +76,7 @@
 
 
 
-/obj/item/clothing/under/det/black
+/obj/item/clothing/under/rank/det/black
 	icon_state = "detective3"
 
 	//item_state = "sl_suit"
@@ -116,7 +116,7 @@
 /obj/item/clothing/head/HoS
 	name = "Ironhammer Commander Hat"
 	desc = "The hat of the Ironhammer Commander. For showing the officers who's in charge."
-	icon_state = "hoscap"
+	icon_state = "hoshat"
 	body_parts_covered = 0
 	siemens_coefficient = 0.8
 

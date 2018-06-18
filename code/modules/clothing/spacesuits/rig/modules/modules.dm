@@ -13,7 +13,7 @@
 	desc = "It looks pretty sciency."
 	icon = 'icons/obj/rig_modules.dmi'
 	icon_state = "module"
-	matter = list(DEFAULT_WALL_MATERIAL = 20000, "plastic" = 30000, "glass" = 5000)
+	matter = list(MATERIAL_STEEL = 15, MATERIAL_PLASTIC = 20, MATERIAL_GLASS = 5)
 
 	var/damage = 0
 	var/obj/item/weapon/rig/holder
@@ -143,27 +143,27 @@
 /obj/item/rig_module/proc/engage()
 
 	if(damage >= 2)
-		usr << "<span class='warning'>The [interface_name] is damaged beyond use!</span>"
+		usr << SPAN_WARNING("The [interface_name] is damaged beyond use!")
 		return 0
 
 	if(world.time < next_use)
-		usr << "<span class='warning'>You cannot use the [interface_name] again so soon.</span>"
+		usr << SPAN_WARNING("You cannot use the [interface_name] again so soon.")
 		return 0
 
 	if(!holder || holder.canremove)
-		usr << "<span class='warning'>The suit is not initialized.</span>"
+		usr << SPAN_WARNING("The suit is not initialized.")
 		return 0
 
 	if(usr.lying || usr.stat || usr.stunned || usr.paralysis || usr.weakened)
-		usr << "<span class='warning'>You cannot use the suit in this state.</span>"
+		usr << SPAN_WARNING("You cannot use the suit in this state.")
 		return 0
 
 	if(holder.wearer && holder.wearer.lying)
-		usr << "<span class='warning'>The suit cannot function while the wearer is prone.</span>"
+		usr << SPAN_WARNING("The suit cannot function while the wearer is prone.")
 		return 0
 
 	if(holder.security_check_enabled && !holder.check_suit_access(usr))
-		usr << "<span class='danger'>Access denied.</span>"
+		usr << SPAN_DANGER("Access denied.")
 		return 0
 
 	if(!holder.check_power_cost(usr, use_power_cost, 0, src, (istype(usr,/mob/living/silicon ? 1 : 0) ) ) )
@@ -215,7 +215,7 @@
 	return
 
 // Called by the hardsuit each rig process tick.
-/obj/item/rig_module/process()
+/obj/item/rig_module/Process()
 	if(active)
 		return active_power_cost
 	else

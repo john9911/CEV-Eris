@@ -26,13 +26,13 @@ In my current plan for it, 'solid' will be defined as anything with density == 1
 				for (var/mob/O in hearers(src, null))
 					O.show_message("CLANG", 2)
 
-		else if (istype(clong, /obj))
+		else if (isobj(clong))
 			if(clong.density)
 				clong.ex_act(2)
 				for (var/mob/O in hearers(src, null))
 					O.show_message("CLANG", 2)
 
-		else if (istype(clong, /mob))
+		else if (ismob(clong))
 			if(clong.density || prob(10))
 				clong.ex_act(2)
 		else
@@ -79,7 +79,7 @@ In my current plan for it, 'solid' will be defined as anything with density == 1
 	sleep(1)
 	while (immrod)
 		if (isNotStationLevel(immrod.z))
-			immrod.z = pick(config.station_levels)
+			immrod.z = pick(maps_data.station_levels)
 		if(immrod.loc == end)
 			qdel(immrod)
 		sleep(10)

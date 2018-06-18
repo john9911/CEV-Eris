@@ -11,7 +11,7 @@
 	name = "tile"
 	singular_name = "tile"
 	desc = "A non-descript floor tile"
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 	max_amount = 60
 
 /obj/item/stack/tile/New()
@@ -91,59 +91,45 @@
 	desc = "Those could work as a pretty decent throwing weapon" //why?
 	icon_state = "tile"
 	force = WEAPON_FORCE_NORMAL
-	matter = list(DEFAULT_WALL_MATERIAL = 937.5)
+	matter = list(MATERIAL_STEEL = 1)
 	throwforce = WEAPON_FORCE_PAINFULL
 	throw_speed = 5
 	throw_range = 20
 	flags = CONDUCT
 
-/obj/item/stack/tile/techgrey
+/obj/item/stack/tile/floor/techgrey
 	name = "grey techfloor tile"
 	singular_name = "grey techfloor tile"
-	desc = "Those could work as a pretty decent throwing weapon" //why?
 	icon_state = "techtile_grey"
-	force = WEAPON_FORCE_NORMAL
-	matter = list(DEFAULT_WALL_MATERIAL = 937.5)
-	throwforce = WEAPON_FORCE_PAINFULL
-	throw_speed = 5
-	throw_range = 20
-	flags = CONDUCT
 
-/obj/item/stack/tile/techgrid
+/obj/item/stack/tile/floor/techgrid
 	name = "grid techfloor tile"
 	singular_name = "grid techfloor tile"
 	icon_state = "techtile_grid"
-	desc = "Those could work as a pretty decent throwing weapon" //why?
-	force = WEAPON_FORCE_NORMAL
-	matter = list(DEFAULT_WALL_MATERIAL = 937.5)
-	throwforce = WEAPON_FORCE_PAINFULL
-	throw_speed = 5
-	throw_range = 20
-	flags = CONDUCT
 
-/obj/item/stack/tile/floor_steel
+/obj/item/stack/tile/floor/steel
 	name = "steel floor tile"
 	singular_name = "steel floor tile"
 	icon_state = "tile_steel"
-	matter = list("plasteel" = 937.5)
+	matter = list(MATERIAL_PLASTEEL = 1)
 
-/obj/item/stack/tile/floor_white
+/obj/item/stack/tile/floor/white
 	name = "white floor tile"
 	singular_name = "white floor tile"
 	icon_state = "tile_white"
-	matter = list("plastic" = 937.5)
+	matter = list(MATERIAL_PLASTIC = 1)
 
-/obj/item/stack/tile/floor_dark
+/obj/item/stack/tile/floor/dark
 	name = "dark floor tile"
 	singular_name = "dark floor tile"
 	icon_state = "fr_tile"
-	matter = list("plasteel" = 937.5)
+	matter = list(MATERIAL_PLASTEEL = 1)
 
-/obj/item/stack/tile/floor_freezer
+/obj/item/stack/tile/floor/freezer
 	name = "freezer floor tile"
 	singular_name = "freezer floor tile"
 	icon_state = "tile_freezer"
-	matter = list("plastic" = 937.5)
+	matter = list(MATERIAL_PLASTIC = 1)
 
 /obj/item/stack/tile/floor/cyborg
 	name = "floor tile synthesizer"

@@ -1,6 +1,6 @@
 /obj/item/inflatable
 	name = "inflatable"
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	icon = 'icons/obj/inflatable.dmi'
 	var/deploy_path = null
 
@@ -8,7 +8,7 @@
 	if(!deploy_path)
 		return
 	playsound(loc, 'sound/items/zip.ogg', 75, 1)
-	user << "<span class='notice'>You inflate \the [src].</span>"
+	user << SPAN_NOTICE("You inflate \the [src].")
 	var/obj/structure/inflatable/R = new deploy_path(user.loc)
 	src.transfer_fingerprints_to(R)
 	R.add_fingerprint(user)
@@ -49,7 +49,7 @@
 
 /obj/structure/inflatable/Destroy()
 	update_nearby_tiles()
-	..()
+	. = ..()
 
 /obj/structure/inflatable/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)
 	return 0
@@ -85,7 +85,7 @@
 	if(!istype(W) || istype(W, /obj/item/weapon/inflatable_dispenser)) return
 
 	if (can_puncture(W))
-		visible_message("<span class='danger'>[user] pierces [src] with [W]!</span>")
+		visible_message(SPAN_DANGER("[user] pierces [src] with [W]!"))
 		deflate(1)
 	if(W.damtype == BRUTE || W.damtype == BURN)
 		hit(W.force)
@@ -133,17 +133,17 @@
 	health -= damage
 	attack_animation(user)
 	if(health <= 0)
-		user.visible_message("<span class='danger'>[user] [attack_verb] open the [src]!</span>")
+		user.visible_message(SPAN_DANGER("[user] [attack_verb] open the [src]!"))
 		spawn(1) deflate(1)
 	else
-		user.visible_message("<span class='danger'>[user] [attack_verb] at [src]!</span>")
+		user.visible_message(SPAN_DANGER("[user] [attack_verb] at [src]!"))
 	return 1
 
 /obj/structure/inflatable/door //Based on mineral door code
 	name = "inflatable door"
 	density = 1
 	anchored = 1
-	opacity = 0
+	opacity = FALSE
 
 	icon_state = "door_closed"
 	undeploy_path = /obj/item/inflatable/door
@@ -191,20 +191,18 @@
 
 /obj/structure/inflatable/door/proc/Open()
 	isSwitchingStates = 1
-	flick("door_opening",src)
+	flick("door_opening", src)
 	sleep(10)
 	density = 0
-	opacity = 0
 	state = 1
 	update_icon()
 	isSwitchingStates = 0
 
 /obj/structure/inflatable/door/proc/Close()
 	isSwitchingStates = 1
-	flick("door_closing",src)
+	flick("door_closing", src)
 	sleep(10)
 	density = 1
-	opacity = 0
 	state = 0
 	update_icon()
 	isSwitchingStates = 0
@@ -236,7 +234,7 @@
 	icon_state = "folded_wall_torn"
 
 	attack_self(mob/user)
-		user << "<span class='notice'>The inflatable wall is too torn to be inflated!</span>"
+		user << SPAN_NOTICE("The inflatable wall is too torn to be inflated!")
 		add_fingerprint(user)
 
 /obj/item/inflatable/door/torn
@@ -246,7 +244,7 @@
 	icon_state = "folded_door_torn"
 
 	attack_self(mob/user)
-		user << "<span class='notice'>The inflatable door is too torn to be inflated!</span>"
+		user << SPAN_NOTICE("The inflatable door is too torn to be inflated!")
 		add_fingerprint(user)
 
 /obj/item/weapon/storage/briefcase/inflatable
@@ -254,7 +252,7 @@
 	desc = "Contains inflatable walls and doors."
 	icon_state = "inf_box"
 	item_state = "syringe_kit"
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 	max_storage_space = 28
 	can_hold = list(/obj/item/inflatable)
 

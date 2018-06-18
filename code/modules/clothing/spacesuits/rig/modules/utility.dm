@@ -28,18 +28,6 @@
 	var/device_type
 	var/obj/item/device
 
-/obj/item/rig_module/device/plasmacutter
-	name = "hardsuit plasma cutter"
-	desc = "A lethal-looking industrial cutter."
-	icon_state = "plasmacutter"
-	interface_name = "plasma cutter"
-	interface_desc = "A self-sustaining plasma arc capable of cutting through walls."
-	suit_overlay_active = "plasmacutter"
-	suit_overlay_inactive = "plasmacutter"
-	use_power_cost = 0.5
-
-	device_type = /obj/item/weapon/pickaxe/plasmacutter
-
 /obj/item/rig_module/device/healthscanner
 	name = "health scanner module"
 	desc = "A hardsuit-mounted health scanner."
@@ -47,7 +35,7 @@
 	interface_name = "health scanner"
 	interface_desc = "Shows an informative health readout when used on a subject."
 
-	device_type = /obj/item/device/healthanalyzer
+	device_type = /obj/item/device/scanner/healthanalyzer
 
 /obj/item/rig_module/device/drill
 	name = "hardsuit drill mount"
@@ -59,7 +47,7 @@
 	suit_overlay_inactive = "mounted-drill"
 	use_power_cost = 0.1
 
-	device_type = /obj/item/weapon/pickaxe/diamonddrill
+	device_type = /obj/item/weapon/tool/pickaxe/diamonddrill
 
 /obj/item/rig_module/device/anomaly_scanner
 	name = "hardsuit anomaly scanner"
@@ -189,7 +177,7 @@
 	if(total_transferred)
 		user << "<font color='blue'>You transfer [total_transferred] units into the suit reservoir.</font>"
 	else
-		user << "<span class='danger'>None of the reagents seem suitable.</span>"
+		user << SPAN_DANGER("None of the reagents seem suitable.")
 	return 1
 
 /obj/item/rig_module/chem_dispenser/engage(atom/target)
@@ -200,7 +188,7 @@
 	var/mob/living/carbon/human/H = holder.wearer
 
 	if(!charge_selected)
-		H << "<span class='danger'>You have not selected a chemical type.</span>"
+		H << SPAN_DANGER("You have not selected a chemical type.")
 		return 0
 
 	var/datum/rig_charge/charge = charges[charge_selected]
@@ -210,14 +198,14 @@
 
 	var/chems_to_use = 10
 	if(charge.charges <= 0)
-		H << "<span class='danger'>Insufficient chems!</span>"
+		H << SPAN_DANGER("Insufficient chems!")
 		return 0
 	else if(charge.charges < chems_to_use)
 		chems_to_use = charge.charges
 
 	var/mob/living/carbon/target_mob
 	if(target)
-		if(istype(target,/mob/living/carbon))
+		if(iscarbon(target))
 			target_mob = target
 		else
 			return 0
@@ -225,7 +213,7 @@
 		target_mob = H
 
 	if(target_mob != H)
-		H << "<span class='danger'>You inject [target_mob] with [chems_to_use] unit\s of [charge.display_name].</span>"
+		H << SPAN_DANGER("You inject [target_mob] with [chems_to_use] unit\s of [charge.display_name].")
 	target_mob << "<span class='danger'>You feel a rushing in your veins as [chems_to_use] unit\s of [charge.display_name] [chems_to_use == 1 ? "is" : "are"] injected.</span>"
 	target_mob.reagents.add_reagent(charge.display_name, chems_to_use)
 
@@ -382,63 +370,3 @@
 	jets.ion_trail.set_up(jets)
 
 /obj/item/rig_module/foam_sprayer
-
-/obj/item/rig_module/device/paperdispenser
-	name = "hardsuit paper dispenser"
-	desc = "Crisp sheets."
-	icon_state = "paper"
-	interface_name = "paper dispenser"
-	interface_desc = "Dispenses warm, clean, and crisp sheets of paper."
-	engage_string = "Dispense"
-	usable = 1
-	selectable = 0
-	device_type = /obj/item/weapon/paper_bin
-
-/obj/item/rig_module/device/paperdispenser/engage(atom/target)
-
-	if(!..() || !device)
-		return 0
-
-	if(!target)
-		device.attack_hand(holder.wearer)
-		return 1
-
-/obj/item/rig_module/device/pen
-	name = "mounted pen"
-	desc = "For mecha John Hancocks."
-	icon_state = "pen"
-	interface_name = "mounted pen"
-	interface_desc = "Signatures with style(tm)."
-	engage_string = "Change color"
-	usable = 1
-	device_type = /obj/item/weapon/pen/multi
-
-/obj/item/rig_module/device/stamp
-	name = "mounted internal affairs stamp"
-	desc = "DENIED."
-	icon_state = "stamp"
-	interface_name = "mounted stamp"
-	interface_desc = "Leave your mark."
-	engage_string = "Toggle stamp type"
-	usable = 1
-	var/iastamp
-	var/deniedstamp
-
-/obj/item/rig_module/device/stamp/New()
-	..()
-	iastamp = new /obj/item/weapon/stamp/internalaffairs(src)
-	deniedstamp = new /obj/item/weapon/stamp/denied(src)
-	device = iastamp
-
-/obj/item/rig_module/device/stamp/engage(atom/target)
-	if(!..() || !device)
-		return 0
-
-	if(!target)
-		if(device == iastamp)
-			device = deniedstamp
-			holder.wearer << "<span class='notice'>Switched to denied stamp.</span>"
-		else if(device == deniedstamp)
-			device = iastamp
-			holder.wearer << "<span class='notice'>Switched to internal affairs stamp.</span>"
-		return 1

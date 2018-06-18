@@ -12,7 +12,7 @@
 	return
 
 /obj/structure/bed/chair/e_chair/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench))
+	if(istype(W, /obj/item/weapon/tool/wrench))
 		var/obj/structure/bed/chair/C = new /obj/structure/bed/chair(loc)
 		playsound(loc, 'sound/items/Ratchet.ogg', 50, 1)
 		C.set_dir(dir)
@@ -66,11 +66,11 @@
 	s.start()
 	if(buckled_mob)
 		buckled_mob.burn_skin(85)
-		buckled_mob << "<span class='danger'>You feel a deep shock course through your body!</span>"
+		buckled_mob << SPAN_DANGER("You feel a deep shock course through your body!")
 		sleep(1)
 		buckled_mob.burn_skin(85)
 		buckled_mob.Stun(600)
-	visible_message("<span class='danger'>The electric chair went off!</span>", "<span class='danger'>You hear a deep sharp shock!</span>")
+	visible_message(SPAN_DANGER("The electric chair went off!"), SPAN_DANGER("You hear a deep sharp shock!"))
 
 	A.power_light = light
 	A.updateicon()

@@ -12,9 +12,9 @@
 	throwforce = WEAPON_FORCE_PAINFULL
 	throw_speed = 1
 	throw_range = 5
-	w_class = 3.0
+	w_class = ITEM_SIZE_NORMAL
 	origin_tech = list(TECH_ENGINEERING = 4, TECH_MATERIAL = 2)
-	matter = list(DEFAULT_WALL_MATERIAL = 50000)
+	matter = list(MATERIAL_STEEL = 15, MATERIAL_PLASTIC = 5, MATERIAL_SILVER = 3)
 	var/datum/effect/effect/system/spark_spread/spark_system
 	var/stored_matter = 0
 	var/working = 0
@@ -49,20 +49,20 @@
 
 	if(istype(W, /obj/item/weapon/rcd_ammo))
 		if((stored_matter + 10) > 30)
-			user << "<span class='notice'>The RCD can't hold any more matter-units.</span>"
+			user << SPAN_NOTICE("The RCD can't hold any more matter-units.")
 			return
 		user.drop_from_inventory(W)
 		qdel(W)
 		stored_matter += 10
 		playsound(src.loc, 'sound/machines/click.ogg', 50, 1)
-		user << "<span class='notice'>The RCD now holds [stored_matter]/30 matter-units.</span>"
+		user << SPAN_NOTICE("The RCD now holds [stored_matter]/30 matter-units.")
 		return
 	..()
 
 /obj/item/weapon/rcd/attack_self(mob/user)
 	//Change the mode
 	if(++mode > 3) mode = 1
-	user << "<span class='notice'>Changed mode to '[modes[mode]]'</span>"
+	user << SPAN_NOTICE("Changed mode to '[modes[mode]]'")
 	playsound(src.loc, 'sound/effects/pop.ogg', 50, 0)
 	if(prob(20)) src.spark_system.start()
 
@@ -155,9 +155,9 @@
 	icon = 'icons/obj/ammo.dmi'
 	icon_state = "rcd"
 	item_state = "rcdammo"
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	origin_tech = list(TECH_MATERIAL = 2)
-	matter = list(DEFAULT_WALL_MATERIAL = 30000,"glass" = 15000)
+	matter = list(MATERIAL_STEEL = 40)
 
 /obj/item/weapon/rcd/borg
 	canRwall = 1

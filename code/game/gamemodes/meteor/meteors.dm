@@ -2,14 +2,24 @@
 //set to at least 100 unless you want evarr ruining every round
 
 //Meteors probability of spawning during a given wave
-/var/list/meteors_normal = list(/obj/effect/meteor/dust=3, /obj/effect/meteor/medium=8, /obj/effect/meteor/big=3, \
-						  /obj/effect/meteor/flaming=1, /obj/effect/meteor/irradiated=3) //for normal meteor event
 
-/var/list/meteors_threatening = list(/obj/effect/meteor/medium=4, /obj/effect/meteor/big=8, \
-						  /obj/effect/meteor/flaming=3, /obj/effect/meteor/irradiated=3) //for threatening meteor event
+//for normal meteor event
+/var/list/meteors_normal = list(
+	/obj/effect/meteor/dust=3,    /obj/effect/meteor/medium=8,    /obj/effect/meteor/big=3,
+	/obj/effect/meteor/flaming=1, /obj/effect/meteor/irradiated=3
+)
 
-/var/list/meteors_catastrophic = list(/obj/effect/meteor/medium=5, /obj/effect/meteor/big=75, \
-						  /obj/effect/meteor/flaming=10, /obj/effect/meteor/irradiated=10, /obj/effect/meteor/tunguska = 1) //for catastrophic meteor event
+//for threatening meteor event
+/var/list/meteors_threatening = list(
+	/obj/effect/meteor/medium=4,  /obj/effect/meteor/big=8,
+	/obj/effect/meteor/flaming=3, /obj/effect/meteor/irradiated=3
+)
+
+//for catastrophic meteor event
+/var/list/meteors_catastrophic = list(
+	/obj/effect/meteor/medium=5,   /obj/effect/meteor/big=75,
+	/obj/effect/meteor/flaming=10, /obj/effect/meteor/irradiated=10, /obj/effect/meteor/tunguska = 1
+)
 
 /var/list/meteors_dust = list(/obj/effect/meteor/dust) //for space dust event
 
@@ -19,7 +29,7 @@
 ///////////////////////////////
 
 /proc/pick_meteor_start(var/startSide = pick(cardinal))
-	var/startLevel = pick(config.station_levels)
+	var/startLevel = pick(maps_data.station_levels)
 	var/pickedstart = spaceDebrisStartLoc(startSide, startLevel)
 
 	return list(startLevel, pickedstart)
@@ -113,14 +123,15 @@
 		var/turf/T = get_turf(loc)
 		ram_turf(T)
 
-		if(prob(10) && (!istype(T, /turf/space)) && (!istype(T, /turf/simulated/floor/hull)))//randomly takes a 'hit' from ramming
+		//randomly takes a 'hit' from ramming
+		if(prob(10) && (!istype(T, /turf/space)) && (!istype(T, /turf/simulated/floor/hull)))
 			get_hit()
 
 	return .
 
 /obj/effect/meteor/Destroy()
 	walk(src,0) //this cancels the walk_towards() proc
-	..()
+	. = ..()
 
 /obj/effect/meteor/New()
 	..()
@@ -157,10 +168,12 @@
 /obj/effect/meteor/ex_act()
 	return
 
-/obj/effect/meteor/attackby(obj/item/weapon/W as obj, mob/user as mob, params)
-	if(istype(W, /obj/item/weapon/pickaxe))
-		qdel(src)
-		return
+/obj/effect/meteor/attackby(obj/item/I, mob/user, params)
+	if(QUALITY_DIGGING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_INSTANT, QUALITY_DIGGING, FAILCHANCE_EASY, required_stat = STAT_PHY))
+			user << SPAN_NOTICE("You broke the meteor in harmless dust.")
+			qdel(src)
+			return
 	..()
 
 /obj/effect/meteor/proc/make_debris()

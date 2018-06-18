@@ -36,7 +36,7 @@
 
 /obj/machinery/floorlayer/attackby(var/obj/item/W as obj, var/mob/user as mob)
 
-	if (istype(W, /obj/item/weapon/wrench))
+	if (istype(W, /obj/item/weapon/tool/wrench))
 		var/m = input("Choose work mode", "Mode") as null|anything in mode
 		mode[m] = !mode[m]
 		var/O = mode[m]
@@ -44,23 +44,23 @@
 		return
 
 	if(istype(W, /obj/item/stack/tile))
-		user << "<span class='notice'>\The [W] successfully loaded.</span>"
+		user << SPAN_NOTICE("\The [W] successfully loaded.")
 		user.drop_item(T)
 		TakeTile(T)
 		return
 
-	if(istype(W, /obj/item/weapon/crowbar))
+	if(istype(W, /obj/item/weapon/tool/crowbar))
 		if(!length(contents))
-			user << "<span class='notice'>\The [src] is empty.</span>"
+			user << SPAN_NOTICE("\The [src] is empty.")
 		else
 			var/obj/item/stack/tile/E = input("Choose remove tile type.", "Tiles") as null|anything in contents
 			if(E)
-				user <<  "<span class='notice'>You remove the [E] from /the [src].</span>"
+				user <<  SPAN_NOTICE("You remove the [E] from /the [src].")
 				E.loc = src.loc
 				T = null
 		return
 
-	if(istype(W, /obj/item/weapon/screwdriver))
+	if(istype(W, /obj/item/weapon/tool/screwdriver))
 		T = input("Choose tile type.", "Tiles") as null|anything in contents
 		return
 	..()

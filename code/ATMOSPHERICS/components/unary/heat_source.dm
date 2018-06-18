@@ -10,6 +10,7 @@
 	anchored = 1
 	use_power = 0
 	idle_power_usage = 5			//5 Watts for thermostat related circuitry
+	circuit = /obj/item/weapon/circuitboard/unary_atmos/heater
 
 	var/max_temperature = T20C + 680
 	var/internal_volume = 600	//L
@@ -21,19 +22,10 @@
 	var/heating = 0		//mainly for icon updates
 
 /obj/machinery/atmospherics/unary/heater/New()
-	..()
 	initialize_directions = dir
+	..()
 
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/unary_atmos/heater(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/stack/cable_coil(src, 5)
-
-	RefreshParts()
-
-/obj/machinery/atmospherics/unary/heater/initialize()
+/obj/machinery/atmospherics/unary/heater/atmos_init()
 	if(node)
 		return
 
@@ -48,7 +40,7 @@
 	//copied from pipe construction code since heaters/freezers don't use fittings and weren't doing this check - this all really really needs to be refactored someday.
 	//check that there are no incompatible pipes/machinery in our own location
 	for(var/obj/machinery/atmospherics/M in src.loc)
-		if(M != src && (M.initialize_directions & node_connect) && M.check_connect_types(M,src))	// matches at least one direction on either type of pipe & same connection type
+		if(M != src && (M.initialize_directions & node_connect) && M.check_connect_types(M, src))	// matches at least one direction on either type of pipe & same connection type
 			node = null
 			break
 
@@ -66,7 +58,7 @@
 	return
 
 
-/obj/machinery/atmospherics/unary/heater/process()
+/obj/machinery/atmospherics/unary/heater/Process()
 	..()
 
 	if(stat & (NOPOWER|BROKEN) || !use_power)
@@ -152,22 +144,23 @@
 
 	max_power_rating = initial(max_power_rating) * cap_rating / 2
 	max_temperature = max(initial(max_temperature) - T20C, 0) * ((bin_rating * 4 + cap_rating) / 5) + T20C
-	air_contents.volume = max(initial(internal_volume) - 200, 0) + 200 * bin_rating
+	if(air_contents)
+		air_contents.volume = max(initial(internal_volume) - 200, 0) + 200 * bin_rating
 	set_power_level(power_setting)
 
 /obj/machinery/atmospherics/unary/heater/proc/set_power_level(var/new_power_setting)
 	power_setting = new_power_setting
 	power_rating = max_power_rating * (power_setting/100)
 
-/obj/machinery/atmospherics/unary/heater/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(default_deconstruction_screwdriver(user, O))
-		return
-	if(default_deconstruction_crowbar(user, O))
-		return
-	if(default_part_replacement(user, O))
+/obj/machinery/atmospherics/unary/heater/attackby(var/obj/item/I as obj, var/mob/user as mob)
+
+	if(default_deconstruction(I, user))
 		return
 
-	..()
+	if(default_part_replacement(I, user))
+		return
+
+	return
 
 /obj/machinery/atmospherics/unary/heater/examine(mob/user)
 	..(user)

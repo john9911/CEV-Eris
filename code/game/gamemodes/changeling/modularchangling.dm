@@ -24,13 +24,8 @@ var/list/datum/power/changeling/powerinstances = list()
 	name = "Transform"
 	desc = "We take on the apperance and voice of one we have absorbed."
 	genomecost = 0
+	allowduringlesserform = 1
 	verbpath = /mob/proc/changeling_transform
-
-/datum/power/changeling/change_species
-	name = "Change Species"
-	desc = "We take on the apperance of a species that we have absorbed."
-	genomecost = 0
-	verbpath = /mob/proc/changeling_change_species
 
 /datum/power/changeling/fakedeath
 	name = "Regenerative Stasis"

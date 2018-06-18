@@ -40,7 +40,7 @@ mob/living/carbon/proc/handle_hallucinations()
 					var/list/slots_free = list(ui_lhand,ui_rhand)
 					if(l_hand) slots_free -= ui_lhand
 					if(r_hand) slots_free -= ui_rhand
-					if(istype(src,/mob/living/carbon/human))
+					if(ishuman(src))
 						var/mob/living/carbon/human/H = src
 						if(!H.belt) slots_free += ui_belt
 						if(!H.l_store) slots_free += ui_storage1
@@ -85,7 +85,7 @@ mob/living/carbon/proc/handle_hallucinations()
 				//src << "Danger Flash"
 				if(!halimage)
 					var/list/possible_points = list()
-					for(var/turf/simulated/floor/F in view(src,world.view))
+					for(var/turf/simulated/floor/F in trange(world.view, src))
 						possible_points += F
 					if(possible_points.len)
 						var/turf/simulated/floor/target = pick(possible_points)
@@ -147,7 +147,7 @@ mob/living/carbon/proc/handle_hallucinations()
 				//src << "Danger Flash"
 				if(!halbody)
 					var/list/possible_points = list()
-					for(var/turf/simulated/floor/F in view(src,world.view))
+					for(var/turf/simulated/floor/F in trange(world.view, src))
 						possible_points += F
 					if(possible_points.len)
 						var/turf/simulated/floor/target = pick(possible_points)
@@ -212,7 +212,7 @@ mob/living/carbon/proc/handle_hallucinations()
 	return start_txt + mocktxt + end_txt + "</TT></BODY></HTML>"
 
 proc/check_panel(mob/M)
-	if (istype(M, /mob/living/carbon/human) || istype(M, /mob/living/silicon/ai))
+	if (ishuman(M) || isAI(M))
 		if(M.hallucination < 15)
 			return 1
 	return 0*/
@@ -332,7 +332,7 @@ proc/check_panel(mob/M)
 		qdel(O)
 	return
 
-var/list/non_fakeattack_weapons = list(/obj/item/weapon/gun/projectile, /obj/item/ammo_magazine/a357,\
+var/list/non_fakeattack_weapons = list(/obj/item/weapon/gun/projectile, /obj/item/ammo_magazine/sl357,\
 	/obj/item/weapon/gun/energy/crossbow, /obj/item/weapon/melee/energy/sword,\
 	/obj/item/weapon/storage/box/syndicate, /obj/item/weapon/storage/box/emps,\
 	/obj/item/weapon/cartridge/syndicate, /obj/item/clothing/under/chameleon,\
@@ -342,7 +342,7 @@ var/list/non_fakeattack_weapons = list(/obj/item/weapon/gun/projectile, /obj/ite
 	/obj/item/weapon/storage/toolbox/syndicate, /obj/item/weapon/aiModule,\
 	/obj/item/device/radio/headset/syndicate,	/obj/item/weapon/plastique,\
 	/obj/item/device/powersink, /obj/item/weapon/storage/box/syndie_kit,\
-	/obj/item/toy/syndicateballoon, /obj/item/weapon/gun/energy/captain,\
+	/obj/item/weapon/gun/energy/captain,\
 	/obj/item/weapon/hand_tele, /obj/item/weapon/rcd, /obj/item/weapon/tank/jetpack,\
 	/obj/item/clothing/under/rank/captain, /obj/item/device/aicard,\
 	/obj/item/clothing/shoes/magboots, /obj/item/blueprints, /obj/item/weapon/disk/nuclear,\

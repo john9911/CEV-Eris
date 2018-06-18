@@ -27,7 +27,6 @@
 	use_power = 1
 	idle_power_usage = 100
 
-	var/initialized = 0 // Map-placed ones break if seeds are loaded right at the start of the round, so we do it on the first interaction
 	var/list/datum/seed_pile/piles = list()
 	var/list/starting_seeds = list()
 	var/list/scanner = list() // What properties we can view
@@ -215,15 +214,15 @@
 		if (loaded)
 			user.visible_message("[user] puts the seeds from \the [O.name] into \the [src].", "You put the seeds from \the [O.name] into \the [src].")
 		else
-			user << "<span class='notice'>There are no seeds in \the [O.name].</span>"
+			user << SPAN_NOTICE("There are no seeds in \the [O.name].")
 		return
-	else if(istype(O, /obj/item/weapon/wrench))
+	else if(istype(O, /obj/item/weapon/tool/wrench))
 		playsound(loc, 'sound/items/Ratchet.ogg', 50, 1)
 		anchored = !anchored
 		user << "You [anchored ? "wrench" : "unwrench"] \the [src]."
 
 /obj/machinery/seed_storage/proc/add(var/obj/item/seeds/O as obj)
-	if (istype(O.loc, /mob))
+	if (ismob(O.loc))
 		var/mob/user = O.loc
 		user.remove_from_mob(O)
 	else if(istype(O.loc,/obj/item/weapon/storage))

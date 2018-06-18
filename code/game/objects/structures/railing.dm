@@ -33,7 +33,7 @@
 	broken = 1
 	for(var/obj/structure/railing/R in oview(src, 1))
 		R.update_icon()
-	..()
+	. = ..()
 
 /obj/structure/railing/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)
 	if(!mover)
@@ -52,16 +52,16 @@
 	if(health < maxhealth)
 		switch(health / maxhealth)
 			if(0.0 to 0.5)
-				user << "<span class='warning'>It looks severely damaged!</span>"
+				user << SPAN_WARNING("It looks severely damaged!")
 			if(0.25 to 0.5)
-				user << "<span class='warning'>It looks damaged!</span>"
+				user << SPAN_WARNING("It looks damaged!")
 			if(0.5 to 1.0)
-				user << "<span class='notice'>It has a few scrapes and dents.</span>"
+				user << SPAN_NOTICE("It has a few scrapes and dents.")
 
 /obj/structure/railing/proc/take_damage(amount)
 	health -= amount
 	if(health <= 0)
-		visible_message("<span class='warning'>\The [src] breaks down!</span>")
+		visible_message(SPAN_WARNING("\The [src] breaks down!"))
 		playsound(loc, 'sound/effects/grillehit.ogg', 50, 1)
 		new /obj/item/stack/rods(get_turf(usr))
 		qdel(src)
@@ -210,69 +210,74 @@
 		return 0
 	return 1
 
-/obj/structure/railing/attackby(obj/item/W as obj, mob/user as mob)
-	// Dismantle
-	if(istype(W, /obj/item/weapon/wrench) && !anchored)
-		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-		if(do_after(user, 20, src))
-			user.visible_message("<span class='notice'>\The [user] dismantles \the [src].</span>", "<span class='notice'>You dismantle \the [src].</span>")
-			new /obj/item/stack/material/steel(get_turf(usr))
-			new /obj/item/stack/material/steel(get_turf(usr))
-			qdel(src)
+/obj/structure/railing/affect_grab(var/mob/user, var/mob/living/target, var/state)
+	var/obj/occupied = turf_is_crowded()
+	if(occupied)
+		user << SPAN_DANGER("There's \a [occupied] in the way.")
+		return
+	if (state < GRAB_AGGRESSIVE)
+		if(user.a_intent == I_HURT)
+			if(prob(15))
+				target.Weaken(5)
+			target.apply_damage(8, def_zone = BP_HEAD)
+			take_damage(8)
+			visible_message(SPAN_DANGER("[user] slams [target]'s face against \the [src]!"))
+			playsound(loc, 'sound/effects/grillehit.ogg', 50, 1)
+		else
+			user << SPAN_DANGER("You need a better grip to do that!")
 			return
-
-	// Repair
-	if(health < maxhealth && istype(W, /obj/item/weapon/weldingtool))
-		var/obj/item/weapon/weldingtool/F = W
-		if(F.welding)
-			playsound(src.loc, 'sound/items/Welder.ogg', 50, 1)
-			if(do_after(user, 20, src))
-				user.visible_message("<span class='notice'>\The [user] repairs some damage to \the [src].</span>", "<span class='notice'>You repair some damage to \the [src].</span>")
-				health = min(health+(maxhealth/5), maxhealth)//max(health+(maxhealth/5), maxhealth) // 20% repair per application
-				return
-
-	// Install
-	if(istype(W, /obj/item/weapon/screwdriver))
-		user.visible_message(anchored ? "<span class='notice'>\The [user] begins unscrew \the [src].</span>" : "<span class='notice'>\The [user] begins fasten \the [src].</span>" )
-		playsound(loc, 'sound/items/Screwdriver.ogg', 75, 1)
-		if(do_after(user, 10, src))
-			user << (anchored ? "<span class='notice'>You have unfastened \the [src] from the floor.</span>" : "<span class='notice'>You have fastened \the [src] to the floor.</span>")
-			anchored = !anchored
-			update_icon()
-			return
-
-	// Handle harm intent grabbing/tabling.
-	if(istype(W, /obj/item/weapon/grab) && get_dist(src,user)<2)
-		var/obj/item/weapon/grab/G = W
-		if (istype(G.affecting, /mob/living))
-			var/mob/living/M = G.affecting
-			var/obj/occupied = turf_is_crowded()
-			if(occupied)
-				user << "<span class='danger'>There's \a [occupied] in the way.</span>"
-				return
-			if (G.state < 2)
-				if(user.a_intent == I_HURT)
-					if (prob(15))	M.Weaken(5)
-					M.apply_damage(8,def_zone = "head")
-					take_damage(8)
-					visible_message("<span class='danger'>[G.assailant] slams [G.affecting]'s face against \the [src]!</span>")
-					playsound(loc, 'sound/effects/grillehit.ogg', 50, 1)
-				else
-					user << "<span class='danger'>You need a better grip to do that!</span>"
-					return
-			else
-				if (get_turf(G.affecting) == get_turf(src))
-					G.affecting.forceMove(get_step(src, src.dir))
-				else
-					G.affecting.forceMove(get_turf(src))
-				G.affecting.Weaken(5)
-				visible_message("<span class='danger'>[G.assailant] throws [G.affecting] over \the [src]!</span>")
-			qdel(W)
-			return
-
 	else
-		playsound(loc, 'sound/effects/grillehit.ogg', 50, 1)
-		take_damage(W.force)
+		if (get_turf(target) == get_turf(src))
+			target.forceMove(get_step(src, src.dir))
+		else
+			target.forceMove(get_turf(src))
+		target.Weaken(5)
+		visible_message(SPAN_DANGER("[user] throws [target] over \the [src]!"))
+	return TRUE
+
+
+
+/obj/structure/railing/attackby(obj/item/I, mob/user)
+
+	var/list/usable_qualities = list(QUALITY_SCREW_DRIVING)
+	if(health < maxhealth)
+		usable_qualities.Add(QUALITY_WELDING)
+	if(!anchored)
+		usable_qualities.Add(QUALITY_BOLT_TURNING)
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_SCREW_DRIVING)
+			if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+				user << (anchored ? SPAN_NOTICE("You have unfastened \the [src] from the floor.") : SPAN_NOTICE("You have fastened \the [src] to the floor."))
+				anchored = !anchored
+				update_icon()
+				return
+			return
+
+		if(QUALITY_WELDING)
+			if(health < maxhealth)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+					user.visible_message(SPAN_NOTICE("\The [user] repairs some damage to \the [src]."), SPAN_NOTICE("You repair some damage to \the [src]."))
+					health = min(health+(maxhealth/5), maxhealth)//max(health+(maxhealth/5), maxhealth) // 20% repair per application
+					return
+			return
+
+		if(QUALITY_BOLT_TURNING)
+			if(!anchored)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+					user.visible_message(SPAN_NOTICE("\The [user] dismantles \the [src]."), SPAN_NOTICE("You dismantle \the [src]."))
+					new /obj/item/stack/material/steel(src.loc, 4)
+					qdel(src)
+					return
+			return
+
+		if(ABORT_CHECK)
+			return
+
+	playsound(loc, 'sound/effects/grillehit.ogg', 50, 1)
+	take_damage(I.force)
 
 	return ..()
 
@@ -294,7 +299,7 @@
 	if(!can_climb(user))
 		return
 
-	usr.visible_message("<span class='warning'>[user] starts climbing onto \the [src]!</span>")
+	usr.visible_message(SPAN_WARNING("[user] starts climbing onto \the [src]!"))
 	climbers |= user
 
 	if(!do_after(user,(issmall(user) ? 20 : 34)))
@@ -306,7 +311,7 @@
 		return
 
 	if(!neighbor_turf_passable())
-		user << "<span class='danger'>You can't climb there, the way is blocked.</span>"
+		user << SPAN_DANGER("You can't climb there, the way is blocked.")
 		climbers -= user
 		return
 
@@ -315,6 +320,6 @@
 	else
 		usr.forceMove(get_turf(src))
 
-	usr.visible_message("<span class='warning'>[user] climbed over \the [src]!</span>")
+	usr.visible_message(SPAN_WARNING("[user] climbed over \the [src]!"))
 	if(!anchored)	take_damage(maxhealth) // Fatboy
 	climbers -= user

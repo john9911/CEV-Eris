@@ -3,6 +3,8 @@
 
 var/list/ai_list = list()
 var/list/ai_verbs_default = list(
+	/mob/living/silicon/ai/proc/ai_movement_up,
+	/mob/living/silicon/ai/proc/ai_movement_down,
 	/mob/living/silicon/ai/proc/ai_announcement,
 	/mob/living/silicon/ai/proc/ai_call_shuttle,
 	// /mob/living/silicon/ai/proc/ai_recall_shuttle,
@@ -47,15 +49,16 @@ var/list/ai_verbs_default = list(
 	anchored = 1 // -- TLE
 	density = 1
 	status_flags = CANSTUN|CANPARALYSE|CANPUSH
-	shouldnt_see = list(/obj/effect/rune)
+//	shouldnt_see = list()
 	var/list/network = list("Exodus")
 	var/obj/machinery/camera/camera = null
 	var/list/connected_robots = list()
 	var/aiRestorePowerRoutine = 0
 	var/viewalerts = 0
 	var/icon/holo_icon//Default is assigned when AI is created.
+	var/obj/mecha/controlled_mech //For controlled_mech a mech, to determine whether to relaymove or use the AI eye.
 	var/obj/item/device/pda/ai/aiPDA = null
-	var/obj/item/device/multitool/aiMulti = null
+	var/obj/item/weapon/tool/multitool/aiMulti = null
 	var/obj/item/device/radio/headset/heads/ai_integrated/aiRadio = null
 	var/camera_light_on = 0	//Defines if the AI toggled the light on the camera it's looking through.
 	var/datum/trackable/track = null
@@ -94,6 +97,40 @@ var/list/ai_verbs_default = list(
 /mob/living/silicon/ai/proc/remove_ai_verbs()
 	src.verbs -= ai_verbs_default
 
+
+/mob/living/silicon/ai/proc/add_mecha_verbs()
+	verbs += /mob/living/silicon/ai/proc/view_mecha_stats
+	verbs += /mob/living/silicon/ai/proc/AIeject
+
+
+/mob/living/silicon/ai/proc/remove_mecha_verbs()
+	verbs -= /mob/living/silicon/ai/proc/view_mecha_stats
+	verbs -= /mob/living/silicon/ai/proc/AIeject
+
+/mob/living/silicon/ai/proc/view_mecha_stats()
+	set name = "View Stats"
+	set category = "Exosuit Interface"
+	set popup_menu = 0
+	if(controlled_mech)
+		controlled_mech.view_stats()
+
+
+/mob/living/silicon/ai/proc/AIeject()
+	set name = "AI Eject"
+	set category = "Exosuit Interface"
+	set popup_menu = 0
+	if(controlled_mech)
+		controlled_mech.AIeject()
+
+
+/mob/living/silicon/ai/MiddleClickOn(var/atom/A)
+    if(!control_disabled && A.AIMiddleClick(src))
+        return
+    if(controlled_mech) //Are we piloting a mech? Placed here so the modifiers are not overridden.
+        controlled_mech.click_action(A, src) //Override AI normal click behavior.  , params
+        return
+    ..()
+
 /mob/living/silicon/ai/New(loc, var/datum/ai_laws/L, var/obj/item/device/mmi/B, var/safety = 0)
 	announcement = new()
 	announcement.title = "A.I. Announcement"
@@ -105,7 +142,7 @@ var/list/ai_verbs_default = list(
 	var/pickedName = null
 	while(!pickedName)
 		pickedName = pick(ai_names)
-		for (var/mob/living/silicon/ai/A in mob_list)
+		for (var/mob/living/silicon/ai/A in SSmobs.mob_list)
 			if (A.real_name == pickedName && possibleNames.len > 1) //fixing the theoretically possible infinite loop
 				possibleNames -= pickedName
 				pickedName = null
@@ -129,7 +166,7 @@ var/list/ai_verbs_default = list(
 	aiRadio = new(src)
 	common_radio = aiRadio
 	aiRadio.myAi = src
-	additional_law_channels["Holopad"] = ":h"
+	additional_law_channels["Holopad"] = "h"
 
 	aiCamera = new/obj/item/device/camera/siliconcam/ai_camera(src)
 
@@ -137,9 +174,8 @@ var/list/ai_verbs_default = list(
 		add_ai_verbs(src)
 
 	//Languages
-	add_language("Robot Talk", 1)
-	add_language("Galactic Common", 1)
-	add_language(LANGUAGE_SOL_COMMON, 0)
+	add_language(LANGUAGE_ROBOT, 1)
+	add_language(LANGUAGE_COMMON, 1)
 
 	if(!safety)//Only used by AIize() to successfully spawn an AI.
 		if (!B)//If there is no player/brain inside.
@@ -160,7 +196,6 @@ var/list/ai_verbs_default = list(
 	hud_list[LIFE_HUD] 		  = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[ID_HUD]          = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[WANTED_HUD]      = image('icons/mob/hud.dmi', src, "hudblank")
-	hud_list[IMPLOYAL_HUD]    = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[IMPCHEM_HUD]     = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[IMPTRACK_HUD]    = image('icons/mob/hud.dmi', src, "hudblank")
 	hud_list[SPECIALROLE_HUD] = image('icons/mob/hud.dmi', src, "hudblank")
@@ -186,7 +221,7 @@ var/list/ai_verbs_default = list(
 
 	src << radio_text
 
-	if (malf && !(mind in malf.current_antagonists))
+	if (!player_is_antag_id(mind, ROLE_MALFUNCTION))
 		show_laws()
 		src << "<b>These laws may be changed by other players, or by you being the traitor.</b>"
 
@@ -282,7 +317,7 @@ var/list/ai_verbs_default = list(
 	. = ..()
 	powered_ai = null
 
-/obj/machinery/ai_powersupply/process()
+/obj/machinery/ai_powersupply/Process()
 	if(!powered_ai || powered_ai.stat == DEAD)
 		qdel(src)
 		return
@@ -298,6 +333,16 @@ var/list/ai_verbs_default = list(
 		use_power(50000) // Less optimalised but only called if AI is unwrenched. This prevents usage of wrenching as method to keep AI operational without power. Intellicard is for that.
 	if(powered_ai.anchored)
 		use_power = 2
+
+/mob/living/silicon/ai/proc/ai_movement_up()
+	set category = "Silicon Commands"
+	set name = "Move Upwards"
+	zMove(UP)
+
+/mob/living/silicon/ai/proc/ai_movement_down()
+	set category = "Silicon Commands"
+	set name = "Move Downwards"
+	zMove(DOWN)
 
 /mob/living/silicon/ai/proc/pick_icon()
 	set category = "Silicon Commands"
@@ -346,19 +391,13 @@ var/list/ai_verbs_default = list(
 	if(check_unable(AI_CHECK_WIRELESS))
 		return
 
-	var/confirm = alert("Are you sure you want to call the shuttle?", "Confirm Shuttle Call", "Yes", "No")
+	var/confirm = alert("Are you sure you want to evacuate?", "Confirm Evacuation", "Yes", "No")
 
 	if(check_unable(AI_CHECK_WIRELESS))
 		return
 
 	if(confirm == "Yes")
 		call_shuttle_proc(src)
-
-	// hack to display shuttle timer
-	if(emergency_shuttle.online())
-		var/obj/machinery/computer/communications/C = locate() in machines
-		if(C)
-			C.post_status("shuttle")
 
 /mob/living/silicon/ai/proc/ai_recall_shuttle()
 	set category = "Silicon Commands"
@@ -382,15 +421,15 @@ var/list/ai_verbs_default = list(
 	if(check_unable(AI_CHECK_WIRELESS))
 		return
 	if(!is_relay_online())
-		usr <<"<span class='warning'>No Emergency Bluespace Relay detected. Unable to transmit message.</span>"
+		usr <<SPAN_WARNING("No Emergency Bluespace Relay detected. Unable to transmit message.")
 		return
 	if(emergency_message_cooldown)
-		usr << "<span class='warning'>Arrays recycling. Please stand by.</span>"
+		usr << SPAN_WARNING("Arrays recycling. Please stand by.")
 		return
 	var/input = sanitize(input(usr, "Please choose a message to transmit to [boss_short] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination.  Transmission does not guarantee a response. There is a 30 second delay before you may send another message, be clear, full and concise.", "To abort, send an empty message.", ""))
 	if(!input)
 		return
-	usr << "<span class='notice'>No response from the remote server. Please, contact your system administrator.</span>"
+	usr << SPAN_NOTICE("No response from the remote server. Please, contact your system administrator.")
 	log_say("[key_name(usr)] has made an IA [boss_short] announcement: [input]")
 	emergency_message_cooldown = 1
 	spawn(300)
@@ -432,12 +471,12 @@ var/list/ai_verbs_default = list(
 			if(H)
 				H.attack_ai(src) //may as well recycle
 			else
-				src << "<span class='notice'>Unable to locate the holopad.</span>"
+				src << SPAN_NOTICE("Unable to locate the holopad.")
 
 	if (href_list["track"])
-		var/mob/target = locate(href_list["track"]) in mob_list
+		var/mob/target = locate(href_list["track"]) in SSmobs.mob_list
 
-		if(target && (!istype(target, /mob/living/carbon/human) || rhtml_decode(href_list["trackname"]) == target:get_face_name()))
+		if(target && (!ishuman(target) || rhtml_decode(href_list["trackname"]) == target:get_face_name()))
 			ai_actual_track(target)
 		else
 			src << "\red System error. Cannot locate [rhtml_decode(href_list["trackname"])]."
@@ -446,14 +485,18 @@ var/list/ai_verbs_default = list(
 	return
 
 /mob/living/silicon/ai/reset_view(atom/A)
+	if(controlled_mech)
+		return ..(controlled_mech)
 	if(camera)
 		camera.set_light(0)
 	if(istype(A,/obj/machinery/camera))
 		camera = A
 	..()
 	if(istype(A,/obj/machinery/camera))
-		if(camera_light_on)	A.set_light(AI_CAMERA_LUMINOSITY)
-		else				A.set_light(0)
+		if(camera_light_on)
+			A.set_light(AI_CAMERA_LUMINOSITY)
+		else
+			A.set_light(0)
 
 
 /mob/living/silicon/ai/proc/switchCamera(var/obj/machinery/camera/C)
@@ -514,7 +557,7 @@ var/list/ai_verbs_default = list(
 		if(network in C.network)
 			eyeobj.setLoc(get_turf(C))
 			break
-	src << "<span class='notice'>Switched to [network] camera network.</span>"
+	src << SPAN_NOTICE("Switched to [network] camera network.")
 //End of code by Mord_Sith
 
 /mob/living/silicon/ai/proc/ai_statuschange()
@@ -622,21 +665,21 @@ var/list/ai_verbs_default = list(
 		var/obj/item/device/aicard/card = W
 		card.grab_ai(src, user)
 
-	else if(istype(W, /obj/item/weapon/wrench))
+	else if(istype(W, /obj/item/weapon/tool/wrench))
 		if(anchored)
-			user.visible_message("<span class='notice'>\The [user] starts to unbolt \the [src] from the plating...</span>")
+			user.visible_message(SPAN_NOTICE("\The [user] starts to unbolt \the [src] from the plating..."))
 			if(!do_after(user,40, src))
-				user.visible_message("<span class='notice'>\The [user] decides not to unbolt \the [src].</span>")
+				user.visible_message(SPAN_NOTICE("\The [user] decides not to unbolt \the [src]."))
 				return
-			user.visible_message("<span class='notice'>\The [user] finishes unfastening \the [src]!</span>")
+			user.visible_message(SPAN_NOTICE("\The [user] finishes unfastening \the [src]!"))
 			anchored = 0
 			return
 		else
-			user.visible_message("<span class='notice'>\The [user] starts to bolt \the [src] to the plating...</span>")
+			user.visible_message(SPAN_NOTICE("\The [user] starts to bolt \the [src] to the plating..."))
 			if(!do_after(user,40,src))
-				user.visible_message("<span class='notice'>\The [user] decides not to bolt \the [src].</span>")
+				user.visible_message(SPAN_NOTICE("\The [user] decides not to bolt \the [src]."))
 				return
-			user.visible_message("<span class='notice'>\The [user] finishes fastening down \the [src]!</span>")
+			user.visible_message(SPAN_NOTICE("\The [user] finishes fastening down \the [src]!"))
 			anchored = 1
 			return
 	else
@@ -670,18 +713,18 @@ var/list/ai_verbs_default = list(
 
 /mob/living/silicon/ai/proc/check_unable(var/flags = 0, var/feedback = 1)
 	if(stat == DEAD)
-		if(feedback) src << "<span class='warning'>You are dead!</span>"
+		if(feedback) src << SPAN_WARNING("You are dead!")
 		return 1
 
 	if(aiRestorePowerRoutine)
-		if(feedback) src << "<span class='warning'>You lack power!</span>"
+		if(feedback) src << SPAN_WARNING("You lack power!")
 		return 1
 
 	if((flags & AI_CHECK_WIRELESS) && src.control_disabled)
-		if(feedback) src << "<span class='warning'>Wireless control is disabled!</span>"
+		if(feedback) src << SPAN_WARNING("Wireless control is disabled!")
 		return 1
 	if((flags & AI_CHECK_RADIO) && src.aiRadio.disabledAi)
-		if(feedback) src << "<span class='warning'>System Error - Transceiver Disabled!</span>"
+		if(feedback) src << SPAN_WARNING("System Error - Transceiver Disabled!")
 		return 1
 	return 0
 

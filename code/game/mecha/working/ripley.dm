@@ -5,7 +5,7 @@
 	initial_icon = "ripley"
 	step_in = 6
 	max_temperature = 20000
-	health = 200
+	health = 300
 	wreckage = /obj/effect/decal/mecha_wreckage/ripley
 	cargo_capacity = 10
 
@@ -17,7 +17,7 @@
 			T.Entered(A)
 		step_rand(A)
 	cargo.Cut()
-	..()
+	. = ..()
 
 /obj/mecha/working/ripley/firefighter
 	desc = "Standart APLU chassis was refitted with additional thermal protection and cistern."
@@ -25,7 +25,7 @@
 	icon_state = "firefighter"
 	initial_icon = "firefighter"
 	max_temperature = 65000
-	health = 250
+	health = 350
 	lights_power = 8
 	damage_absorption = list("fire"=0.5,"bullet"=0.8,"bomb"=0.5)
 	wreckage = /obj/effect/decal/mecha_wreckage/ripley/firefighter

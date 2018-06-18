@@ -7,7 +7,7 @@
 	gender = NEUTER
 	throw_speed = 3
 	throw_range = 7
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 	sharp = 0
 	edge = 0
 
@@ -15,7 +15,7 @@
 	var/unbreakable
 	var/force_divisor = 0.5
 	var/thrown_force_divisor = 0.5
-	var/default_material = DEFAULT_WALL_MATERIAL
+	var/default_material = MATERIAL_STEEL
 	var/material/material
 	var/drops_debris = 1
 
@@ -57,12 +57,12 @@
 		if(applies_material_colour)
 			color = material.icon_colour
 		if(material.products_need_process())
-			processing_objects |= src
+			START_PROCESSING(SSobj, src)
 		update_force()
 
 /obj/item/weapon/material/Destroy()
-	processing_objects -= src
-	..()
+	STOP_PROCESSING(SSobj, src)
+	. = ..()
 
 /obj/item/weapon/material/apply_hit_effect()
 	..()
@@ -79,8 +79,8 @@
 
 /obj/item/weapon/material/proc/shatter(var/consumed)
 	var/turf/T = get_turf(src)
-	T.visible_message("<span class='danger'>\The [src] [material.destruction_desc]!</span>")
-	if(istype(loc, /mob/living))
+	T.visible_message(SPAN_DANGER("\The [src] [material.destruction_desc]!"))
+	if(isliving(loc))
 		var/mob/living/M = loc
 		M.drop_from_inventory(src)
 	playsound(src, "shatter", 70, 1)
@@ -88,7 +88,7 @@
 	qdel(src)
 /*
 Commenting this out pending rebalancing of radiation based on small objects.
-/obj/item/weapon/material/process()
+/obj/item/weapon/material/Process()
 	if(!material.radioactivity)
 		return
 	for(var/mob/living/L in range(1,src))
@@ -106,8 +106,8 @@ Commenting this out pending rebalancing of radiation based on small objects.
 	check_health(1)
 
 /obj/item/weapon/material/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W,/obj/item/weapon/weldingtool))
-		var/obj/item/weapon/weldingtool/WT = W
+	if(istype(W,/obj/item/weapon/tool/weldingtool))
+		var/obj/item/weapon/tool/weldingtool/WT = W
 		if(material.ignition_point && WT.remove_fuel(0, user))
 			TemperatureAct(150)
 	else

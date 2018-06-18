@@ -4,13 +4,18 @@
 	flag = BARTENDER
 	department = "Civilian"
 	department_flag = CIVILIAN
-	faction = "Station"
+	faction = "CEV Eris"
 	total_positions = 1
 	spawn_positions = 1
 	supervisors = "the First Officer"
 	selection_color = "#dddddd"
+	also_known_languages = list(LANGUAGE_CYRILLIC = 25)
 	access = list(access_hydroponics, access_bar, access_kitchen)
-	minimal_access = list(access_bar)
+
+	stat_modifers = list(
+		STAT_AGI = 10,
+	)
+
 	uniform = /obj/item/clothing/under/rank/bartender
 	pda = /obj/item/device/pda/bar
 	ear = /obj/item/device/radio/headset/headset_service
@@ -38,6 +43,10 @@
 			new /obj/item/ammo_casing/shotgun/beanbag(Barpack)
 		return 1
 
+/obj/landmark/join/start/bartender
+	name = "Bartender"
+	icon_state = "player-grey"
+	join_tag = /datum/job/bartender
 
 
 /datum/job/chef
@@ -45,14 +54,13 @@
 	flag = CHEF
 	department = "Civilian"
 	department_flag = CIVILIAN
-	faction = "Station"
+	faction = "CEV Eris"
 	total_positions = 2
 	spawn_positions = 2
 	supervisors = "the First Officer"
 	selection_color = "#dddddd"
+	also_known_languages = list(LANGUAGE_CYRILLIC = 15)
 	access = list(access_hydroponics, access_bar, access_kitchen)
-	minimal_access = list(access_kitchen)
-	alt_titles = list("Cook")
 	idtype = /obj/item/weapon/card/id/ltgrey
 
 	uniform = /obj/item/clothing/under/rank/chef
@@ -62,6 +70,11 @@
 	suit = /obj/item/clothing/suit/chef
 	ear = /obj/item/device/radio/headset/headset_service
 
+/obj/landmark/join/start/chef
+	name = "Chef"
+	icon_state = "player-grey"
+	join_tag = /datum/job/chef
+
 
 
 /datum/job/hydro
@@ -69,124 +82,51 @@
 	flag = BOTANIST
 	department = "Civilian"
 	department_flag = CIVILIAN
-	faction = "Station"
+	faction = "CEV Eris"
 	total_positions = 2
 	spawn_positions = 1
 	supervisors = "the First Officer"
 	selection_color = "#dddddd"
+	also_known_languages = list(LANGUAGE_CYRILLIC = 15)
 	access = list(access_hydroponics, access_bar, access_kitchen)
-	minimal_access = list(access_hydroponics)
-	alt_titles = list("Hydroponicist")
 	idtype = /obj/item/weapon/card/id/hydro
+
+	stat_modifers = list(
+		STAT_BIO = 10,
+	)
 
 	uniform = /obj/item/clothing/under/rank/hydroponics
 	pda = /obj/item/device/pda/botanist
 	suit = /obj/item/clothing/suit/apron
 	gloves = /obj/item/clothing/gloves/botanic_leather
 	ear = /obj/item/device/radio/headset/headset_service
-
-	backpacks = list(
-		/obj/item/weapon/storage/backpack/,\
-		///obj/item/weapon/storage/backpack,\
-		/obj/item/weapon/storage/backpack/satchel_norm,\
-		/obj/item/weapon/storage/backpack/satchel
-		)
-
 	put_in_backpack = list(\
-		/obj/item/device/analyzer/plant_analyzer
+		/obj/item/device/scanner/analyzer/plant_analyzer
 		)
 
-
-//Cargo
-/datum/job/qm
-	title = "Quartermaster"
-	flag = QUARTERMASTER
-	department = "Cargo"
-	department_flag = CIVILIAN
-	faction = "Station"
-	total_positions = 1
-	spawn_positions = 1
-	supervisors = "the First Officer"
-	selection_color = "#dddddd"
-	economic_modifier = 5
-	access = list(access_maint_tunnels, access_mailsorting, access_cargo, access_cargo_bot, access_qm, access_mining, access_mining_station)
-	minimal_access = list(access_maint_tunnels, access_mailsorting, access_cargo, access_cargo_bot, access_qm, access_mining, access_mining_station)
-	idtype = /obj/item/weapon/card/id/car
-	ideal_character_age = 40
+/obj/landmark/join/start/hydro
+	name = "Gardener"
+	icon_state = "player-grey"
+	join_tag = /datum/job/hydro
 
 
-	uniform = /obj/item/clothing/under/rank/cargotech
-	suit = /obj/item/clothing/suit/storage/qm_coat
-	shoes = /obj/item/clothing/shoes/color/brown
-	pda = /obj/item/device/pda/quartermaster
-	gloves = /obj/item/clothing/gloves/thick
-	ear = /obj/item/device/radio/headset/headset_cargo
-	hand = /obj/item/weapon/clipboard
-	glasses = /obj/item/clothing/glasses/sunglasses
-
-
-
-/datum/job/cargo_tech
-	title = "Cargo Technician"
-	flag = CARGOTECH
-	department = "Cargo"
-	department_flag = CIVILIAN
-	faction = "Station"
-	total_positions = 2
-	spawn_positions = 2
-	supervisors = "the quartermaster and the First Officer"
-	selection_color = "#dddddd"
-	access = list(access_maint_tunnels, access_mailsorting, access_cargo, access_cargo_bot, access_qm, access_mining, access_mining_station)
-	minimal_access = list(access_maint_tunnels, access_cargo, access_cargo_bot, access_mailsorting)
-	idtype = /obj/item/weapon/card/id/car
-
-	uniform = /obj/item/clothing/under/rank/cargotech
-	suit = /obj/item/clothing/suit/storage/cargo_jacket
-	pda = /obj/item/device/pda/cargo
-	ear = /obj/item/device/radio/headset/headset_cargo
-
-
-
-/datum/job/mining
-	title = "Shaft Miner"
-	flag = MINER
-	department = "Cargo"
-	department_flag = CIVILIAN
-	faction = "Station"
-	total_positions = 3
-	spawn_positions = 3
-	supervisors = "the quartermaster and the First Officer"
-	selection_color = "#dddddd"
-	economic_modifier = 5
-	access = list(access_maint_tunnels, access_mailsorting, access_cargo, access_cargo_bot, access_qm, access_mining, access_mining_station)
-	minimal_access = list(access_mining, access_mining_station, access_mailsorting)
-	alt_titles = list("Drill Technician","Prospector")
-	idtype = /obj/item/weapon/card/id/car
-
-	uniform = /obj/item/clothing/under/rank/miner
-	pda = /obj/item/device/pda/shaftminer
-	ear = /obj/item/device/radio/headset/headset_cargo
-	survival_gear = /obj/item/weapon/storage/box/engineer
-
-	put_in_backpack = list(\
-		/obj/item/weapon/crowbar,\
-		/obj/item/weapon/storage/bag/ore
-		)
-
-
-
-/datum/job/clown
-	title = "Clown"
-	flag = CLOWN
+/datum/job/actor
+	title = "Actor"
+	flag = ACTOR
 	department = "Civilian"
 	department_flag = CIVILIAN
-	faction = "Station"
-	total_positions = 1
-	spawn_positions = 1
+	faction = "CEV Eris"
+	total_positions = 2
+	spawn_positions = 2
 	supervisors = "the First Officer"
 	selection_color = "#dddddd"
-	access = list(access_maint_tunnels)
-	minimal_access = list(access_maint_tunnels, access_theatre)
+	also_known_languages = list(LANGUAGE_CYRILLIC = 15)
+	access = list(access_maint_tunnels, access_theatre)
+
+	stat_modifers = list(
+		STAT_ROB = 10,
+		STAT_AGI = 20,
+	)
 
 	uniform = /obj/item/clothing/under/rank/clown
 	shoes = /obj/item/clothing/shoes/clown_shoes
@@ -214,42 +154,10 @@
 		H.mutations.Add(CLUMSY)
 		return 1
 
-
-/datum/job/mime
-	title = "Mime"
-	flag = MIME
-	department = "Civilian"
-	department_flag = CIVILIAN
-	faction = "Station"
-	total_positions = 1
-	spawn_positions = 1
-	supervisors = "the First Officer"
-	selection_color = "#dddddd"
-	access = list(access_maint_tunnels)
-	minimal_access = list(access_maint_tunnels, access_theatre)
-
-	uniform = /obj/item/clothing/under/mime
-	pda = /obj/item/device/pda/mime
-	hat = /obj/item/clothing/head/beret
-	gloves = /obj/item/clothing/gloves/color/white
-	mask = /obj/item/clothing/mask/gas/mime
-	ear = /obj/item/device/radio/headset/headset_service
-
-/*
-	put_in_backpack = list(\
-		/obj/item/toy/crayon/mime,\
-		/obj/item/weapon/reagent_containers/food/drinks/bottle/bottleofnothing
-	)
-*/
-
-	equip(var/mob/living/carbon/human/H)
-		if(!..())	return 0
-//		H.verbs += /client/proc/mimespeak
-//		H.verbs += /client/proc/mimewall
-//		H.mind.special_verbs += /client/proc/mimespeak
-//		H.mind.special_verbs += /client/proc/mimewall
-		H.miming = 1
-		return 1
+/obj/landmark/join/start/actor
+	name = "Actor"
+	icon_state = "player-grey"
+	join_tag = /datum/job/actor
 
 
 /datum/job/janitor
@@ -257,61 +165,23 @@
 	flag = JANITOR
 	department = "Civilian"
 	department_flag = CIVILIAN
-	faction = "Station"
+	faction = "CEV Eris"
 	total_positions = 1
 	spawn_positions = 1
 	supervisors = "the First Officer"
 	selection_color = "#dddddd"
+	also_known_languages = list(LANGUAGE_CYRILLIC = 15)
 	access = list(access_janitor, access_maint_tunnels)
-	minimal_access = list(access_janitor, access_maint_tunnels)
+
+	stat_modifers = list(
+		STAT_AGI = 10,
+	)
 
 	uniform = /obj/item/clothing/under/rank/janitor
 	pda = /obj/item/device/pda/janitor
 	ear = /obj/item/device/radio/headset/headset_service
 
-
-
-//More or less assistants
-/datum/job/librarian
-	title = "Librarian"
-	flag = LIBRARIAN
-	department = "Civilian"
-	department_flag = CIVILIAN
-	faction = "Station"
-	total_positions = 1
-	spawn_positions = 1
-	supervisors = "the First Officer"
-	selection_color = "#dddddd"
-	access = list(access_library, access_maint_tunnels)
-	minimal_access = list(access_library)
-	alt_titles = list("Journalist")
-
-
-	uniform = /obj/item/clothing/under/librarian
-	pda = /obj/item/device/pda/librarian
-	hand = /obj/item/weapon/barcodescanner
-
-
-
-//var/global/lawyer = 0//Checks for another lawyer //This changed clothes on 2nd lawyer, both IA get the same dreds.
-///datum/job/lawyer
-//	title = "Lawyer"
-//	flag = LAWYER
-//	department = "Civilian"
-//	department_flag = CIVILIAN
-//	faction = "Station"
-//	total_positions = 1
-//	spawn_positions = 1
-//	supervisors = "the captain"
-//	selection_color = "#dddddd"
-//	economic_modifier = 7
-//	access = list(access_lawyer, access_sec_doors, access_maint_tunnels, access_heads)
-//	minimal_access = list(access_lawyer, access_sec_doors, access_heads)
-//
-//	uniform = /obj/item/clothing/under/rank/internalaffairs
-//	shoes = /obj/item/clothing/shoes/color/brown
-//	pda = /obj/item/device/pda/lawyer
-//	ear = /obj/item/device/radio/headset/headset_sec
-//	hand = /obj/item/weapon/storage/briefcase
-//	glasses = /obj/item/clothing/glasses/sunglasses/big
-
+/obj/landmark/join/start/janitor
+	name = "Janitor"
+	icon_state = "player-grey"
+	join_tag = /datum/job/janitor

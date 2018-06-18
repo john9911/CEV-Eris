@@ -9,11 +9,12 @@
 	idle_power_usage = 20
 	active_power_usage = 5000
 	req_access = list(access_robotics)
+	circuit = /obj/item/weapon/circuitboard/mechfab
 
 	var/speed = 1
 	var/mat_efficiency = 1
-	var/list/materials = list(DEFAULT_WALL_MATERIAL = 0, "glass" = 0, "gold" = 0, "silver" = 0, "diamond" = 0, "plasma" = 0, "uranium" = 0)
-	var/res_max_amount = 200000
+	var/list/materials = list(MATERIAL_STEEL = 0, MATERIAL_GLASS = 0, MATERIAL_GOLD = 0, MATERIAL_SILVER = 0, MATERIAL_DIAMOND = 0, MATERIAL_PLASMA = 0, MATERIAL_URANIUM = 0)
+	var/res_max_amount = 120
 
 	var/datum/research/files
 	var/list/datum/design/queue = list()
@@ -22,29 +23,17 @@
 
 	var/list/categories = list()
 	var/category = null
-	var/manufacturer = null
 	var/sync_message = ""
 
 /obj/machinery/mecha_part_fabricator/New()
 	..()
-
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/mechfab(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/micro_laser(src)
-	component_parts += new /obj/item/weapon/stock_parts/console_screen(src)
-	RefreshParts()
-
 	files = new /datum/research(src) //Setup the research data holder.
-	return
 
-/obj/machinery/mecha_part_fabricator/initialize()
-	manufacturer = basic_robolimb.company
+/obj/machinery/mecha_part_fabricator/Initialize()
+	. = ..()
 	update_categories()
 
-/obj/machinery/mecha_part_fabricator/process()
+/obj/machinery/mecha_part_fabricator/Process()
 	..()
 	if(stat)
 		return
@@ -99,13 +88,6 @@
 	data["buildable"] = get_build_options()
 	data["category"] = category
 	data["categories"] = categories
-	if(all_robolimbs)
-		var/list/T = list()
-		for(var/A in all_robolimbs)
-			var/datum/robolimb/R = all_robolimbs[A]
-			T += list(list("id" = A, "company" = R.company))
-		data["manufacturers"] = T
-		data["manufacturer"] = manufacturer
 	data["materials"] = get_materials()
 	data["maxres"] = res_max_amount
 	data["sync"] = sync_message
@@ -133,10 +115,6 @@
 		if(href_list["category"] in categories)
 			category = href_list["category"]
 
-	if(href_list["manufacturer"])
-		if(href_list["manufacturer"] in all_robolimbs)
-			manufacturer = href_list["manufacturer"]
-
 	if(href_list["eject"])
 		eject_materials(href_list["eject"], text2num(href_list["amount"]))
 
@@ -149,52 +127,41 @@
 
 /obj/machinery/mecha_part_fabricator/attackby(var/obj/item/I, var/mob/user)
 	if(busy)
-		user << "<span class='notice'>\The [src] is busy. Please wait for completion of previous operation.</span>"
-		return 1
-	if(default_deconstruction_screwdriver(user, I))
-		return
-	if(default_deconstruction_crowbar(user, I))
-		return
-	if(default_part_replacement(user, I))
+		user << SPAN_NOTICE("\The [src] is busy. Please wait for completion of previous operation.")
+		return TRUE
+
+	if(default_deconstruction(I, user))
 		return
 
-	var/material
-	switch(I.type)
-		if(/obj/item/stack/material/gold)
-			material = "gold"
-		if(/obj/item/stack/material/silver)
-			material = "silver"
-		if(/obj/item/stack/material/diamond)
-			material = "diamond"
-		if(/obj/item/stack/material/plasma)
-			material = "plasma"
-		if(/obj/item/stack/material/steel)
-			material = DEFAULT_WALL_MATERIAL
-		if(/obj/item/stack/material/glass)
-			material = "glass"
-		if(/obj/item/stack/material/uranium)
-			material = "uranium"
-		else
-			return ..()
+	if(default_part_replacement(I, user))
+		return
+
+	if(!istype(I,/obj/item/stack/material))
+		return ..()
+
+	var/material = I.get_material_name()
+
+	if(!material || !(material in materials))
+		return ..()
 
 	var/obj/item/stack/material/stack = I
 	var/sname = "[stack.name]"
-	var/amnt = stack.perunit
 
-	if(materials[material] + amnt <= res_max_amount)
-		if(stack && stack.amount >= 1)
-			var/count = 0
-			overlays += "fab-load-metal"
-			spawn(10)
-				overlays -= "fab-load-metal"
-			while(materials[material] + amnt <= res_max_amount && stack.amount >= 1)
-				materials[material] += amnt
-				stack.use(1)
-				count++
-			user << "You insert [count] [sname] into the fabricator."
-			update_busy()
-	else
+	if(materials[material] >= res_max_amount)
 		user << "The fabricator cannot hold more [sname]."
+
+	overlays += "fab-load-metal"
+	spawn(10)
+		overlays -= "fab-load-metal"
+
+	var/load = min(res_max_amount - materials[material], stack.get_amount())
+
+	stack.use(load)
+	materials[material] += load
+
+	user << "You insert [load] [sname] into the fabricator."
+	update_busy()
+
 
 /obj/machinery/mecha_part_fabricator/emag_act(var/remaining_charges, var/mob/user)
 	switch(emagged)
@@ -217,12 +184,9 @@
 
 /obj/machinery/mecha_part_fabricator/proc/update_busy()
 	if(queue.len)
-		if(can_build(queue[1]))
-			busy = 1
-		else
-			busy = 0
+		busy = can_build(queue[1])
 	else
-		busy = 0
+		busy = FALSE
 
 /obj/machinery/mecha_part_fabricator/proc/add_to_queue(var/index)
 	var/datum/design/D = files.known_designs[index]
@@ -238,8 +202,8 @@
 /obj/machinery/mecha_part_fabricator/proc/can_build(var/datum/design/D)
 	for(var/M in D.materials)
 		if(materials[M] < D.materials[M])
-			return 0
-	return 1
+			return FALSE
+	return TRUE
 
 /obj/machinery/mecha_part_fabricator/proc/check_build()
 	if(!queue.len)
@@ -252,14 +216,14 @@
 	if(D.time > progress)
 		return
 	for(var/M in D.materials)
-		materials[M] = max(0, materials[M] - D.materials[M] * mat_efficiency)
+		materials[M] = max(0, round(materials[M] - D.materials[M] * mat_efficiency))
 	if(D.build_path)
 		var/obj/new_item = D.Fabricate(loc, src)
 		visible_message("\The [src] pings, indicating that \the [D] is complete.", "You hear a ping.")
 		if(mat_efficiency != 1)
 			if(new_item.matter && new_item.matter.len > 0)
 				for(var/i in new_item.matter)
-					new_item.matter[i] = new_item.matter[i] * mat_efficiency
+					new_item.matter[i] = round(new_item.matter[i] * mat_efficiency)
 	remove_from_queue(1)
 
 /obj/machinery/mecha_part_fabricator/proc/get_queue_names()
@@ -300,36 +264,19 @@
 		. += list(list("mat" = capitalize(T), "amt" = materials[T]))
 
 /obj/machinery/mecha_part_fabricator/proc/eject_materials(var/material, var/amount) // 0 amount = 0 means ejecting a full stack; -1 means eject everything
-	var/recursive = amount == -1 ? 1 : 0
-	material = lowertext(material)
-	var/mattype
-	switch(material)
-		if(DEFAULT_WALL_MATERIAL)
-			mattype = /obj/item/stack/material/steel
-		if("glass")
-			mattype = /obj/item/stack/material/glass
-		if("gold")
-			mattype = /obj/item/stack/material/gold
-		if("silver")
-			mattype = /obj/item/stack/material/silver
-		if("diamond")
-			mattype = /obj/item/stack/material/diamond
-		if("plasma")
-			mattype = /obj/item/stack/material/plasma
-		if("uranium")
-			mattype = /obj/item/stack/material/uranium
-		else
-			return
+	var/recursive = amount == -1
+	var/mattype = material_stack_type(material)
+
 	var/obj/item/stack/material/S = new mattype(loc)
 	if(amount <= 0)
 		amount = S.max_amount
-	var/ejected = min(round(materials[material] / S.perunit), amount)
-	S.amount = min(ejected, amount)
+	var/ejected = min(materials[material], amount)
+	S.amount = ejected
 	if(S.amount <= 0)
 		qdel(S)
 		return
-	materials[material] -= ejected * S.perunit
-	if(recursive && materials[material] >= S.perunit)
+	materials[material] -= ejected
+	if(recursive && materials[material] > 0)
 		eject_materials(material, -1)
 	update_busy()
 

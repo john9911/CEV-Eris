@@ -10,73 +10,73 @@
 	amount_per_transfer_from_this = 5
 	volume = 50
 
-	on_reagent_change()
+/obj/item/weapon/reagent_containers/food/drinks/on_reagent_change()
+	return
+
+/obj/item/weapon/reagent_containers/food/drinks/attack_self(mob/user as mob)
+	if(!is_open_container())
+		open(user)
+
+/obj/item/weapon/reagent_containers/food/drinks/proc/open(mob/user)
+	playsound(loc,'sound/effects/canopen.ogg', rand(10,50), 1)
+	user << SPAN_NOTICE("You open [src] with an audible pop!")
+	flags |= OPENCONTAINER
+
+/obj/item/weapon/reagent_containers/food/drinks/attack(mob/M as mob, mob/user as mob, def_zone)
+	if(force && !(flags & NOBLUDGEON) && user.a_intent == I_HURT)
+		return ..()
+
+	if(standard_feed_mob(user, M))
 		return
 
-	attack_self(mob/user as mob)
-		if(!is_open_container())
-			open(user)
+	return 0
 
-	proc/open(mob/user)
-		playsound(loc,'sound/effects/canopen.ogg', rand(10,50), 1)
-		user << "<span class='notice'>You open [src] with an audible pop!</span>"
-		flags |= OPENCONTAINER
+/obj/item/weapon/reagent_containers/food/drinks/afterattack(obj/target, mob/user, proximity)
+	if(!proximity) return
 
-	attack(mob/M as mob, mob/user as mob, def_zone)
-		if(force && !(flags & NOBLUDGEON) && user.a_intent == I_HURT)
-			return ..()
+	if(standard_dispenser_refill(user, target))
+		return
+	if(standard_pour_into(user, target))
+		return
+	return ..()
 
-		if(standard_feed_mob(user, M))
-			return
+/obj/item/weapon/reagent_containers/food/drinks/standard_feed_mob(var/mob/user, var/mob/target)
+	if(!is_open_container())
+		user << SPAN_NOTICE("You need to open [src]!")
+		return 1
+	return ..()
 
-		return 0
+/obj/item/weapon/reagent_containers/food/drinks/standard_dispenser_refill(var/mob/user, var/obj/structure/reagent_dispensers/target)
+	if(!is_open_container())
+		user << SPAN_NOTICE("You need to open [src]!")
+		return 1
+	return ..()
 
-	afterattack(obj/target, mob/user, proximity)
-		if(!proximity) return
+/obj/item/weapon/reagent_containers/food/drinks/standard_pour_into(var/mob/user, var/atom/target)
+	if(!is_open_container())
+		user << SPAN_NOTICE("You need to open [src]!")
+		return 1
+	return ..()
 
-		if(standard_dispenser_refill(user, target))
-			return
-		if(standard_pour_into(user, target))
-			return
-		return ..()
+/obj/item/weapon/reagent_containers/food/drinks/self_feed_message(var/mob/user)
+	user << SPAN_NOTICE("You swallow a gulp from \the [src].")
 
-	standard_feed_mob(var/mob/user, var/mob/target)
-		if(!is_open_container())
-			user << "<span class='notice'>You need to open [src]!</span>"
-			return 1
-		return ..()
+/obj/item/weapon/reagent_containers/food/drinks/feed_sound(var/mob/user)
+	playsound(user.loc, 'sound/items/drink.ogg', rand(10, 50), 1)
 
-	standard_dispenser_refill(var/mob/user, var/obj/structure/reagent_dispensers/target)
-		if(!is_open_container())
-			user << "<span class='notice'>You need to open [src]!</span>"
-			return 1
-		return ..()
-
-	standard_pour_into(var/mob/user, var/atom/target)
-		if(!is_open_container())
-			user << "<span class='notice'>You need to open [src]!</span>"
-			return 1
-		return ..()
-
-	self_feed_message(var/mob/user)
-		user << "<span class='notice'>You swallow a gulp from \the [src].</span>"
-
-	feed_sound(var/mob/user)
-		playsound(user.loc, 'sound/items/drink.ogg', rand(10, 50), 1)
-
-	examine(mob/user)
-		if(!..(user, 1))
-			return
-		if(!reagents || reagents.total_volume == 0)
-			user << "<span class='notice'>\The [src] is empty!</span>"
-		else if (reagents.total_volume <= volume * 0.25)
-			user << "<span class='notice'>\The [src] is almost empty!</span>"
-		else if (reagents.total_volume <= volume * 0.66)
-			user << "<span class='notice'>\The [src] is half full!</span>"
-		else if (reagents.total_volume <= volume * 0.90)
-			user << "<span class='notice'>\The [src] is almost full!</span>"
-		else
-			user << "<span class='notice'>\The [src] is full!</span>"
+/obj/item/weapon/reagent_containers/food/drinks/examine(mob/user)
+	if(!..(user, 1))
+		return
+	if(!reagents || reagents.total_volume == 0)
+		user << SPAN_NOTICE("\The [src] is empty!")
+	else if (reagents.total_volume <= volume * 0.25)
+		user << SPAN_NOTICE("\The [src] is almost empty!")
+	else if (reagents.total_volume <= volume * 0.66)
+		user << SPAN_NOTICE("\The [src] is half full!")
+	else if (reagents.total_volume <= volume * 0.90)
+		user << SPAN_NOTICE("\The [src] is almost full!")
+	else
+		user << SPAN_NOTICE("\The [src] is full!")
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@
 	name = "golden cup"
 	icon_state = "golden_cup"
 	item_state = "" //nope :(
-	w_class = 4
+	w_class = ITEM_SIZE_LARGE
 	force = WEAPON_FORCE_PAINFULL
 	throwforce = 10
 	amount_per_transfer_from_this = 20

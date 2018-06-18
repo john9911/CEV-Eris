@@ -11,6 +11,7 @@ datum/preferences/proc/set_biological_gender(var/set_gender)
 	identifying_gender = set_gender
 
 /datum/category_item/player_setup_item/general/basic/load_character(var/savefile/S)
+	pref.req_update_icon = 1
 	S["real_name"]				>> pref.real_name
 	S["name_is_always_random"]	>> pref.be_random_name
 	S["gender"]					>> pref.gender
@@ -37,20 +38,25 @@ datum/preferences/proc/set_biological_gender(var/set_gender)
 	pref.real_name		= sanitize_name(pref.real_name, pref.species)
 	if(!pref.real_name)
 		pref.real_name	= random_name(pref.gender, pref.species)
-	pref.spawnpoint		= sanitize_inlist(pref.spawnpoint, spawntypes, initial(pref.spawnpoint))
+	pref.spawnpoint		= sanitize_inlist(pref.spawnpoint, spawnpoints_late, spawnpoints_late[1])
+
 	pref.be_random_name	= sanitize_integer(pref.be_random_name, 0, 1, initial(pref.be_random_name))
 
 /datum/category_item/player_setup_item/general/basic/content()
-	. = "<b>Name:</b> "
+	. = list()
+	. += "<b>Name:</b> "
 	. += "<a href='?src=\ref[src];rename=1'><b>[pref.real_name]</b></a><br>"
-	. += "(<a href='?src=\ref[src];random_name=1'>Random Name</A>) "
-	. += "(<a href='?src=\ref[src];always_random_name=1'>Always Random Name: [pref.be_random_name ? "Yes" : "No"]</a>)"
+	. += "<a href='?src=\ref[src];random_name=1'>Randomize Name</A><br>"
+	. += "<a href='?src=\ref[src];always_random_name=1'>Always Random Name: [pref.be_random_name ? "Yes" : "No"]</a>"
 	. += "<br>"
 	. += "<b>Gender:</b> <a href='?src=\ref[src];gender=1'><b>[capitalize(lowertext(pref.gender))]</b></a><br>"
 	. += "<b>Body Shape:</b> <a href='?src=\ref[src];body_build=1'><b>[pref.body_build]</b></a><br>"
 	. += "<b>Age:</b> <a href='?src=\ref[src];age=1'>[pref.age]</a><br>"
+	. += "<b>Religion:</b> <a href='?src=\ref[src];religion=1'>[pref.religion]</a><br>"
+
 	if(config.allow_Metadata)
 		. += "<b>OOC Notes:</b> <a href='?src=\ref[src];metadata=1'> Edit </a><br>"
+	. = jointext(.,null)
 
 /datum/category_item/player_setup_item/general/basic/OnTopic(var/href,var/list/href_list, var/mob/user)
 	if(href_list["rename"])
@@ -61,7 +67,7 @@ datum/preferences/proc/set_biological_gender(var/set_gender)
 				pref.real_name = new_name
 				return TOPIC_REFRESH
 			else
-				user << "<span class='warning'>Invalid name. Your name should be at least 2 and at most [MAX_NAME_LEN] characters long. It may only contain the characters A-Z, a-z, -, ' and .</span>"
+				user << SPAN_WARNING("Invalid name. Your name should be at least 2 and at most [MAX_NAME_LEN] characters long. It may only contain the characters A-Z, a-z, -, ' and .")
 				return TOPIC_NOACTION
 
 	else if(href_list["random_name"])
@@ -74,10 +80,12 @@ datum/preferences/proc/set_biological_gender(var/set_gender)
 
 	else if(href_list["gender"])
 		pref.gender = next_in_list(pref.gender, valid_player_genders)
+		pref.req_update_icon = 1
 		return TOPIC_REFRESH
 
 	else if(href_list["body_build"])
 		pref.body_build = input("Body Shape", "Body") in list("Default", "Slim", "Fat")
+		pref.req_update_icon = 1
 		return TOPIC_REFRESH
 
 	else if(href_list["age"])
@@ -92,5 +100,10 @@ datum/preferences/proc/set_biological_gender(var/set_gender)
 		if(new_metadata && CanUseTopic(user))
 			pref.metadata = sanitize(new_metadata)
 			return TOPIC_REFRESH
+
+	else if(href_list["religion"])
+		pref.religion = input("Religion") in list("None", "Christianity")
+		pref.req_update_icon = 1
+		return TOPIC_REFRESH
 
 	return ..()

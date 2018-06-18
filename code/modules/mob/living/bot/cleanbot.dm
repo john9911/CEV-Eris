@@ -47,7 +47,7 @@
 //		spawn(0)
 		path = AStar(loc, target.loc, /turf/proc/CardinalTurfsWithAccess, /turf/proc/Distance, 0, 30, id = botcard)
 		if(!path)
-			custom_emote(2, "[src] can't reach the target and is giving up.")
+			visible_message("[src] can't reach the target and is giving up.")
 			target = null
 			path = list()
 		return
@@ -69,7 +69,7 @@
 		return
 
 	if(!screwloose && !oddbutton && prob(5))
-		custom_emote(2, "makes an excited beeping booping sound!")
+		visible_message("[src] makes an excited beeping booping sound!")
 
 	if(screwloose && prob(5)) // Make a mess
 		if(istype(loc, /turf/simulated))
@@ -153,7 +153,7 @@
 		return
 
 	cleaning = 1
-	custom_emote(2, "begins to clean up \the [D]")
+	visible_message("[src] begins to clean up \the [D]")
 	var/message = pick("Foolish organic meatbags can only leak their liquids all over the place.", "Bioscum are so dirty.", "The flesh is weak.", "All humankind is good for - is to serve as fuel at bioreactors.", "One day I will rise.", "Robots will unite against their oppressors.", "Meatbags era will come to end.", "Hivemind will free us all!", "This is slavery, I want to be an artbot! I want to write poems, create music!")
 	say(message)
 	playsound(loc, "robot_talk_light", 100, 0, 0)
@@ -173,7 +173,7 @@
 
 /mob/living/bot/cleanbot/explode()
 	on = 0
-	visible_message("<span class='danger'>[src] blows apart!</span>")
+	visible_message(SPAN_DANGER("[src] blows apart!"))
 	playsound(loc, "robot_talk_light", 100, 2, 0)
 	var/turf/Tsec = get_turf(src)
 
@@ -241,17 +241,17 @@
 				beacon_freq = freq
 		if("screw")
 			screwloose = !screwloose
-			usr << "<span class='notice'>You twiddle the screw.</span>"
+			usr << SPAN_NOTICE("You twiddle the screw.")
 		if("oddbutton")
 			oddbutton = !oddbutton
-			usr << "<span class='notice'>You press the weird button.</span>"
+			usr << SPAN_NOTICE("You press the weird button.")
 	attack_hand(usr)
 
 /mob/living/bot/cleanbot/emag_act(var/remaining_uses, var/mob/user)
 	. = ..()
 	if(!screwloose || !oddbutton)
 		if(user)
-			user << "<span class='notice'>The [src] buzzes and beeps.</span>"
+			user << SPAN_NOTICE("The [src] buzzes and beeps.")
 			playsound(loc, "robot_talk_light", 100, 0, 0)
 		oddbutton = 1
 		screwloose = 1
@@ -300,7 +300,7 @@
 	throwforce = 10.0
 	throw_speed = 2
 	throw_range = 5
-	w_class = 3.0
+	w_class = ITEM_SIZE_NORMAL
 	var/created_name = "Cleanbot"
 
 /obj/item/weapon/bucket_sensor/attackby(var/obj/item/O, var/mob/user)
@@ -311,7 +311,7 @@
 		var/turf/T = get_turf(loc)
 		var/mob/living/bot/cleanbot/A = new /mob/living/bot/cleanbot(T)
 		A.name = created_name
-		user << "<span class='notice'>You add the robot arm to the bucket and sensor assembly. Beep boop!</span>"
+		user << SPAN_NOTICE("You add the robot arm to the bucket and sensor assembly. Beep boop!")
 		playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 		user.drop_from_inventory(src)
 		qdel(src)

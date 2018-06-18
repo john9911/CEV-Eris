@@ -1,7 +1,7 @@
 //Biosuit complete with shoes (in the item sprite)
 /obj/item/clothing/head/bio_hood
 	name = "bio hood"
-	icon_state = "bio"
+	icon_state = "bio_general"
 	item_state_slots = list(
 		slot_l_hand_str = "bio_hood",
 		slot_r_hand_str = "bio_hood",
@@ -10,7 +10,8 @@
 	permeability_coefficient = 0.01
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 100, rad = 20)
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|BLOCKHAIR
-	body_parts_covered = HEAD|FACE|EYES
+	body_parts_covered = HEAD|FACE|EYES|EARS
+	item_flags = COVER_PREVENT_MANIPULATION
 	siemens_coefficient = 0.9
 
 /obj/item/clothing/suit/bio_suit
@@ -18,12 +19,16 @@
 	desc = "A suit that protects against biological contamination."
 	icon_state = "bio"
 	item_state = "bio_suit"
-	w_class = 4//bulky item
+	w_class = ITEM_SIZE_LARGE//bulky item
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.01
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
+	item_flags = COVER_PREVENT_MANIPULATION
 	slowdown = 1.0
-	allowed = list(/obj/item/weapon/tank/emergency_oxygen,/obj/item/weapon/pen,/obj/item/device/flashlight/pen)
+	allowed = list(
+		/obj/item/weapon/tank/emergency_oxygen,/obj/item/weapon/pen,
+		/obj/item/device/lighting/toggleable/flashlight/pen
+	)
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 100, rad = 20)
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT|HIDETAIL
 	siemens_coefficient = 0.9

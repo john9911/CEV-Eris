@@ -35,7 +35,7 @@
 	var/obj/screen/gun/mode/gun_setting_icon = null*/
 
 	//spells hud icons - this interacts with add_spell and remove_spell
-	var/list/obj/screen/movable/spell_master/spell_masters = null
+	//var/list/obj/screen/movable/spell_master/spell_masters = null
 
 	/*A bunch of this stuff really needs to go under their own defines instead of being globally attached to mob.
 	A variable should only be globally attached to turfs/objects/whatever, when it is in fact needed as such.
@@ -108,12 +108,12 @@
 
 	var/inertia_dir = 0
 
-	var/targeted_organ = "chest"
+	var/targeted_organ = BP_CHEST
 
 //	var/job = null//Living
 
-	var/can_pull_size = 10              // Maximum w_class the mob can pull.
-	var/can_pull_mobs = MOB_PULL_LARGER // Whether or not the mob can pull other mobs.
+	var/can_pull_size = ITEM_SIZE_NO_CONTAINER // Maximum w_class the mob can pull.
+	var/can_pull_mobs = MOB_PULL_LARGER       // Whether or not the mob can pull other mobs.
 
 	var/datum/dna/dna = null//Carbon
 	var/list/active_genes=list()
@@ -176,3 +176,5 @@
 	var/list/HUDprocess = list() //What HUD object need process
 	var/list/HUDtech = list()
 	var/defaultHUD = "" //Default mob hud
+
+	var/list/progressbars = null

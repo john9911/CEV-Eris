@@ -1,32 +1,51 @@
-/datum/antagonist/proc/create_global_objectives()
-	if(config.objectives_disabled)
-		return 0
-	if(global_objectives && global_objectives.len)
-		return 0
-	return 1
+/datum/antagonist/proc/create_objectives(var/survive = FALSE)
+	for(var/obj in possible_objectives)
+		var/chance = possible_objectives[obj]
+		if(!chance)
+			chance = 100
 
-/datum/antagonist/proc/create_objectives(var/datum/mind/player)
-	if(config.objectives_disabled)
-		return 0
-	if(create_global_objectives() || global_objectives.len)
-		player.objectives |= global_objectives
-	return 1
+		if(!prob(chance))
+			continue
 
-/datum/antagonist/proc/get_special_objective_text()
-	return ""
+		if(islist(obj))
+			var/list/L = obj
+			var/chosen
+			var/total = 0
+			for(var/O in L)
+				total += L[O]
 
-/datum/antagonist/proc/check_victory()
-	var/result = 1
-	if(config.objectives_disabled)
-		return 1
-	if(global_objectives && global_objectives.len)
-		for(var/datum/objective/O in global_objectives)
-			if(!O.completed && !O.check_completion())
-				result = 0
-		if(result && victory_text)
-			world << "<span class='danger'><font size = 3>[victory_text]</font></span>"
+			var/picked = rand(0,total)
+			total = 0
 
-		else if(loss_text)
-			world << "<span class='danger'><font size = 3>[loss_text]</font></span>"
+			for(var/O in L)
+				total += L[O]
+				if(total > picked)
+					chosen = O
+					break
 
+			if(!chosen)
+				chosen = pick(L)
 
+			obj = chosen
+
+		if(ispath(obj))
+			objectives.Add(new obj(src))
+
+	if(survive)
+		create_survive_objective()
+
+/datum/antagonist/proc/set_objectives(var/list/new_objectives)
+	if(!owner || !owner.current)
+		return
+
+	if(objectives.len)
+		owner.current << "<span class='danger'><font size=3>Your objectives were updated.</font></span>"
+
+	objectives.Cut()
+	objectives.Add(new_objectives)
+
+	show_objectives()
+
+/datum/antagonist/proc/create_survive_objective()
+	if(ispath(survive_objective))
+		objectives.Add(new survive_objective(src))

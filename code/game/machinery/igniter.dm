@@ -16,8 +16,8 @@
 	..()
 	update_icon()
 
-/obj/machinery/igniter/initialize()
-	..()
+/obj/machinery/igniter/Initialize()
+	. = ..()
 	update_icon()
 	if(_wifi_id)
 		wifi_receiver = new(_wifi_id, src)
@@ -41,7 +41,7 @@
 	ignite()
 	return
 
-/obj/machinery/igniter/process()	//ugh why is this even in process()?
+/obj/machinery/igniter/Process()	//ugh why is this even in process()?
 	if (on && powered() )
 		var/turf/location = src.loc
 		if (isturf(location))
@@ -76,8 +76,8 @@
 	var/_wifi_id
 	var/datum/wifi/receiver/button/sparker/wifi_receiver
 
-/obj/machinery/sparker/initialize()
-	..()
+/obj/machinery/sparker/Initialize()
+	. = ..()
 	if(_wifi_id)
 		wifi_receiver = new(_wifi_id, src)
 
@@ -102,13 +102,13 @@
 	update_icon()
 
 /obj/machinery/sparker/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if (istype(W, /obj/item/weapon/screwdriver))
+	if (istype(W, /obj/item/weapon/tool/screwdriver))
 		add_fingerprint(user)
 		disable = !disable
 		if(disable)
-			user.visible_message("<span class='warning'>[user] has disabled the [src]!</span>", "<span class='warning'>You disable the connection to the [src].</span>")
+			user.visible_message(SPAN_WARNING("[user] has disabled the [src]!"), SPAN_WARNING("You disable the connection to the [src]."))
 		else if(!disable)
-			user.visible_message("<span class='warning'>[user] has reconnected the [src]!</span>", "<span class='warning'>You fix the connection to the [src].</span>")
+			user.visible_message(SPAN_WARNING("[user] has reconnected the [src]!"), SPAN_WARNING("You fix the connection to the [src]."))
 		update_icon()
 
 /obj/machinery/sparker/attack_ai()
@@ -157,12 +157,12 @@
 	active = 1
 	icon_state = "launcheract"
 
-	for(var/obj/machinery/sparker/M in machines)
+	for(var/obj/machinery/sparker/M in SSmachines.machinery)
 		if (M.id == id)
 			spawn( 0 )
 				M.ignite()
 
-	for(var/obj/machinery/igniter/M in machines)
+	for(var/obj/machinery/igniter/M in SSmachines.machinery)
 		if(M.id == id)
 			M.ignite()
 

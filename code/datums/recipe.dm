@@ -32,7 +32,7 @@
 
 /datum/recipe
 	var/list/reagents // example: = list("berryjuice" = 5) // do not list same reagent twice
-	var/list/items    // example: = list(/obj/item/weapon/crowbar, /obj/item/weapon/welder) // place /foo/bar before /foo
+	var/list/items    // example: = list(/obj/item/weapon/tool/crowbar, /obj/item/weapon/welder) // place /foo/bar before /foo
 	var/list/fruit    // example: = list("fruit" = 3)
 	var/result        // example: = /obj/item/weapon/reagent_containers/food/snacks/donut/normal
 	var/time = 100    // 1/10 part of second
@@ -80,7 +80,7 @@
 			var/found = 0
 			for(var/i = 1; i < checklist.len+1; i++)
 				var/item_type = checklist[i]
-				if (istype(O,item_type))
+				if (istype(O, item_type))
 					checklist.Cut(i, i+1)
 					found = 1
 					break
@@ -102,7 +102,7 @@
 // food-related
 /datum/recipe/proc/make_food(var/obj/container as obj)
 	if(!result)
-		world << "<span class='danger'>Recipe [type] is defined without a result, please bug this.</span>"
+		world << SPAN_DANGER("Recipe [type] is defined without a result, please bug this.")
 		return
 	var/obj/result_obj = new result(container)
 	for (var/obj/O in (container.contents-result_obj))

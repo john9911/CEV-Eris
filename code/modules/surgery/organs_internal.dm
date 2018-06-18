@@ -72,8 +72,8 @@
 		for(var/obj/item/organ/I in affected.internal_organs)
 			if(I && I.damage > 0)
 				if(I.robotic < 2)
-					user.visible_message("<span class='notice'>[user] treats damage to [target]'s [I.name] with [tool_name].</span>", \
-					"<span class='notice'>You treat damage to [target]'s [I.name] with [tool_name].</span>" )
+					user.visible_message(SPAN_NOTICE("[user] treats damage to [target]'s [I.name] with [tool_name]."), \
+					SPAN_NOTICE("You treat damage to [target]'s [I.name] with [tool_name].") )
 					I.damage = 0
 
 	fail_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
@@ -82,8 +82,8 @@
 			return
 		var/obj/item/organ/external/affected = target.get_organ(target_zone)
 
-		user.visible_message("<span class='warning'>[user]'s hand slips, getting mess and tearing the inside of [target]'s [affected.name] with \the [tool]!</span>", \
-		"<span class='warning'>Your hand slips, getting mess and tearing the inside of [target]'s [affected.name] with \the [tool]!</span>")
+		user.visible_message(SPAN_WARNING("[user]'s hand slips, getting mess and tearing the inside of [target]'s [affected.name] with \the [tool]!"), \
+		SPAN_WARNING("Your hand slips, getting mess and tearing the inside of [target]'s [affected.name] with \the [tool]!"))
 		var/dam_amt = 2
 
 		if (istype(tool, /obj/item/stack/medical/advanced/bruise_pack))
@@ -100,11 +100,7 @@
 
 /datum/surgery_step/internal/detatch_organ
 
-	allowed_tools = list(
-	/obj/item/weapon/scalpel = 100,		\
-	/obj/item/weapon/material/knife = 75,	\
-	/obj/item/weapon/material/shard = 50, 		\
-	)
+	requedQuality = QUALITY_CUTTING
 
 	min_duration = 90
 	max_duration = 110
@@ -116,7 +112,7 @@
 
 		var/obj/item/organ/external/affected = target.get_organ(target_zone)
 
-		if(!(affected && !(affected.status & ORGAN_ROBOT)))
+		if(!(affected && !(affected.robotic >= ORGAN_ROBOT)))
 			return 0
 
 		target.op_stage.current_organ = null
@@ -145,8 +141,8 @@
 		..()
 
 	end_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
-		user.visible_message("<span class='notice'>[user] has separated [target]'s [target.op_stage.current_organ] with \the [tool].</span>" , \
-		"<span class='notice'>You have separated [target]'s [target.op_stage.current_organ] with \the [tool].</span>")
+		user.visible_message(SPAN_NOTICE("[user] has separated [target]'s [target.op_stage.current_organ] with \the [tool].") , \
+		SPAN_NOTICE("You have separated [target]'s [target.op_stage.current_organ] with \the [tool]."))
 
 		var/obj/item/organ/I = target.internal_organs_by_name[target.op_stage.current_organ]
 		if(I && istype(I))
@@ -154,17 +150,12 @@
 
 	fail_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 		var/obj/item/organ/external/affected = target.get_organ(target_zone)
-		user.visible_message("<span class='warning'>[user]'s hand slips, slicing an artery inside [target]'s [affected.name] with \the [tool]!</span>", \
-		"<span class='warning'>Your hand slips, slicing an artery inside [target]'s [affected.name] with \the [tool]!</span>")
+		user.visible_message(SPAN_WARNING("[user]'s hand slips, slicing an artery inside [target]'s [affected.name] with \the [tool]!"), \
+		SPAN_WARNING("Your hand slips, slicing an artery inside [target]'s [affected.name] with \the [tool]!"))
 		affected.createwound(CUT, rand(30,50), 1)
 
 /datum/surgery_step/internal/remove_organ
-
-	allowed_tools = list(
-	/obj/item/weapon/hemostat = 100,	\
-	/obj/item/weapon/wirecutters = 75,	\
-	/obj/item/weapon/material/kitchen/utensil/fork = 20
-	)
+	requedQuality = QUALITY_CLAMPING
 
 	min_duration = 60
 	max_duration = 80
@@ -196,8 +187,8 @@
 		..()
 
 	end_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
-		user.visible_message("<span class='notice'>[user] has removed [target]'s [target.op_stage.current_organ] with \the [tool].</span>", \
-		"<span class='notice'>You have removed [target]'s [target.op_stage.current_organ] with \the [tool].</span>")
+		user.visible_message(SPAN_NOTICE("[user] has removed [target]'s [target.op_stage.current_organ] with \the [tool]."), \
+		SPAN_NOTICE("You have removed [target]'s [target.op_stage.current_organ] with \the [tool]."))
 
 		// Extract the organ!
 		if(target.op_stage.current_organ)
@@ -209,8 +200,8 @@
 
 	fail_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 		var/obj/item/organ/external/affected = target.get_organ(target_zone)
-		user.visible_message("<span class='warning'>[user]'s hand slips, damaging [target]'s [affected.name] with \the [tool]!</span>", \
-		"<span class='warning'>Your hand slips, damaging [target]'s [affected.name] with \the [tool]!</span>")
+		user.visible_message(SPAN_WARNING("[user]'s hand slips, damaging [target]'s [affected.name] with \the [tool]!"), \
+		SPAN_WARNING("Your hand slips, damaging [target]'s [affected.name] with \the [tool]!"))
 		affected.createwound(BRUISE, 20)
 
 /datum/surgery_step/internal/replace_organ
@@ -232,39 +223,36 @@
 		if(!istype(O))
 			return 0
 
-		if((affected.status & ORGAN_ROBOT) && !(O.status & ORGAN_ROBOT))
-			user << "<span class='danger'>You cannot install a naked organ into a robotic body.</span>"
+		if((affected.robotic >= ORGAN_ROBOT) && !(O.robotic >= ORGAN_ROBOT))
+			user << SPAN_DANGER("You cannot install a naked organ into a robotic body.")
 			return SURGERY_FAILURE
 
 		if(!target.species)
-			user << "<span class='danger'>You have no idea what species this person is. Report this on the bug tracker.</span>"
+			user << SPAN_DANGER("You have no idea what species this person is. Report this on the bug tracker.")
 			return SURGERY_FAILURE
 
 		var/o_is = (O.gender == PLURAL) ? "are" : "is"
 		var/o_a =  (O.gender == PLURAL) ? "" : "a "
 		var/o_do = (O.gender == PLURAL) ? "don't" : "doesn't"
 
-		if(O.organ_tag == "limb")
-			return 0
-		else if(target.species.has_organ[O.organ_tag])
-
+		if(target.species.has_organ[O.organ_tag])
 			if(O.damage > (O.max_damage * 0.75))
-				user << "<span class='warning'>\The [O.organ_tag] [o_is] in no state to be transplanted.</span>"
+				user << SPAN_WARNING("\The [O.organ_tag] [o_is] in no state to be transplanted.")
 				return SURGERY_FAILURE
 
 			if(!target.internal_organs_by_name[O.organ_tag])
 				organ_missing = 1
 			else
-				user << "<span class='warning'>\The [target] already has [o_a][O.organ_tag].</span>"
+				user << SPAN_WARNING("\The [target] already has [o_a][O.organ_tag].")
 				return SURGERY_FAILURE
 
-			if(O && affected.limb_name == O.parent_organ)
+			if(O && affected.organ_tag == O.parent_organ)
 				organ_compatible = 1
 			else
-				user << "<span class='warning'>\The [O.organ_tag] [o_do] normally go in \the [affected.name].</span>"
+				user << SPAN_WARNING("\The [O.organ_tag] [o_do] normally go in \the [affected.name].")
 				return SURGERY_FAILURE
 		else
-			user << "<span class='warning'>You're pretty sure [target.species.name_plural] don't normally have [o_a][O.organ_tag].</span>"
+			user << SPAN_WARNING("You're pretty sure [target.species.name_plural] don't normally have [o_a][O.organ_tag].")
 			return SURGERY_FAILURE
 
 		return ..() && organ_missing && organ_compatible
@@ -278,8 +266,8 @@
 
 	end_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 		var/obj/item/organ/external/affected = target.get_organ(target_zone)
-		user.visible_message("<span class='notice'>[user] has transplanted \the [tool] into [target]'s [affected.name].</span>", \
-		"<span class='notice'>You have transplanted \the [tool] into [target]'s [affected.name].</span>")
+		user.visible_message(SPAN_NOTICE("[user] has transplanted \the [tool] into [target]'s [affected.name]."), \
+		SPAN_NOTICE("You have transplanted \the [tool] into [target]'s [affected.name]."))
 		var/obj/item/organ/O = tool
 		if(istype(O))
 			user.remove_from_mob(O)
@@ -287,17 +275,14 @@
 			playsound(target.loc, 'sound/effects/squelch1.ogg', 50, 1)
 
 	fail_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
-		user.visible_message("<span class='warning'>[user]'s hand slips, damaging \the [tool]!</span>", \
-		"<span class='warning'>Your hand slips, damaging \the [tool]!</span>")
+		user.visible_message(SPAN_WARNING("[user]'s hand slips, damaging \the [tool]!"), \
+		SPAN_WARNING("Your hand slips, damaging \the [tool]!"))
 		var/obj/item/organ/I = tool
 		if(istype(I))
 			I.take_damage(rand(3,5),0)
 
 /datum/surgery_step/internal/attach_organ
-	allowed_tools = list(
-	/obj/item/weapon/FixOVein = 100, \
-	/obj/item/stack/cable_coil = 75
-	)
+	requedQuality = QUALITY_CLAMPING
 
 	min_duration = 100
 	max_duration = 120
@@ -312,7 +297,7 @@
 		var/list/removable_organs = list()
 		for(var/organ in target.internal_organs_by_name)
 			var/obj/item/organ/I = target.internal_organs_by_name[organ]
-			if(I && (I.status & ORGAN_CUT_AWAY) && !(I.status & ORGAN_ROBOT) && I.parent_organ == target_zone)
+			if(I && (I.status & ORGAN_CUT_AWAY) && !(I.robotic >= ORGAN_ROBOT) && I.parent_organ == target_zone)
 				removable_organs |= organ
 
 		var/organ_to_replace = input(user, "Which organ do you want to reattach?") as null|anything in removable_organs
@@ -329,8 +314,8 @@
 		..()
 
 	end_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
-		user.visible_message("<span class='notice'>[user] has reattached [target]'s [target.op_stage.current_organ] with \the [tool].</span>" , \
-		"<span class='notice'>You have reattached [target]'s [target.op_stage.current_organ] with \the [tool].</span>")
+		user.visible_message(SPAN_NOTICE("[user] has reattached [target]'s [target.op_stage.current_organ] with \the [tool].") , \
+		SPAN_NOTICE("You have reattached [target]'s [target.op_stage.current_organ] with \the [tool]."))
 
 		var/obj/item/organ/I = target.internal_organs_by_name[target.op_stage.current_organ]
 		if(I && istype(I))
@@ -338,8 +323,8 @@
 
 	fail_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 		var/obj/item/organ/external/affected = target.get_organ(target_zone)
-		user.visible_message("<span class='warning'>[user]'s hand slips, damaging the flesh in [target]'s [affected.name] with \the [tool]!</span>", \
-		"<span class='warning'>Your hand slips, damaging the flesh in [target]'s [affected.name] with \the [tool]!</span>")
+		user.visible_message(SPAN_WARNING("[user]'s hand slips, damaging the flesh in [target]'s [affected.name] with \the [tool]!"), \
+		SPAN_WARNING("Your hand slips, damaging the flesh in [target]'s [affected.name] with \the [tool]!"))
 		affected.createwound(BRUISE, 20)
 
 //////////////////////////////////////////////////////////////////
@@ -348,7 +333,7 @@
 // To be finished after some tests.
 // /datum/surgery_step/ribcage/heart/cut
 //	allowed_tools = list(
-//	/obj/item/weapon/scalpel = 100,		\
+//	/obj/item/weapon/tool/scalpel = 100,		\
 //	/obj/item/weapon/material/knife = 75,	\
 //	/obj/item/weapon/material/shard = 50, 		\
 //	)

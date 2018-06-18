@@ -5,17 +5,16 @@
 	var/obj/item/clothing/head/helmet/part1 = null
 	var/obj/item/device/radio/electropack/part2 = null
 	var/status = 0
-	w_class = 5.0
+	w_class = ITEM_SIZE_HUGE
 	flags = CONDUCT
 
 /obj/item/assembly/shock_kit/Destroy()
 	qdel(part1)
 	qdel(part2)
-	..()
-	return
+	. = ..()
 
-/obj/item/assembly/shock_kit/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench) && !status)
+/obj/item/assembly/shock_kit/attackby(obj/item/weapon/I, mob/user)
+	if(I.get_tool_type(usr, list(QUALITY_BOLT_TURNING)) && !status)
 		var/turf/T = loc
 		if(ismob(T))
 			T = T.loc
@@ -27,9 +26,9 @@
 		part2 = null
 		qdel(src)
 		return
-	if(istype(W, /obj/item/weapon/screwdriver))
+	if(I.get_tool_type(usr, list(QUALITY_SCREW_DRIVING)))
 		status = !status
-		user << "<span class='notice'>[src] is now [status ? "secured" : "unsecured"]!</span>"
+		user << SPAN_NOTICE("[src] is now [status ? "secured" : "unsecured"]!")
 	add_fingerprint(user)
 	return
 
@@ -37,10 +36,8 @@
 	part1.attack_self(user, status)
 	part2.attack_self(user, status)
 	add_fingerprint(user)
-	return
 
 /obj/item/assembly/shock_kit/receive_signal()
 	if(istype(loc, /obj/structure/bed/chair/e_chair))
 		var/obj/structure/bed/chair/e_chair/C = loc
 		C.shock()
-	return

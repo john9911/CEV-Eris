@@ -57,7 +57,7 @@ Data storage vars:
 	var/result
 	var/state = 0
 
-	New(list/arguments=null,autostart=1)
+	New(list/arguments=null, autostart=1)
 		delay = delay>0?(delay):1
 		if(forbid_garbage) //prevents garbage collection with tag != null
 			tag = "\ref[src]"
@@ -73,7 +73,7 @@ Data storage vars:
 			if(check_for_null && has_null_args())
 				stop()
 				return 0
-			result = process(arglist(arg_list))
+			result = Process(arglist(arg_list))
 			for(var/sleep_time=delay;sleep_time>0;sleep_time--) //uhh, this is ugly. But I see no other way to terminate sleeping proc. Such disgrace.
 				if(!control_switch)
 					return 0
@@ -109,7 +109,7 @@ Data storage vars:
 				CRASH("The global_iterator loop \ref[src] failed to terminate in designated timeframe. This may be caused by server lagging.")
 		return 1
 
-	proc/process()
+	Process()
 		return
 
 	proc/active()
@@ -139,7 +139,7 @@ Data storage vars:
 			arg_list = arguments
 			return 1
 		else
-//			world << "<span class='danger'>Invalid arguments supplied for [src.type], ref = \ref[src]</span>"
+//			world << SPAN_DANGER("Invalid arguments supplied for [src.type], ref = \ref[src]")
 			return 0
 
 	proc/toggle_null_checks()
@@ -155,4 +155,5 @@ Data storage vars:
 	tag = null
 	arg_list.Cut()
 	stop()
+	return QDEL_HINT_LETMELIVE
 	//Do not call ..()

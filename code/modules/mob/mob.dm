@@ -1,20 +1,20 @@
 /mob/Destroy()//This makes sure that mobs with clients/keys are not just deleted from the game.
-	mob_list -= src
+	STOP_PROCESSING(SSmobs, src)
 	dead_mob_list -= src
 	living_mob_list -= src
 	unset_machine()
 	qdel(hud_used)
 	if(client)
-		for(var/obj/screen/movable/spell_master/spell_master in spell_masters)
-			qdel(spell_master)
 		remove_screen_obj_references()
 		for(var/atom/movable/AM in client.screen)
 			qdel(AM)
 		client.screen = list()
-	if(mind && mind.current == src)
-		spellremove(src)
 	ghostize()
 	..()
+	return QDEL_HINT_HARDDEL
+
+/mob/get_fall_damage()
+	return 15
 
 /mob/proc/remove_screen_obj_references()//FIX THIS SHIT
 //	flash = null
@@ -38,16 +38,16 @@
 //	item_use_icon = null
 //	gun_move_icon = null
 //	gun_setting_icon = null
-	spell_masters = null
+//	spell_masters = null
 	zone_sel = null
 
-/mob/New()
-	mob_list += src
+/mob/Initialize()
+	START_PROCESSING(SSmobs, src)
 	if(stat == DEAD)
 		dead_mob_list += src
 	else
 		living_mob_list += src
-	..()
+	. = ..()
 
 /mob/proc/show_message(msg, type, alt, alt_type)//Message, type of message (1 or 2), alternative message, alt message type (1 or 2)
 
@@ -134,7 +134,7 @@
 
 
 /mob/proc/findname(msg)
-	for(var/mob/M in mob_list)
+	for(var/mob/M in SSmobs.mob_list)
 		if (M.real_name == text("[]", msg))
 			return M
 	return 0
@@ -238,31 +238,31 @@
 
 
 /mob/proc/ret_grab(obj/effect/list_container/mobl/L as obj, flag)
-	if ((!( istype(l_hand, /obj/item/weapon/grab) ) && !( istype(r_hand, /obj/item/weapon/grab) )))
-		if (!( L ))
+	if(!istype(l_hand, /obj/item/weapon/grab) && !istype(r_hand, /obj/item/weapon/grab))
+		if (!L)
 			return null
 		else
 			return L.container
 	else
-		if (!( L ))
-			L = new /obj/effect/list_container/mobl( null )
+		if(!L)
+			L = new /obj/effect/list_container/mobl(null)
 			L.container += src
 			L.master = src
-		if (istype(l_hand, /obj/item/weapon/grab))
+		if(istype(l_hand, /obj/item/weapon/grab))
 			var/obj/item/weapon/grab/G = l_hand
-			if (!( L.container.Find(G.affecting) ))
+			if (!L.container.Find(G.affecting))
 				L.container += G.affecting
 				if (G.affecting)
 					G.affecting.ret_grab(L, 1)
-		if (istype(r_hand, /obj/item/weapon/grab))
+		if(istype(r_hand, /obj/item/weapon/grab))
 			var/obj/item/weapon/grab/G = r_hand
-			if (!( L.container.Find(G.affecting) ))
+			if (!L.container.Find(G.affecting))
 				L.container += G.affecting
 				if (G.affecting)
 					G.affecting.ret_grab(L, 1)
-		if (!( flag ))
+		if(!flag)
 			if (L.master == src)
-				var/list/temp = list(  )
+				var/list/temp = list()
 				temp += L.container
 				//L = null
 				qdel(L)
@@ -369,9 +369,6 @@
 	if ((stat != DEAD || !( ticker )))
 		usr << "<span class='notice'><B>You must be dead to use this!</B></span>"
 		return
-	if (ticker.mode && ticker.mode.deny_respawn)
-		usr << "<span class='notice'>Respawn is disabled for this roundtype.</span>"
-		return
 	else if(!MayRespawn(1, config.respawn_delay))
 		if(!check_rights(0, 0) || alert("Normal players must wait at least [config.respawn_delay] minutes to respawn! Would you?","Warning", "No", "Ok") != "Ok")
 			return
@@ -439,7 +436,7 @@
 
 	if(client.holder && (client.holder.rights & R_ADMIN))
 		is_admin = 1
-	else if(stat != DEAD || istype(src, /mob/new_player))
+	else if(stat != DEAD || isnewplayer(src))
 		usr << "\blue You must be observing to use this!"
 		return
 
@@ -484,7 +481,7 @@
 			creatures[name] = O
 
 
-	for(var/mob/M in sortAtom(mob_list))
+	for(var/mob/M in sortAtom(SSmobs.mob_list))
 		var/name = M.name
 		if (names.Find(name))
 			namecounts[name]++
@@ -529,7 +526,12 @@
 
 	if(href_list["flavor_more"])
 		if(src in view(usr))
-			usr << browse(text("<HTML><HEAD><TITLE>[]</TITLE></HEAD><BODY><TT>[]</TT></BODY></HTML>", name, cp1251_to_utf8(replacetext(flavor_text, "\n", "<BR>"))), text("window=[];size=500x200", name))
+			var/dat = {"
+				<html><head><title>[name]</title></head>
+				<body><tt>[cp1251_to_utf8(replacetext(flavor_text, "\n", "<br>"))]</tt></body>
+				</html>
+			"}
+			usr << browse(dat, "window=[name];size=500x200")
 			onclose(usr, "[name]")
 	if(href_list["flavor_change"])
 		update_flavor_text()
@@ -540,7 +542,7 @@
 /mob/proc/pull_damage()
 	if(ishuman(src))
 		var/mob/living/carbon/human/H = src
-		if(H.health - H.halloss <= config.health_threshold_softcrit)
+		if(H.health - H.halloss <= HEALTH_THRESHOLD_SOFTCRIT)
 			for(var/name in H.organs_by_name)
 				var/obj/item/organ/external/e = H.organs_by_name[name]
 				if(e && H.lying)
@@ -554,7 +556,7 @@
 	if(M != usr) return
 	if(usr == src) return
 	if(!Adjacent(usr)) return
-	if(istype(M,/mob/living/silicon/ai)) return
+	if(isAI(M)) return
 	show_inv(usr)
 
 
@@ -643,7 +645,7 @@
 /mob/proc/is_mechanical()
 	if(mind && (mind.assigned_role == "Cyborg" || mind.assigned_role == "AI"))
 		return 1
-	return istype(src, /mob/living/silicon)
+	return issilicon(src)
 
 /mob/proc/is_ready()
 	return client && !!mind
@@ -673,11 +675,25 @@
 		if(client.holder)
 			if(statpanel("Status"))
 				stat("Location:", "([x], [y], [z]) [loc]")
-				stat("CPU:","[world.cpu]")
-				stat("Instances:","[world.contents.len]")
 			if(statpanel("Processes"))
 				if(processScheduler)
 					processScheduler.statProcesses()
+			if(statpanel("MC"))
+				stat("CPU:","[world.cpu]")
+				stat("Instances:","[world.contents.len]")
+				stat(null)
+				if(Master)
+					Master.stat_entry()
+				else
+					stat("Master Controller:", "ERROR")
+				if(Failsafe)
+					Failsafe.stat_entry()
+				else
+					stat("Failsafe Controller:", "ERROR")
+				if(Master)
+					stat(null)
+					for(var/datum/controller/subsystem/SS in Master.subsystems)
+						SS.stat_entry()
 
 		if(listed_turf && client)
 			if(!TurfAdjacent(listed_turf))
@@ -889,11 +905,12 @@
 	return ""
 
 /mob/proc/flash_weak_pain()
-	if(istype(src,/mob/living))
-		var/mob/living/L = src
-//		flick("weak_pain",L.flash["pain"])
-		if (L.HUDtech.Find("pain"))
-			flick("weak_pain",L.HUDtech["pain"])
+	return
+
+/mob/living/flash_weak_pain()
+//	flick("weak_pain", flash["pain"])
+	if(HUDtech.Find("pain"))
+		flick("weak_pain", HUDtech["pain"])
 
 
 /mob/proc/get_visible_implants(var/class = 0)

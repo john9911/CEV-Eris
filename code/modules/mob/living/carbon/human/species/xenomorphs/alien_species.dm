@@ -3,8 +3,8 @@
 	name = "Xenomorph"
 	name_plural = "Xenomorphs"
 
-	default_language = "Xenomorph"
-	language = "Hivemind"
+	default_language = LANGUAGE_XENOMORPH
+	language = LANGUAGE_HIVEMIND
 	unarmed_types = list(/datum/unarmed_attack/claws/strong, /datum/unarmed_attack/bite/strong)
 	hud_type = /datum/hud_data/alien
 	rarity_value = 3
@@ -46,11 +46,11 @@
 	vision_flags = SEE_SELF|SEE_MOBS
 
 	has_organ = list(
-		"heart" =           /obj/item/organ/heart,
-		"brain" =           /obj/item/organ/brain/xeno,
-		"plasma vessel" =   /obj/item/organ/xenos/plasmavessel,
-		"hive node" =       /obj/item/organ/xenos/hivenode,
-		)
+		O_HEART =  /obj/item/organ/internal/heart,
+		O_BRAIN =  /obj/item/organ/internal/brain/xeno,
+		O_PLASMA = /obj/item/organ/internal/xenos/plasmavessel,
+		O_HIVE =   /obj/item/organ/internal/xenos/hivenode,
+	)
 
 	bump_flag = ALIEN
 	swap_flags = ~HEAVY
@@ -68,21 +68,18 @@
 	return "alien [caste_name] ([alien_number])"
 
 /datum/species/xenos/can_understand(var/mob/other)
-
-	if(istype(other,/mob/living/carbon/alien/larva))
-		return 1
-
-	return 0
+	return istype(other,/mob/living/carbon/alien/larva)
 
 /datum/species/xenos/hug(var/mob/living/carbon/human/H,var/mob/living/target)
-	H.visible_message("<span class='notice'>[H] caresses [target] with its scythe-like arm.</span>", \
-					"<span class='notice'>You caress [target] with your scythe-like arm.</span>")
+	H.visible_message(
+		SPAN_NOTICE("[H] caresses [target] with its scythe-like arm."),
+		SPAN_NOTICE("You caress [target] with your scythe-like arm.")
+	)
 
 /datum/species/xenos/handle_post_spawn(var/mob/living/carbon/human/H)
 
 	if(H.mind)
 		H.mind.assigned_role = "Alien"
-		H.mind.special_role = "Alien"
 
 	alien_number++ //Keep track of how many aliens we've had so far.
 	H.real_name = "alien [caste_name] ([alien_number])"
@@ -99,7 +96,7 @@
 
 	var/obj/effect/plant/plant = locate() in T
 	if((environment.gas["plasma"] > 0 || (plant && plant.seed && plant.seed.name == "xenomorph")) && !regenerate(H))
-		var/obj/item/organ/xenos/plasmavessel/P = H.internal_organs_by_name["plasma vessel"]
+		var/obj/item/organ/internal/xenos/plasmavessel/P = H.internal_organs_by_name[O_PLASMA]
 		P.stored_plasma += weeds_plasma_rate
 		P.stored_plasma = min(max(P.stored_plasma,0),P.max_plasma)
 	..()
@@ -151,23 +148,18 @@
 	deform =  'icons/mob/human_races/xenos/r_xenos_drone.dmi'
 
 	has_organ = list(
-		"heart" =           /obj/item/organ/heart,
-		"brain" =           /obj/item/organ/brain/xeno,
-		"plasma vessel" =   /obj/item/organ/xenos/plasmavessel/queen,
-		"acid gland" =      /obj/item/organ/xenos/acidgland,
-		"hive node" =       /obj/item/organ/xenos/hivenode,
-		"resin spinner" =   /obj/item/organ/xenos/resinspinner,
-		)
+		O_HEART =  /obj/item/organ/internal/heart,
+		O_BRAIN =  /obj/item/organ/internal/brain/xeno,
+		O_PLASMA = /obj/item/organ/internal/xenos/plasmavessel/drone,
+		O_ACID =   /obj/item/organ/internal/xenos/acidgland/drone,
+		O_HIVE =   /obj/item/organ/internal/xenos/hivenode,
+		O_RESIN =  /obj/item/organ/internal/xenos/resinspinner,
+	)
 
 	inherent_verbs = list(
 		/mob/living/proc/ventcrawl,
-		/mob/living/carbon/human/proc/regurgitate,
-		/mob/living/carbon/human/proc/plant,
-		/mob/living/carbon/human/proc/transfer_plasma,
-		/mob/living/carbon/human/proc/evolve,
-		/mob/living/carbon/human/proc/resin,
-		/mob/living/carbon/human/proc/corrosive_acid
-		)
+		/mob/living/carbon/human/proc/regurgitate
+	)
 
 /datum/species/xenos/drone/handle_post_spawn(var/mob/living/carbon/human/H)
 
@@ -189,11 +181,11 @@
 	deform =  'icons/mob/human_races/xenos/r_xenos_hunter.dmi'
 
 	has_organ = list(
-		"heart" =           /obj/item/organ/heart,
-		"brain" =           /obj/item/organ/brain/xeno,
-		"plasma vessel" =   /obj/item/organ/xenos/plasmavessel/hunter,
-		"hive node" =       /obj/item/organ/xenos/hivenode,
-		)
+		O_HEART =  /obj/item/organ/internal/heart,
+		O_BRAIN =  /obj/item/organ/internal/brain/xeno,
+		O_PLASMA = /obj/item/organ/internal/xenos/plasmavessel/hunter,
+		O_HIVE =   /obj/item/organ/internal/xenos/hivenode,
+	)
 
 	inherent_verbs = list(
 		/mob/living/proc/ventcrawl,
@@ -202,7 +194,7 @@
 		/mob/living/carbon/human/proc/leap,
 		/mob/living/carbon/human/proc/psychic_whisper,
 		/mob/living/carbon/human/proc/regurgitate
-		)
+	)
 
 /datum/species/xenos/sentinel
 	name = "Xenomorph Sentinel"
@@ -216,21 +208,18 @@
 	deform =  'icons/mob/human_races/xenos/r_xenos_sentinel.dmi'
 
 	has_organ = list(
-		"heart" =           /obj/item/organ/heart,
-		"brain" =           /obj/item/organ/brain/xeno,
-		"plasma vessel" =   /obj/item/organ/xenos/plasmavessel/sentinel,
-		"acid gland" =      /obj/item/organ/xenos/acidgland,
-		"hive node" =       /obj/item/organ/xenos/hivenode,
-		)
+		O_HEART =  /obj/item/organ/internal/heart,
+		O_BRAIN =  /obj/item/organ/internal/brain/xeno,
+		O_PLASMA = /obj/item/organ/internal/xenos/plasmavessel/sentinel,
+		O_ACID =   /obj/item/organ/internal/xenos/acidgland,
+		O_HIVE =   /obj/item/organ/internal/xenos/hivenode,
+	)
 
 	inherent_verbs = list(
 		/mob/living/proc/ventcrawl,
 		/mob/living/carbon/human/proc/tackle,
 		/mob/living/carbon/human/proc/regurgitate,
-		/mob/living/carbon/human/proc/transfer_plasma,
-		/mob/living/carbon/human/proc/corrosive_acid,
-		/mob/living/carbon/human/proc/neurotoxin
-		)
+	)
 
 /datum/species/xenos/queen
 
@@ -247,27 +236,20 @@
 	deform =  'icons/mob/human_races/xenos/r_xenos_queen.dmi'
 
 	has_organ = list(
-		"heart" =           /obj/item/organ/heart,
-		"brain" =           /obj/item/organ/brain/xeno,
-		"egg sac" =         /obj/item/organ/xenos/eggsac,
-		"plasma vessel" =   /obj/item/organ/xenos/plasmavessel/queen,
-		"acid gland" =      /obj/item/organ/xenos/acidgland,
-		"hive node" =       /obj/item/organ/xenos/hivenode,
-		"resin spinner" =   /obj/item/organ/xenos/resinspinner,
-		)
+		O_HEART =  /obj/item/organ/internal/heart,
+		O_BRAIN =  /obj/item/organ/internal/brain/xeno,
+		O_EGG =    /obj/item/organ/internal/xenos/eggsac,
+		O_PLASMA = /obj/item/organ/internal/xenos/plasmavessel/queen,
+		O_ACID =   /obj/item/organ/internal/xenos/acidgland,
+		O_HIVE =   /obj/item/organ/internal/xenos/hivenode,
+		O_RESIN =  /obj/item/organ/internal/xenos/resinspinner,
+	)
 
 	inherent_verbs = list(
 		/mob/living/proc/ventcrawl,
 		/mob/living/carbon/human/proc/psychic_whisper,
 		/mob/living/carbon/human/proc/regurgitate,
-		/mob/living/carbon/human/proc/lay_egg,
-		/mob/living/carbon/human/proc/plant,
-		/mob/living/carbon/human/proc/transfer_plasma,
-		/mob/living/carbon/human/proc/corrosive_acid,
-		/mob/living/carbon/human/proc/neurotoxin,
-		/mob/living/carbon/human/proc/resin,
-		/mob/living/carbon/human/proc/xeno_infest
-		)
+	)
 
 /datum/species/xenos/queen/handle_login_special(var/mob/living/carbon/human/H)
 	..()

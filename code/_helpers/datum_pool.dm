@@ -22,9 +22,9 @@ var/global/list/GlobalPool = list()
 //Or a list of arguments
 //Either way it gets passed to new
 
-/proc/PoolOrNew(var/get_type,var/second_arg)
+/proc/PoolOrNew(var/get_type, var/second_arg)
 	var/datum/D
-	D = GetFromPool(get_type,second_arg)
+	D = GetFromPool(get_type, second_arg)
 
 	if(!D)
 		// So the GC knows we're pooling this type.
@@ -36,7 +36,7 @@ var/global/list/GlobalPool = list()
 			return new get_type (second_arg)
 	return D
 
-/proc/GetFromPool(var/get_type,var/second_arg)
+/proc/GetFromPool(var/get_type, var/second_arg)
 	if(isnull(GlobalPool[get_type]))
 		return 0
 
@@ -58,8 +58,8 @@ var/global/list/GlobalPool = list()
 		#ifdef DEBUG_ATOM_POOL
 		world << text("DEBUG_DATUM_POOL: PlaceInPool([]) exceeds []. Discarding.", D.type, ATOM_POOL_COUNT)
 		#endif
-		if(garbage_collector)
-			garbage_collector.AddTrash(D)
+		if(SSgarbage)
+			qdel(D)
 		else
 			del(D)
 		return

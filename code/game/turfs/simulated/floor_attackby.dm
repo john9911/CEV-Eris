@@ -1,58 +1,83 @@
-/turf/simulated/floor/attackby(obj/item/C as obj, mob/user as mob)
+/turf/simulated/floor/attackby(obj/item/I, mob/user)
 
-	if(!C || !user)
+	if(!I || !user)
 		return 0
 
-	if(istype(C, /obj/item/stack/cable_coil) || (flooring && istype(C, /obj/item/stack/rods)))
-		return ..(C, user)
+	if(istype(I, /obj/item/stack/cable_coil) || (flooring && istype(I, /obj/item/stack/rods)))
+		return ..(I, user)
 
 	if(flooring)
-		if(istype(C, /obj/item/weapon/crowbar))
-			if(broken || burnt)
-				user << "<span class='notice'>You remove the broken [flooring.descriptor].</span>"
-				make_plating()
-			else if(flooring.flags & TURF_IS_FRAGILE)
-				user << "<span class='danger'>You forcefully pry off the [flooring.descriptor], destroying them in the process.</span>"
-				make_plating()
-			else if(flooring.flags & TURF_REMOVE_CROWBAR)
-				user << "<span class='notice'>You lever off the [flooring.descriptor].</span>"
-				make_plating(1)
-			else
+
+		var/list/usable_qualities = list()
+		if(broken || burnt || (flooring.flags & TURF_IS_FRAGILE) || (flooring.flags & TURF_REMOVE_CROWBAR))
+			usable_qualities.Add(QUALITY_PRYING)
+		if(!(broken || burnt) || flooring.flags & TURF_REMOVE_SCREWDRIVER)
+			usable_qualities.Add(QUALITY_SCREW_DRIVING)
+		if(flooring.flags & TURF_REMOVE_WRENCH)
+			usable_qualities.Add(QUALITY_BOLT_TURNING)
+		if(flooring.flags & TURF_REMOVE_SHOVEL)
+			usable_qualities.Add(QUALITY_SHOVELING)
+
+		var/tool_type = I.get_tool_type(user, usable_qualities)
+		switch(tool_type)
+
+			if(QUALITY_PRYING)
+				if(broken || burnt)
+					if(I.use_tool(user, src, WORKTIME_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+						user << SPAN_NOTICE("You remove the broken [flooring.descriptor].")
+						make_plating()
+					return
+				else if(flooring.flags & TURF_IS_FRAGILE)
+					if(I.use_tool(user, src, WORKTIME_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+						user << SPAN_DANGER("You forcefully pry off the [flooring.descriptor], destroying them in the process.")
+						make_plating()
+					return
+				else if(flooring.flags & TURF_REMOVE_CROWBAR)
+					if(I.use_tool(user, src, WORKTIME_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+						user << SPAN_NOTICE("You lever off the [flooring.descriptor].")
+						make_plating(1)
+					return
 				return
-			playsound(src, 'sound/items/Crowbar.ogg', 80, 1)
-			return
-		else if(istype(C, /obj/item/weapon/screwdriver) && (flooring.flags & TURF_REMOVE_SCREWDRIVER))
-			if(broken || burnt)
+
+			if(QUALITY_SCREW_DRIVING)
+				if(!(broken || burnt) || flooring.flags & TURF_REMOVE_SCREWDRIVER)
+					if(I.use_tool(user, src, WORKTIME_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+						user << SPAN_NOTICE("You unscrew and remove the [flooring.descriptor].")
+						make_plating(1)
 				return
-			user << "<span class='notice'>You unscrew and remove the [flooring.descriptor].</span>"
-			make_plating(1)
-			playsound(src, 'sound/items/Screwdriver.ogg', 80, 1)
+
+			if(QUALITY_BOLT_TURNING)
+				if(flooring.flags & TURF_REMOVE_WRENCH)
+					if(I.use_tool(user, src, WORKTIME_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+						user << SPAN_NOTICE("You unwrench and remove the [flooring.descriptor].")
+						make_plating(1)
+				return
+
+			if(QUALITY_SHOVELING)
+				if(flooring.flags & TURF_REMOVE_SHOVEL)
+					if(I.use_tool(user, src, WORKTIME_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+						user << SPAN_NOTICE("You shovel off the [flooring.descriptor].")
+						make_plating(1)
+				return
+
+			if(ABORT_CHECK)
+				return
+
+		if(istype(I, /obj/item/stack/cable_coil))
+			user << SPAN_WARNING("You must remove the [flooring.descriptor] first.")
 			return
-		else if(istype(C, /obj/item/weapon/wrench) && (flooring.flags & TURF_REMOVE_WRENCH))
-			user << "<span class='notice'>You unwrench and remove the [flooring.descriptor].</span>"
-			make_plating(1)
-			playsound(src, 'sound/items/Ratchet.ogg', 80, 1)
-			return
-		else if(istype(C, /obj/item/weapon/shovel) && (flooring.flags & TURF_REMOVE_SHOVEL))
-			user << "<span class='notice'>You shovel off the [flooring.descriptor].</span>"
-			make_plating(1)
-			playsound(src, 'sound/items/Deconstruct.ogg', 80, 1)
-			return
-		else if(istype(C, /obj/item/stack/cable_coil))
-			user << "<span class='warning'>You must remove the [flooring.descriptor] first.</span>"
-			return
-		else if (istype(C, /obj/item/frame))
-			var/obj/item/frame/F = C
-			//world<<"click on floor"
+		else if (istype(I, /obj/item/frame))
+			var/obj/item/frame/F = I
 			F.try_floorbuild(src)
 			return
+
 	else
 
-		if(istype(C, /obj/item/stack))
+		if(istype(I, /obj/item/stack))
 			if(broken || burnt)
-				user << "<span class='warning'>This section is too damaged to support anything. Use a welder to fix the damage.</span>"
+				user << SPAN_WARNING("This section is too damaged to support anything. Use a welder to fix the damage.")
 				return
-			var/obj/item/stack/S = C
+			var/obj/item/stack/S = I
 			var/decl/flooring/use_flooring
 			for(var/flooring_type in flooring_types)
 				var/decl/flooring/F = flooring_types[flooring_type]
@@ -65,7 +90,7 @@
 				return
 			// Do we have enough?
 			if(use_flooring.build_cost && S.get_amount() < use_flooring.build_cost)
-				user << "<span class='warning'>You require at least [use_flooring.build_cost] [S.name] to complete the [use_flooring.descriptor].</span>"
+				user << SPAN_WARNING("You require at least [use_flooring.build_cost] [S.name] to complete the [use_flooring.descriptor].")
 				return
 			// Stay still and focus...
 			if(use_flooring.build_time && !do_after(user, use_flooring.build_time, src))
@@ -77,22 +102,17 @@
 				playsound(src, 'sound/items/Deconstruct.ogg', 80, 1)
 				return
 		// Repairs.
-		else if(istype(C, /obj/item/weapon/weldingtool))
-			var/obj/item/weapon/weldingtool/welder = C
-			if(welder.isOn() && (is_plating()))
-				if(broken || burnt)
-					if(welder.remove_fuel(0,user))
-						user << "<span class='notice'>You fix some dents on the broken plating.</span>"
-						playsound(src, 'sound/items/Welder.ogg', 80, 1)
-						icon_state = "plating"
-						burnt = null
-						broken = null
-					else
-						user << "<span class='warning'>You need more welding fuel to complete this task.</span>"
+		if(broken || burnt)
+			if(I.get_tool_type(usr, list(QUALITY_WELDING)))
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, QUALITY_WELDING, FAILCHANCE_EASY, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("You fix some dents on the broken plating.")
+					playsound(src, 'sound/items/Welder.ogg', 80, 1)
+					icon_state = "plating"
+					burnt = null
+					broken = null
 					return
-		else if(istype(C,/obj/item/frame))
-			var/obj/item/frame/F = C
-			//world<<"click on floor"
+		else if(istype(I,/obj/item/frame))
+			var/obj/item/frame/F = I
 			F.try_floorbuild(src)
 			return
 	return ..()
@@ -100,9 +120,9 @@
 
 /turf/simulated/floor/can_build_cable(var/mob/user)
 	if(!is_plating() || flooring)
-		user << "<span class='warning'>Removing the tiling first.</span>"
+		user << SPAN_WARNING("Removing the tiling first.")
 		return 0
 	if(broken || burnt)
-		user << "<span class='warning'>This section is too damaged to support anything. Use a welder to fix the damage.</span>"
+		user << SPAN_WARNING("This section is too damaged to support anything. Use a welder to fix the damage.")
 		return 0
 	return 1

@@ -30,7 +30,9 @@
 	var/powered = 0		//set if vehicle is powered and should use fuel when moving
 	var/move_delay = 1	//set this to limit the speed of the vehicle
 
-	var/obj/item/weapon/cell/cell
+	var/passenger_allowed = 1
+
+	var/obj/item/weapon/cell/large/cell
 	var/charge_use = 5	//set this to adjust the amount of power the vehicle uses per move
 
 	var/atom/movable/load		//all vehicles can take a load, since they should all be a least drivable
@@ -74,40 +76,65 @@
 	else
 		return 0
 
-/obj/vehicle/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/hand_labeler))
-		return
-	if(istype(W, /obj/item/weapon/screwdriver))
-		if(!locked)
-			open = !open
-			update_icon()
-			user << "<span class='notice'>Maintenance panel is now [open ? "opened" : "closed"].</span>"
-	else if(istype(W, /obj/item/weapon/crowbar) && cell && open)
-		remove_cell(user)
+/obj/vehicle/attackby(obj/item/I, mob/user)
 
-	else if(istype(W, /obj/item/weapon/cell) && !cell && open)
-		insert_cell(W, user)
-	else if(istype(W, /obj/item/weapon/weldingtool))
-		var/obj/item/weapon/weldingtool/T = W
-		if(T.welding)
-			if(health < maxhealth)
-				if(open)
-					health = min(maxhealth, health+10)
-					user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
-					user.visible_message("\red [user] repairs [src]!","\blue You repair [src]!")
+	var/list/usable_qualities = list(QUALITY_PRYING, QUALITY_SCREW_DRIVING)
+	if(open)
+		usable_qualities.Add(QUALITY_WIRE_CUTTING)
+	if(open && health < maxhealth)
+		usable_qualities.Add(QUALITY_WELDING)
+
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_PRYING)
+			if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+				remove_cell(user)
+			return
+
+		if(QUALITY_SCREW_DRIVING)
+			var/used_sound = open ? 'sound/machines/Custom_screwdriveropen.ogg' :  'sound/machines/Custom_screwdriverclose.ogg'
+			if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD, instant_finish_tier = 30, forced_sound = used_sound))
+				if(!locked)
+					open = !open
+					update_icon()
+					user << SPAN_NOTICE("You [open ? "open" : "close"] the maintenance hatch of \the [src] with [I].")
 				else
-					user << "<span class='notice'>Unable to repair with the maintenance panel closed.</span>"
-			else
-				user << "<span class='notice'>[src] does not need a repair.</span>"
-		else
-			user << "<span class='notice'>Unable to repair while [src] is off.</span>"
-	else if(hasvar(W,"force") && hasvar(W,"damtype"))
+					user << SPAN_NOTICE("You fail to unsrew the cover, looks like its locked from the inside.")
+				return
+
+		if(QUALITY_WIRE_CUTTING)
+			if(open)
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+					passenger_allowed = !passenger_allowed
+					user.visible_message(
+						SPAN_NOTICE("[user] [passenger_allowed ? "cuts" : "mends"] a cable in [src]."),
+						SPAN_NOTICE("You [passenger_allowed ? "cut" : "mend"] the load limiter cable.")
+					)
+			return
+
+		if(QUALITY_WELDING)
+			if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+				health = min(maxhealth, health+10)
+				user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
+				user.visible_message("\red [user] repairs [src]!","\blue You repair [src]!")
+			return
+
+		if(ABORT_CHECK)
+			return
+
+	if(istype(I, /obj/item/weapon/hand_labeler))
+		return
+	else if(istype(I, /obj/item/weapon/cell/large) && !cell && open)
+		insert_cell(I, user)
+	else if(hasvar(I,"force") && hasvar(I,"damtype"))
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
-		switch(W.damtype)
+		switch(I.damtype)
 			if("fire")
-				health -= W.force * fire_dam_coeff
+				health -= I.force * fire_dam_coeff
 			if("brute")
-				health -= W.force * brute_dam_coeff
+				health -= I.force * brute_dam_coeff
 		..()
 		healthcheck()
 	else
@@ -139,15 +166,9 @@
 /obj/vehicle/emp_act(severity)
 	var/was_on = on
 	stat |= EMPED
-	var/obj/effect/overlay/pulse2 = PoolOrNew(/obj/effect/overlay, src.loc)
-	pulse2.icon = 'icons/effects/effects.dmi'
-	pulse2.icon_state = "empdisable"
-	pulse2.name = "emp sparks"
-	pulse2.anchored = 1
-	pulse2.set_dir(pick(cardinal))
 
-	spawn(10)
-		qdel(pulse2)
+	PoolOrNew(/obj/effect/overlay/pulse, src.loc)
+
 	if(on)
 		turn_off()
 	spawn(severity*300)
@@ -185,11 +206,11 @@
 		emagged = 1
 		if(locked)
 			locked = 0
-			user << "<span class='warning'>You bypass [src]'s controls.</span>"
+			user << SPAN_WARNING("You bypass [src]'s controls.")
 		return 1
 
 /obj/vehicle/proc/explode()
-	src.visible_message("<span class='danger'>\The [src] blows apart!</span>")
+	src.visible_message(SPAN_DANGER("\The [src] blows apart!"))
 	var/turf/Tsec = get_turf(src)
 
 	PoolOrNew(/obj/item/stack/rods, Tsec)
@@ -202,7 +223,7 @@
 		cell = null
 
 	//stuns people who are thrown off a train that has been blown up
-	if(istype(load, /mob/living))
+	if(isliving(load))
 		var/mob/living/M = load
 		M.apply_effects(5, 5)
 
@@ -233,7 +254,7 @@
 		turn_on()
 		return
 
-/obj/vehicle/proc/insert_cell(var/obj/item/weapon/cell/C, var/mob/living/carbon/human/H)
+/obj/vehicle/proc/insert_cell(var/obj/item/weapon/cell/large/C, var/mob/living/carbon/human/H)
 	if(cell)
 		return
 	if(!istype(C))
@@ -241,15 +262,15 @@
 
 	H.drop_from_inventory(C)
 	C.forceMove(src)
-	cell = C
+	src.cell = C
 	powercheck()
-	usr << "<span class='notice'>You install [C] in [src].</span>"
+	usr << SPAN_NOTICE("You install [C] in [src].")
 
 /obj/vehicle/proc/remove_cell(var/mob/living/carbon/human/H)
 	if(!cell)
 		return
 
-	usr << "<span class='notice'>You remove [cell] from [src].</span>"
+	usr << SPAN_NOTICE("You remove [cell] from [src].")
 	cell.forceMove(get_turf(H))
 	H.put_in_hands(cell)
 	cell = null
@@ -352,7 +373,7 @@
 /obj/vehicle/attack_generic(var/mob/user, var/damage, var/attack_message)
 	if(!damage)
 		return
-	visible_message("<span class='danger'>\The [user] [attack_message] the \the [src]!</span>")
+	visible_message(SPAN_DANGER("\The [user] [attack_message] the \the [src]!"))
 	if(istype(user))
 		user.attack_log += text("\[[time_stamp()]\] <font color='red'>attacked \the [src.name]</font>")
 		user.do_attack_animation(src)

@@ -5,10 +5,10 @@
 	icon_state = "stamp-qm"
 	item_state = "stamp"
 	throwforce = 0
-	w_class = 1.0
+	w_class = ITEM_SIZE_TINY
 	throw_speed = 7
 	throw_range = 15
-	matter = list(DEFAULT_WALL_MATERIAL = 60)
+	matter = list(MATERIAL_PLASTIC = 1)
 	attack_verb = list("stamped")
 
 /obj/item/weapon/stamp/captain
@@ -24,15 +24,15 @@
 	icon_state = "stamp-hos"
 
 /obj/item/weapon/stamp/ce
-	name = "chief engineer's rubber stamp"
+	name = "exultant's rubber stamp"
 	icon_state = "stamp-ce"
 
 /obj/item/weapon/stamp/rd
-	name = "research director's rubber stamp"
+	name = "moebius expedition overseer's rubber stamp"
 	icon_state = "stamp-rd"
 
 /obj/item/weapon/stamp/cmo
-	name = "chief medical officer's rubber stamp"
+	name = "moebius biolab officer's rubber stamp"
 	icon_state = "stamp-cmo"
 
 /obj/item/weapon/stamp/denied
@@ -43,16 +43,8 @@
 	name = "clown's rubber stamp"
 	icon_state = "stamp-clown"
 
-/obj/item/weapon/stamp/internalaffairs
-	name = "internal affairs rubber stamp"
-	icon_state = "stamp-intaff"
-
-/obj/item/weapon/stamp/centcomm
-	name = "centcomm rubber stamp"
-	icon_state = "stamp-cent"
-
 /obj/item/weapon/stamp/qm
-	name = "quartermaster's stamp"
+	name = "guild merchant's stamp"
 	icon_state = "stamp-qm"
 
 // Syndicate stamp to forge documents.

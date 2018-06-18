@@ -26,26 +26,23 @@
 		tally += wear_suit.slowdown
 
 	if(istype(buckled, /obj/structure/bed/chair/wheelchair))
-		for(var/organ_name in list("l_hand","r_hand","l_arm","r_arm"))
+		for(var/organ_name in list(BP_L_HAND, BP_R_HAND, BP_L_ARM, BP_R_ARM))
 			var/obj/item/organ/external/E = get_organ(organ_name)
-			if(!E || E.is_stump())
+			if(!E)
 				tally += 4
-			if(E.status & ORGAN_SPLINTED)
-				tally += 0.5
-			else if(E.status & ORGAN_BROKEN)
-				tally += 1.5
+			else
+				tally += E.get_tally()
 	else
 		if(shoes)
 			tally += shoes.slowdown
 
-		for(var/organ_name in list("l_foot","r_foot","l_leg","r_leg"))
+		for(var/organ_name in BP_LEGS)
 			var/obj/item/organ/external/E = get_organ(organ_name)
-			if(!E || E.is_stump())
+			if(!E)
 				tally += 4
-			else if(E.status & ORGAN_SPLINTED)
-				tally += 0.5
-			else if(E.status & ORGAN_BROKEN)
-				tally += 1.5
+			else
+				tally += E.get_tally()
+
 
 	if(shock_stage >= 10) tally += 3
 
@@ -94,10 +91,14 @@
 		return 0
 
 	//Check hands and mod slip
-	if(!l_hand)	prob_slip -= 2
-	else if(l_hand.w_class <= 2)	prob_slip -= 1
-	if (!r_hand)	prob_slip -= 2
-	else if(r_hand.w_class <= 2)	prob_slip -= 1
+	if(!l_hand)
+		prob_slip -= 2
+	else if(l_hand.w_class <= ITEM_SIZE_SMALL)
+		prob_slip -= 1
+	if (!r_hand)
+		prob_slip -= 2
+	else if(r_hand.w_class <= ITEM_SIZE_SMALL)
+		prob_slip -= 1
 
 	return prob_slip
 
@@ -107,3 +108,46 @@
 	if(shoes && (shoes.item_flags & NOSLIP) && istype(shoes, /obj/item/clothing/shoes/magboots))  //magboots + dense_object = no floating
 		return 1
 	return 0
+
+/mob/living/carbon/human/handle_footstep(atom/T)
+	if(..())
+
+		if(m_intent == "run")
+			if(!(step_count % 2)) //every other turf makes a sound
+				return
+
+		if(istype(shoes, /obj/item/clothing/shoes))
+			var/obj/item/clothing/shoes/footwear = shoes
+			if(footwear.silence_steps)
+				return //silent
+
+		if(!has_organ(BP_L_FOOT) && !has_organ(BP_R_FOOT))
+			return //no feet no footsteps
+
+		if(buckled || lying || throwing)
+			return //people flying, lying down or sitting do not step
+
+		if(!has_gravity(src))
+			if(step_count % 3) //this basically says, every three moves make a noise
+				return //1st - none, 1%3==1, 2nd - none, 2%3==2, 3rd - noise, 3%3==0
+
+		if(species.silent_steps)
+			return //species is silent
+
+
+		var/S = T.get_footstep_sound("human")
+		if(S)
+			var/range = -(world.view - 2)
+			if(m_intent == "walk")
+				range -= 0.333
+			if(!shoes)
+				range -= 0.333
+
+			var/volume = 90
+			if(m_intent == "walk")
+				volume -= 55
+			if(!shoes)
+				volume -= 70
+
+			playsound(T, S, volume, 1, range)
+			return

@@ -41,7 +41,7 @@
 	update_pulling()
 
 	for(var/obj/item/weapon/grab/G in src)
-		G.process()
+		G.Process()
 
 	blinded = 0 // Placing this here just show how out of place it is.
 	// human/handle_regular_status_updates() needs a cleanup, as blindness should be handled in handle_disabilities()
@@ -188,7 +188,7 @@
 	if (!usr.client)
 		return
 	usr.client.screen.Cut()
-	if(istype(usr, /mob/living/carbon/human) && (usr.client.prefs.UI_style != null))
+	if(ishuman(usr) && (usr.client.prefs.UI_style != null))
 		if (!global.HUDdatums.Find(usr.client.prefs.UI_style))
 			log_debug("[usr] try update a HUD, but HUDdatums not have [usr.client.prefs.UI_style]!")
 		else

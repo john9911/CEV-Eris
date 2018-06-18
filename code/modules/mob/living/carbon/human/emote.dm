@@ -9,7 +9,7 @@
 	if(findtext(act,"s",-1) && !findtext(act,"_",-2))//Removes ending s's unless they are prefixed with a '_'
 		act = copytext(act,1,length(act))
 
-	var/muzzled = istype(src.wear_mask, /obj/item/clothing/mask/muzzle)
+	var/muzzled = istype(src.wear_mask, /obj/item/clothing/mask/muzzle) || istype(src.wear_mask, /obj/item/weapon/grenade)
 	//var/m_type = 1
 
 	for (var/obj/item/weapon/implant/I in src)
@@ -540,18 +540,6 @@
 				else
 					message = "makes a very loud noise."
 					m_type = 2
-
-		if("swish")
-			src.animate_tail_once()
-
-		if("wag", "sway")
-			src.animate_tail_start()
-
-		if("qwag", "fastsway")
-			src.animate_tail_fast()
-
-		if("swag", "stopsway")
-			src.animate_tail_stop()
 
 		if ("help")
 			src << {"blink, blink_r, blush, bow-(none)/mob, burp, choke, chuckle, clap, collapse, cough,

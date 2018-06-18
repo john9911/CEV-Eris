@@ -11,19 +11,11 @@ Note: Must be placed within 3 tiles of the R&D Console
 	icon_state = "d_analyzer"
 	var/obj/item/weapon/loaded_item = null
 	var/decon_mod = 0
+	circuit = /obj/item/weapon/circuitboard/destructive_analyzer
 
 	use_power = 1
 	idle_power_usage = 30
 	active_power_usage = 2500
-
-/obj/machinery/r_n_d/destructive_analyzer/New()
-	..()
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/destructive_analyzer(src)
-	component_parts += new /obj/item/weapon/stock_parts/scanning_module(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/micro_laser(src)
-	RefreshParts()
 
 /obj/machinery/r_n_d/destructive_analyzer/RefreshParts()
 	var/T = 0
@@ -39,42 +31,62 @@ Note: Must be placed within 3 tiles of the R&D Console
 	else
 		icon_state = "d_analyzer"
 
-/obj/machinery/r_n_d/destructive_analyzer/attackby(var/obj/item/O as obj, var/mob/user as mob)
+/obj/machinery/r_n_d/destructive_analyzer/attackby(var/obj/item/I, var/mob/user as mob)
 	if(busy)
-		user << "<span class='notice'>\The [src] is busy right now.</span>"
+		user << SPAN_NOTICE("\The [src] is busy right now.")
 		return
 	if(loaded_item)
-		user << "<span class='notice'>There is something already loaded into \the [src].</span>"
+		user << SPAN_NOTICE("There is something already loaded into \the [src].")
 		return 1
-	if(default_deconstruction_screwdriver(user, O))
-		if(linked_console)
-			linked_console.linked_destroy = null
-			linked_console = null
-		return
-	if(default_deconstruction_crowbar(user, O))
-		return
-	if(default_part_replacement(user, O))
+
+	var/tool_type = I.get_tool_type(user, list(QUALITY_PRYING, QUALITY_SCREW_DRIVING))
+	switch(tool_type)
+
+		if(QUALITY_PRYING)
+			if(!panel_open)
+				user << SPAN_NOTICE("You cant get to the components of \the [src], remove the cover.")
+				return
+			if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+				user << SPAN_NOTICE("You remove the components of \the [src] with [I].")
+				dismantle()
+				return
+
+		if(QUALITY_SCREW_DRIVING)
+			var/used_sound = panel_open ? 'sound/machines/Custom_screwdriveropen.ogg' :  'sound/machines/Custom_screwdriverclose.ogg'
+			if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD, instant_finish_tier = 30, forced_sound = used_sound))
+				if(linked_console)
+					linked_console.linked_imprinter = null
+					linked_console = null
+				panel_open = !panel_open
+				user << SPAN_NOTICE("You [panel_open ? "open" : "close"] the maintenance hatch of \the [src] with [I].")
+				update_icon()
+				return
+
+		if(ABORT_CHECK)
+			return
+
+	if(default_part_replacement(I, user))
 		return
 	if(panel_open)
-		user << "<span class='notice'>You can't load \the [src] while it's opened.</span>"
+		user << SPAN_NOTICE("You can't load \the [src] while it's opened.")
 		return 1
 	if(!linked_console)
-		user << "<span class='notice'>\The [src] must be linked to an R&D console first.</span>"
+		user << SPAN_NOTICE("\The [src] must be linked to an R&D console first.")
 		return
 	if(!loaded_item)
 		if(isrobot(user)) //Don't put your module items in there!
 			return
-		if(!O.origin_tech)
-			user << "<span class='notice'>This doesn't seem to have a tech origin.</span>"
+		if(!I.origin_tech)
+			user << SPAN_NOTICE("This doesn't seem to have a tech origin.")
 			return
-		if(O.origin_tech.len == 0)
-			user << "<span class='notice'>You cannot deconstruct this item.</span>"
+		if(I.origin_tech.len == 0)
+			user << SPAN_NOTICE("You cannot deconstruct this item.")
 			return
 		busy = 1
-		loaded_item = O
+		loaded_item = I
 		user.drop_item()
-		O.loc = src
-		user << "<span class='notice'>You add \the [O] to \the [src].</span>"
+		I.loc = src
+		user << SPAN_NOTICE("You add \the [I] to \the [src].")
 		flick("d_analyzer_la", src)
 		spawn(10)
 			update_icon()

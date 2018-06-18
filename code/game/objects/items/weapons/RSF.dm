@@ -14,7 +14,7 @@ RSF
 	anchored = 0.0
 	var/stored_matter = 30
 	var/mode = 1
-	w_class = 3.0
+	w_class = ITEM_SIZE_NORMAL
 
 /obj/item/weapon/rsf/examine(mob/user)
 	if(..(user, 0))
@@ -62,7 +62,7 @@ RSF
 
 	if(!proximity) return
 
-	if(istype(user,/mob/living/silicon/robot))
+	if(isrobot(user))
 		var/mob/living/silicon/robot/R = user
 		if(R.stat || !R.cell || R.cell.charge <= 0)
 			return

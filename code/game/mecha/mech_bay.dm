@@ -6,23 +6,11 @@
 	density = 0
 	layer = TURF_LAYER + 0.1
 	anchored = 1
+	circuit = /obj/item/weapon/circuitboard/mech_recharger
 
 	var/obj/mecha/charging = null
 	var/charge = 45
 	var/repair = 0
-
-/obj/machinery/mech_recharger/New()
-	..()
-	component_parts = list()
-
-	component_parts += new /obj/item/weapon/circuitboard/mech_recharger(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/stock_parts/scanning_module(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-
-	RefreshParts()
 
 /obj/machinery/mech_recharger/Crossed(var/obj/mecha/M)
 	. = ..()
@@ -47,7 +35,7 @@
 		if(istype(P, /obj/item/weapon/stock_parts/manipulator))
 			repair += P.rating * 2
 
-/obj/machinery/mech_recharger/process()
+/obj/machinery/mech_recharger/Process()
 	..()
 	if(!charging)
 		return
@@ -62,11 +50,11 @@
 			use_power(t * 150)
 			done = 0
 		else
-			charging.occupant_message("<span class='notice'>Fully charged.</span>")
+			charging.occupant_message(SPAN_NOTICE("Fully charged."))
 	if(repair && charging.health < initial(charging.health))
 		charging.health = min(charging.health + repair, initial(charging.health))
 		if(charging.health == initial(charging.health))
-			charging.occupant_message("<span class='notice'>Fully repaired.</span>")
+			charging.occupant_message(SPAN_NOTICE("Fully repaired."))
 
 		else
 			done = 0
@@ -75,20 +63,20 @@
 	return
 
 /obj/machinery/mech_recharger/attackby(var/obj/item/I, var/mob/user)
-	if(default_deconstruction_screwdriver(user, I))
+
+	if(default_deconstruction(I, user))
 		return
-	if(default_deconstruction_crowbar(user, I))
-		return
-	if(default_part_replacement(user, I))
+
+	if(default_part_replacement(I, user))
 		return
 
 /obj/machinery/mech_recharger/proc/start_charging(var/obj/mecha/M)
 	if(stat & (NOPOWER | BROKEN))
-		M.occupant_message("<span class='warning'>Power port not responding. Terminating.</span>")
+		M.occupant_message(SPAN_WARNING("Power port not responding. Terminating."))
 
 		return
 	if(M.cell)
-		M.occupant_message("<span class='notice'>Now charging...</span>")
+		M.occupant_message(SPAN_NOTICE("Now charging..."))
 		charging = M
 	return
 

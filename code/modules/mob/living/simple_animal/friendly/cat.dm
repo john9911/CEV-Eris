@@ -3,12 +3,7 @@
 	name = "cat"
 	desc = "A domesticated, feline pet. Has a tendency to adopt crewmembers."
 	icon_state = "cat2"
-	item_state = "cat2"
-	icon_living = "cat2"
-	icon_dead = "cat2_dead"
-	speak = list("Meow!","Esp!","Purr!","HSSSSS")
 	speak_emote = list("purrs", "meows")
-	emote_hear = list("meows","mews")
 	emote_see = list("shakes their head", "shivers")
 	speak_chance = 1
 	turns_per_move = 5
@@ -34,7 +29,11 @@
 			for(var/mob/living/simple_animal/mouse/M in loc)
 				if(!M.stat)
 					M.splat()
-					visible_emote(pick("bites \the [M]!","toys with \the [M].","chomps on \the [M]!"))
+					visible_emote(pick(\
+						"bites \the [M]!",
+						"toys with \the [M].",
+						"chomps on \the [M]!"\
+					))
 					movement_target = null
 					stop_automated_movement = 0
 					break
@@ -43,7 +42,8 @@
 
 	for(var/mob/living/simple_animal/mouse/snack in oview(src,5))
 		if(snack.stat < DEAD && prob(15))
-			audible_emote(pick("hisses and spits!","mrowls fiercely!","eyes [snack] hungrily."))
+			var/msg2 = (pick("hisses and spits!","mrowls fiercely!","eyes [snack] hungrily."))
+			visible_emote("<span class='name'>[src]</span> [msg2].")
 		break
 
 	if(incapacitated())
@@ -146,7 +146,7 @@
 /mob/living/simple_animal/cat/fluff/handle_movement_target()
 	if (friend)
 		var/follow_dist = 5
-		if (friend.stat >= DEAD || friend.health <= config.health_threshold_softcrit) //danger
+		if (friend.stat >= DEAD || friend.health <= HEALTH_THRESHOLD_SOFTCRIT) //danger
 			follow_dist = 1
 		else if (friend.stat || friend.health <= 50) //danger or just sleeping
 			follow_dist = 2
@@ -154,7 +154,7 @@
 		var/current_dist = get_dist(src, friend)
 
 		if (movement_target != friend)
-			if (current_dist > follow_dist && !istype(movement_target, /mob/living/simple_animal/mouse) && (friend in oview(src)))
+			if (current_dist > follow_dist && !ismouse(movement_target) && (friend in oview(src)))
 				//stop existing movement
 				walk_to(src,0)
 				turns_since_scan = 0
@@ -180,20 +180,22 @@
 	if (stat || !friend)
 		return
 	if (get_dist(src, friend) <= 1)
-		if (friend.stat >= DEAD || friend.health <= config.health_threshold_softcrit)
+		if (friend.stat >= DEAD || friend.health <= HEALTH_THRESHOLD_SOFTCRIT)
 			if (prob((friend.stat < DEAD)? 50 : 15))
 				var/verb = pick("meows", "mews", "mrowls")
-				audible_emote(pick("[verb] in distress.", "[verb] anxiously."))
+				visible_emote(pick("[verb] in distress.", "[verb] anxiously."))
+
 		else
 			if (prob(5))
-				visible_emote(pick("nuzzles [friend].",
+				var/msg5 = (pick("nuzzles [friend].",
 								   "brushes against [friend].",
 								   "rubs against [friend].",
 								   "purrs."))
+				src.visible_message("<span class='name'>[src]</span> [msg5].")
 	else if (friend.health <= 50)
 		if (prob(10))
 			var/verb = pick("meows", "mews", "mrowls")
-			audible_emote("[verb] anxiously.")
+			visible_emote("[verb] anxiously.")
 
 /mob/living/simple_animal/cat/fluff/verb/friend()
 	set name = "Become Friends"
@@ -213,7 +215,7 @@
 			say("Meow!")
 			return
 
-	usr << "<span class='notice'>[src] ignores you.</span>"
+	usr << SPAN_NOTICE("[src] ignores you.")
 	return
 
 
@@ -223,18 +225,12 @@
 	desc = "Her fur has the look and feel of velvet, and her tail quivers occasionally."
 	gender = FEMALE
 	icon_state = "cat"
-	item_state = "cat"
-	icon_living = "cat"
-	icon_dead = "cat_dead"
-	befriend_job = "Chief Medical Officer"
+	befriend_job = "Moebius Biolab Officer"
 
 /mob/living/simple_animal/cat/kitten
 	name = "kitten"
 	desc = "D'aaawwww"
 	icon_state = "kitten"
-	item_state = "kitten"
-	icon_living = "kitten"
-	icon_dead = "kitten_dead"
 	gender = NEUTER
 
 // Leaving this here for now.
@@ -249,9 +245,6 @@
 	desc = "That's Bones the cat. He's a laid back, black cat. Meow."
 	gender = MALE
 	icon_state = "cat3"
-	item_state = "cat3"
-	icon_living = "cat3"
-	icon_dead = "cat3_dead"
 	holder_type = /obj/item/weapon/holder/cat/fluff/bones
 	var/friend_name = "Erstatz Vryroxes"
 

@@ -10,8 +10,8 @@
 	item_state = "laundry"
 	desc = "The peak of thousands of years of laundry evolution."
 
-	w_class = 5
-	max_w_class = 4
+	w_class = ITEM_SIZE_HUGE
+	max_w_class = ITEM_SIZE_LARGE
 	max_storage_space = 25 //20 for clothes + a bit of additional space for non-clothing items that were worn on body
 	storage_slots = 14
 	use_to_pickup = 1
@@ -24,21 +24,21 @@
 /obj/item/weapon/storage/laundry_basket/attack_hand(mob/user as mob)
 	if(ishuman(user))
 		var/mob/living/carbon/human/H = user
-		var/obj/item/organ/external/temp = H.get_organ("r_hand")
+		var/obj/item/organ/external/temp = H.get_organ(BP_R_HAND)
 		if (user.hand)
-			temp = H.get_organ("l_hand")
+			temp = H.get_organ(BP_L_HAND)
 		if(!temp)
-			user << "<span class='warning'>You need two hands to pick this up!</span>"
+			user << SPAN_WARNING("You need two hands to pick this up!")
 			return
 
 	if(user.get_inactive_hand())
-		user << "<span class='warning'>You need your other hand to be empty</span>"
+		user << SPAN_WARNING("You need your other hand to be empty")
 		return
 	return ..()
 
 /obj/item/weapon/storage/laundry_basket/attack_self(mob/user as mob)
 	var/turf/T = get_turf(user)
-	user << "<span class='notice'>You dump the [src]'s contents onto \the [T].</span>"
+	user << SPAN_NOTICE("You dump the [src]'s contents onto \the [T].")
 	return ..()
 
 /obj/item/weapon/storage/laundry_basket/pickup(mob/user)

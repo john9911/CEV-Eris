@@ -36,7 +36,7 @@
 	icon_state = "black"
 	item_state = "bl_suit"
 
-	w_class = 4//bulky item
+	w_class = ITEM_SIZE_LARGE//bulky item
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.02
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
@@ -72,21 +72,7 @@
 	item_state = "rainbow"
 
 
-/obj/item/clothing/under/gentlesuit
-	name = "gentlemans suit"
-	desc = "A silk black shirt with a white tie and a matching gray vest and slacks. Feels proper."
-	icon_state = "gentlesuit"
-	item_state = "gy_suit"
-
-
-/*/obj/item/clothing/under/gimmick/rank/captain/suit
-	name = "captain's suit"
-	desc = "A green suit and yellow necktie. Exemplifies authority."
-	icon_state = "green_suit"
-	item_state = "dg_suit"*/
-
-
-/obj/item/clothing/under/gimmick/rank/head_of_personnel/suit
+/obj/item/clothing/under/rank/fo_suit
 	name = "First Officer's suit"
 	desc = "A teal suit and yellow necktie. An authoritative yet tacky ensemble."
 	icon_state = "teal_suit"
@@ -157,17 +143,11 @@
 
 	body_parts_covered = LOWER_TORSO
 
-//wedding stuff
-/obj/item/clothing/under/wedding/
-	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS
-
-
-/obj/item/clothing/under/wedding/bride_white
+/obj/item/clothing/under/bride_white
 	name = "silky wedding dress"
 	desc = "A white wedding gown made from the finest silk."
 	icon_state = "bride_white"
 	item_state = "nursesuit"
-
 	flags_inv = HIDESHOES
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO
 
@@ -184,41 +164,6 @@
 	desc = "An assistant's formal-wear. Why an assistant needs formal-wear is still unknown."
 	icon_state = "assistant_formal"
 	item_state = "gy_suit"
-
-
-/obj/item/clothing/under/suit_jacket/charcoal
-	name = "charcoal suit"
-	desc = "A charcoal suit and red tie. Very professional."
-	icon_state = "charcoal_suit"
-	item_state = "bl_suit"
-
-
-/obj/item/clothing/under/suit_jacket/navy
-	name = "navy suit"
-	desc = "A navy suit and red tie, intended for the station's finest."
-	icon_state = "navy_suit"
-	item_state = "bl_suit"
-
-
-/obj/item/clothing/under/suit_jacket/burgundy
-	name = "burgundy suit"
-	desc = "A burgundy suit and black tie. Somewhat formal."
-	icon_state = "burgundy_suit"
-	item_state = "r_suit"
-
-
-/obj/item/clothing/under/suit_jacket/checkered
-	name = "checkered suit"
-	desc = "That's a very nice suit you have there. Shame if something were to happen to it, eh?"
-	icon_state = "checkered_suit"
-	item_state = "gy_suit"
-
-
-/obj/item/clothing/under/suit_jacket/tan
-	name = "tan suit"
-	desc = "A tan suit with a yellow tie. Smart, but casual."
-	icon_state = "tan_suit"
-	item_state = "lb_suit"
 
 
 /obj/item/clothing/under/serviceoveralls

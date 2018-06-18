@@ -34,12 +34,12 @@
 		var/area/A = get_area(C)
 		if(!A)
 			continue
-		if(!(A.z in config.station_levels))
+		if(!isNotStationLevel(A.z))
 			continue
 		if(A.flags & RAD_SHIELDED)
 			continue
 
-		if(istype(C,/mob/living/carbon/human))
+		if(ishuman(C))
 			var/mob/living/carbon/human/H = C
 			H.apply_effect((rand(15,35)),IRRADIATE,0)
 			if(prob(5))

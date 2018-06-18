@@ -20,39 +20,35 @@
 
 //auto-gibs anything that bumps into it
 /obj/machinery/gibber/autogibber
-	var/turf/input_plate
+	var/input_dir = 0
 
 /obj/machinery/gibber/autogibber/New()
 	..()
-	spawn(5)
-		for(var/i in cardinal)
-			var/obj/machinery/mineral/input/input_obj = locate( /obj/machinery/mineral/input, get_step(src.loc, i) )
-			if(input_obj)
-				if(isturf(input_obj.loc))
-					input_plate = input_obj.loc
-					gib_throw_dir = i
-					qdel(input_obj)
-					break
-
-		if(!input_plate)
+	spawn()
+		var/obj/landmark/machinery/input/input = locate() in orange(1, src)
+		if(input)
+			input_dir = get_dir(src, input)
+		else
 			log_misc("a [src] didn't find an input plate.")
-			return
 
 /obj/machinery/gibber/autogibber/Bumped(var/atom/A)
-	if(!input_plate) return
+	if(!input_dir)
+		return
 
 	if(ismob(A))
 		var/mob/M = A
-
-		if(M.loc == input_plate
-		)
-			M.loc = src
+		if(M.loc == get_step(src, input_dir))
+			M.forceMove(src)
 			M.gib()
 
 
 /obj/machinery/gibber/New()
 	..()
-	src.overlays += image('icons/obj/kitchen.dmi', "grjam")
+	update_icon()
+	spawn()
+		var/obj/landmark/machinery/output/output = locate() in orange(1, src)
+		if(output)
+			gib_throw_dir = get_dir(src, output)
 
 /obj/machinery/gibber/update_icon()
 	overlays.Cut()
@@ -69,38 +65,31 @@
 
 /obj/machinery/gibber/relaymove(mob/user as mob)
 	src.go_out()
-	return
 
 /obj/machinery/gibber/attack_hand(mob/user as mob)
 	if(stat & (NOPOWER|BROKEN))
 		return
 	if(operating)
-		user << "<span class='danger'>The gibber is locked and running, wait for it to finish.</span>"
+		user << SPAN_DANGER("The gibber is locked and running, wait for it to finish.")
 		return
 	else
 		src.startgibbing(user)
 
 /obj/machinery/gibber/examine()
 	..()
-	usr << "The safety guard is [emagged ? "<span class='danger'>disabled</span>" : "enabled"]."
+	usr << "The safety guard is [emagged ? SPAN_DANGER("disabled") : "enabled"]."
 
 /obj/machinery/gibber/emag_act(var/remaining_charges, var/mob/user)
 	emagged = !emagged
-	user << "<span class='danger'>You [emagged ? "disable" : "enable"] the gibber safety guard.</span>"
+	user <<  SPAN_DANGER("You [emagged ? "disable" : "enable"] the gibber safety guard.")
 	return 1
 
-/obj/machinery/gibber/attackby(var/obj/item/W, var/mob/user)
-	var/obj/item/weapon/grab/G = W
-
-	if(!istype(G))
-		return ..()
-
-	if(G.state < 2)
-		user << "<span class='danger'>You need a better grip to do that!</span>"
-		return
-
-	move_into_gibber(user,G.affecting)
-	// Grab() process should clean up the grab item, no need to del it.
+/obj/machinery/gibber/affect_grab(var/mob/user, var/mob/target, var/state)
+	if(state < GRAB_NECK)
+		user << SPAN_DANGER("You need a better grip to do that!")
+		return FALSE
+	move_into_gibber(user, target)
+	return TRUE
 
 /obj/machinery/gibber/MouseDrop_T(mob/target, mob/user)
 	if(user.stat || user.restrained())
@@ -110,34 +99,32 @@
 /obj/machinery/gibber/proc/move_into_gibber(var/mob/user,var/mob/living/victim)
 
 	if(src.occupant)
-		user << "<span class='danger'>The gibber is full, empty it first!</span>"
+		user << SPAN_DANGER("The gibber is full, empty it first!")
 		return
 
 	if(operating)
-		user << "<span class='danger'>The gibber is locked and running, wait for it to finish.</span>"
+		user << SPAN_DANGER("The gibber is locked and running, wait for it to finish.")
 		return
 
-	if(!(istype(victim, /mob/living/carbon)) && !(istype(victim, /mob/living/simple_animal)) )
-		user << "<span class='danger'>This is not suitable for the gibber!</span>"
+	if(!(iscarbon(victim)) && !(isanimal(victim)) )
+		user << SPAN_DANGER("This is not suitable for the gibber!")
 		return
 
-	if(istype(victim,/mob/living/carbon/human) && !emagged)
-		user << "<span class='danger'>The gibber safety guard is engaged!</span>"
+	if(ishuman(victim) && !emagged)
+		user << SPAN_DANGER("The gibber safety guard is engaged!")
 		return
 
 
 	if(victim.abiotic(1))
-		user << "<span class='danger'>Subject may not have abiotic items on.</span>"
+		user << SPAN_DANGER("Subject may not have abiotic items on.")
 		return
 
-	user.visible_message("<span class='danger'>[user] starts to put [victim] into the gibber!</span>")
+	user.visible_message(SPAN_DANGER("[user] starts to put [victim] into the gibber!"))
 	src.add_fingerprint(user)
 	if(do_after(user, 30, src) && victim.Adjacent(src) && user.Adjacent(src) && victim.Adjacent(user) && !occupant)
-		user.visible_message("<span class='danger'>\The [user] stuffs \the [victim] into the gibber!</span>")
-		if(victim.client)
-			victim.client.perspective = EYE_PERSPECTIVE
-			victim.client.eye = src
-		victim.loc = src
+		user.visible_message(SPAN_DANGER("\The [user] stuffs \the [victim] into the gibber!"))
+		victim.forceMove(src)
+		victim.reset_view(src)
 		src.occupant = victim
 		update_icon()
 
@@ -170,10 +157,10 @@
 	if(src.operating)
 		return
 	if(!src.occupant)
-		visible_message("<span class='danger'>You hear a loud metallic grinding sound.</span>")
+		visible_message(SPAN_DANGER("You hear a loud metallic grinding sound."))
 		return
 	use_power(1000)
-	visible_message("<span class='danger'>You hear a loud squelchy grinding sound.</span>")
+	visible_message(SPAN_DANGER("You hear a loud squelchy grinding sound."))
 	src.operating = 1
 	update_icon()
 
@@ -186,13 +173,13 @@
 		slab_nutrition = C.nutrition / 15
 
 	// Some mobs have specific meat item types.
-	if(istype(src.occupant,/mob/living/simple_animal))
+	if(isanimal(src.occupant))
 		var/mob/living/simple_animal/critter = src.occupant
 		if(critter.meat_amount)
 			slab_count = critter.meat_amount
 		if(critter.meat_type)
 			slab_type = critter.meat_type
-	else if(istype(src.occupant,/mob/living/carbon/human))
+	else if(ishuman(occupant))
 		var/mob/living/carbon/human/H = occupant
 		slab_name = src.occupant.real_name
 		slab_type = H.species.meat_type

@@ -1,13 +1,14 @@
+ADMIN_VERB_ADD(/client/proc/air_report, R_DEBUG, FALSE)
 /client/proc/air_report()
 	set category = "Debug"
 	set name = "Show Air Report"
 
-	if(!master_controller || !air_master)
-		alert(usr,"Master_controller or air_master not found.","Air Report")
+	if(!master_controller || !SSair)
+		alert(usr,"Master_controller or SSair not found.","Air Report")
 		return
 
-	var/active_groups = air_master.active_zones
-	var/inactive_groups = air_master.zones.len - active_groups
+	var/active_groups = SSair.active_zones
+	var/inactive_groups = SSair.zones.len - active_groups
 
 	var/hotspots = 0
 	for(var/obj/fire/hotspot in world)
@@ -15,9 +16,9 @@
 
 	var/active_on_main_station = 0
 	var/inactive_on_main_station = 0
-	for(var/zone/zone in air_master.zones)
+	for(var/zone/zone in SSair.zones)
 		var/turf/simulated/turf = locate() in zone.contents
-		if(turf && turf.z in config.station_levels)
+		if(isOnStationLevel(turf))
 			if(zone.needs_update)
 				active_on_main_station++
 			else
@@ -25,8 +26,8 @@
 
 	var/output = {"<B>AIR SYSTEMS REPORT</B><HR>
 <B>General Processing Data</B><BR>
-	Cycle: [air_master.current_cycle]<br>
-	Groups: [air_master.zones.len]<BR>
+	Cycle: [SSair.times_fired]<br>
+	Groups: [SSair.zones.len]<BR>
 ---- <I>Active:</I> [active_groups]<BR>
 ---- <I>Inactive:</I> [inactive_groups]<BR><br>
 ---- <I>Active on station:</i> [active_on_main_station]<br>
@@ -36,7 +37,7 @@
 	Hotspot Processing: [hotspots]<BR>
 <br>
 <B>Geometry Processing Data</B><BR>
-	Tile Update: [air_master.tiles_to_update.len]<BR>
+	Tile Update: [SSair.tiles_to_update.len]<BR>
 "}
 
 	usr << browse(output,"window=airreport")
@@ -98,6 +99,7 @@
 	usr << browse(output,"window=radioreport")
 
 
+ADMIN_VERB_ADD(/client/proc/reload_admins, R_SERVER, FALSE)
 /client/proc/reload_admins()
 	set name = "Reload Admins"
 	set category = "Debug"
@@ -108,6 +110,7 @@
 	load_admins()
 
 
+ADMIN_VERB_ADD(/client/proc/reload_mentors, R_SERVER, FALSE)
 /client/proc/reload_mentors()
 	set name = "Reload Mentors"
 	set category = "Debug"
@@ -117,39 +120,40 @@
 	message_admins("[usr] manually reloaded Mentors")
 	world.load_mods()
 
-
+/*
 //todo:
+ADMIN_VERB_ADD(/client/proc/jump_to_dead_group, R_DEBUG, FALSE)
 /client/proc/jump_to_dead_group()
 	set name = "Jump to dead group"
 	set category = "Debug"
-		/*
 	if(!holder)
 		src << "Only administrators may use this command."
 		return
 
-	if(!air_master)
+	if(!SSair)
 		usr << "Cannot find air_system"
 		return
 	var/datum/air_group/dead_groups = list()
-	for(var/datum/air_group/group in air_master.air_groups)
+	for(var/datum/air_group/group in SSair.air_groups)
 		if (!group.group_processing)
 			dead_groups += group
 	var/datum/air_group/dest_group = pick(dead_groups)
 	usr.loc = pick(dest_group.members)
 
 	return
-	*/
+*/
 
+/*
+ADMIN_VERB_ADD(/client/proc/kill_airgroup, R_DEBUG, FALSE)
 /client/proc/kill_airgroup()
 	set name = "Kill Local Airgroup"
 	set desc = "Use this to allow manual manupliation of atmospherics."
 	set category = "Debug"
-	/*
 	if(!holder)
 		src << "Only administrators may use this command."
 		return
 
-	if(!air_master)
+	if(!SSair)
 		usr << "Cannot find air_system"
 		return
 
@@ -161,7 +165,7 @@
 	else
 		usr << "Local airgroup is unsimulated!"
 
-	*/
+*/
 
 /client/proc/print_jobban_old()
 	set name = "Print Jobban Log"

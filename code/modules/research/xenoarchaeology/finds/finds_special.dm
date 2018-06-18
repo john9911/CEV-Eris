@@ -7,10 +7,10 @@
 
 /obj/item/weapon/reagent_containers/glass/replenishing/New()
 	..()
-	processing_objects.Add(src)
-	spawning_id = pick("blood","holywater","lube","stoxin","ethanol","ice","glycerol","fuel","cleaner")
+	START_PROCESSING(SSobj, src)
+	spawning_id = pick("blood","lube","stoxin","ethanol","ice","glycerol","fuel","cleaner")
 
-/obj/item/weapon/reagent_containers/glass/replenishing/process()
+/obj/item/weapon/reagent_containers/glass/replenishing/Process()
 	reagents.add_reagent(spawning_id, 0.3)
 
 
@@ -22,11 +22,17 @@
 	var/max_stored_messages = 100
 
 /obj/item/clothing/mask/gas/poltergeist/New()
-	processing_objects.Add(src)
+	..()
+	START_PROCESSING(SSobj, src)
+	add_hearing()
 
-/obj/item/clothing/mask/gas/poltergeist/process()
-	if(heard_talk.len && istype(src.loc, /mob/living) && prob(10))
-		var/mob/living/M = src.loc
+/obj/item/clothing/mask/gas/poltergeist/Destroy()
+	remove_hearing()
+	return ..()
+
+/obj/item/clothing/mask/gas/poltergeist/Process()
+	if(heard_talk.len && isliving(loc) && prob(10))
+		var/mob/living/M = loc
 		M.say(pick(heard_talk))
 
 /obj/item/clothing/mask/gas/poltergeist/hear_talk(mob/M as mob, text)
@@ -34,7 +40,7 @@
 	if(heard_talk.len > max_stored_messages)
 		heard_talk.Remove(pick(heard_talk))
 	heard_talk.Add(text)
-	if(istype(src.loc, /mob/living) && world.time - last_twitch > 50)
+	if(isliving(src.loc) && world.time - last_twitch > 50)
 		last_twitch = world.time
 
 
@@ -56,9 +62,14 @@
 
 /obj/item/weapon/vampiric/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
+	add_hearing()
 
-/obj/item/weapon/vampiric/process()
+/obj/item/weapon/vampiric/Destroy()
+	remove_hearing()
+	. = ..()
+
+/obj/item/weapon/vampiric/Process()
 	//see if we've identified anyone nearby
 	if(world.time - last_bloodcall > bloodcall_interval && nearby_mobs.len)
 		var/mob/living/carbon/human/M = pop(nearby_mobs)
@@ -143,10 +154,10 @@
 
 /obj/effect/decal/cleanable/blood/splatter/animated/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 	loc_last_process = src.loc
 
-/obj/effect/decal/cleanable/blood/splatter/animated/process()
+/obj/effect/decal/cleanable/blood/splatter/animated/Process()
 	if(target_turf && src.loc != target_turf)
 		step_towards(src,target_turf)
 		if(src.loc == loc_last_process)
@@ -173,9 +184,9 @@
 	density = 1
 
 /obj/effect/shadow_wight/New()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
-/obj/effect/shadow_wight/process()
+/obj/effect/shadow_wight/Process()
 	if(src.loc)
 		src.loc = get_turf(pick(orange(1,src)))
 		var/mob/living/carbon/M = locate() in src.loc
@@ -197,7 +208,7 @@
 			M.sleeping = max(M.sleeping,rand(5,10))
 			src.loc = null
 	else
-		processing_objects.Remove(src)
+		STOP_PROCESSING(SSobj, src)
 
 /obj/effect/shadow_wight/Bump(var/atom/obstacle)
 	obstacle << "\red You feel a chill run down your spine!"

@@ -76,7 +76,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/csandwich/Destroy()
 	for(var/obj/item/O in ingredients)
 		qdel(O)
-	..()
+	. = ..()
 
 /obj/item/weapon/reagent_containers/food/snacks/csandwich/examine(mob/user)
 	..(user)
@@ -92,7 +92,7 @@
 			break
 
 	var/mob/living/H
-	if(istype(M,/mob/living))
+	if(isliving(M))
 		H = M
 
 	if(H && shard && M == user) //This needs a check for feeding the food to other people, but that could be abusable.

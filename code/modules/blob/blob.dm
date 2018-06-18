@@ -96,7 +96,7 @@
 		return
 	var/obj/mecha/M = locate() in T
 	if(M)
-		M.visible_message("<span class='danger'>The blob attacks \the [M]!</span>")
+		M.visible_message(SPAN_DANGER("The blob attacks \the [M]!"))
 		M.take_damage(40)
 		return
 
@@ -104,7 +104,7 @@
 	for(var/mob/living/L in T)
 		if(L.stat == DEAD)
 			continue
-		L.visible_message("<span class='danger'>The blob attacks \the [L]!</span>", "<span class='danger'>The blob attacks you!</span>")
+		L.visible_message(SPAN_DANGER("The blob attacks \the [L]!"), SPAN_DANGER("The blob attacks you!"))
 		playsound(loc, 'sound/effects/attackblob.ogg', 50, 1)
 		L.take_organ_damage(rand(30, 40))
 		return
@@ -142,7 +142,7 @@
 	switch(W.damtype)
 		if("fire")
 			damage = (W.force / fire_resist)
-			if(istype(W, /obj/item/weapon/weldingtool))
+			if(istype(W, /obj/item/weapon/tool/weldingtool))
 				playsound(loc, 'sound/items/Welder.ogg', 100, 1)
 		if("brute")
 			damage = (W.force / brute_resist)
@@ -165,14 +165,14 @@
 	return
 
 /obj/effect/blob/core/New(loc)
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 	return ..(loc)
 
 /obj/effect/blob/core/Destroy()
-	processing_objects.Remove(src)
+	STOP_PROCESSING(SSobj, src)
 	return ..()
 
-/obj/effect/blob/core/process()
+/obj/effect/blob/core/Process()
 	set waitfor = 0
 	if(!blob_may_process)
 		return
@@ -200,7 +200,7 @@
 /obj/effect/blob/shield/Destroy()
 	density = 0
 	update_nearby_tiles()
-	..()
+	. = ..()
 
 /obj/effect/blob/shield/update_icon()
 	if(health > maxHealth * 2 / 3)

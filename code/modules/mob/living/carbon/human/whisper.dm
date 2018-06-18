@@ -37,8 +37,8 @@
 //This is used by both the whisper verb and human/say() to handle whispering
 /mob/living/carbon/human/proc/whisper_say(var/message, var/datum/language/speaking = null, var/alt_name="", var/verb="whispers")
 
-	if (istype(src.wear_mask, /obj/item/clothing/mask/muzzle))
-		src << "<span class='danger'>You're muzzled and cannot speak!</span>"
+	if (istype(src.wear_mask, /obj/item/clothing/mask/muzzle) || istype(src.wear_mask, /obj/item/weapon/grenade))
+		src << SPAN_DANGER("You're muzzled and cannot speak!")
 		return
 
 	var/message_range = 1
@@ -49,12 +49,12 @@
 	var/not_heard //the message displayed to people who could not hear the whispering
 	if (speaking)
 		if (speaking.whisper_verb)
-			verb = speaking.whisper_verb
+			verb = safepick(speaking.whisper_verb)
 			not_heard = "[verb] something"
-		else
+		if(!verb)
 			var/adverb = pick("quietly", "softly")
-			verb = "[speaking.speech_verb] [adverb]"
-			not_heard = "[speaking.speech_verb] something [adverb]"
+			verb = "[safepick(speaking.speech_verb)] [adverb]"
+			not_heard = "[verb] something [adverb]"
 	else
 		not_heard = "[verb] something" //TODO get rid of the null language and just prevent speech if language is null
 
@@ -122,7 +122,7 @@
 	//Pass whispers on to anything inside the immediate listeners.
 	for(var/mob/L in listening)
 		for(var/mob/C in L.contents)
-			if(istype(C,/mob/living))
+			if(isliving(C))
 				listening += C
 
 	//pass on the message to objects that can hear us.

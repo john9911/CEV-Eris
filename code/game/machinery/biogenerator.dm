@@ -17,17 +17,8 @@
 
 /obj/machinery/biogenerator/New()
 	..()
-	var/datum/reagents/R = new/datum/reagents(1000)
-	reagents = R
-	R.my_atom = src
-	beaker = new /obj/item/weapon/reagent_containers/glass/bottle(src)
-
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/biogenerator(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-
-	RefreshParts()
+	create_reagents(1000)
+	beaker = new(src)
 
 /obj/machinery/biogenerator/on_reagent_change()			//When the reagents change, change the icon as well.
 	update_icon()
@@ -41,52 +32,52 @@
 		icon_state = "biogen-work"
 	return
 
-/obj/machinery/biogenerator/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(default_deconstruction_screwdriver(user, O))
+/obj/machinery/biogenerator/attackby(var/obj/item/I, var/mob/user)
+
+	if(default_deconstruction(I, user))
 		return
-	if(default_deconstruction_crowbar(user, O))
+
+	if(default_part_replacement(I, user))
 		return
-	if(default_part_replacement(user, O))
-		return
-	if(istype(O, /obj/item/weapon/reagent_containers/glass))
+	if(istype(I, /obj/item/weapon/reagent_containers/glass))
 		if(beaker)
-			user << "<span class='notice'>]The [src] is already loaded.</span>"
+			user << SPAN_NOTICE("The [src] is already loaded.")
 		else
-			user.remove_from_mob(O)
-			O.loc = src
-			beaker = O
+			user.remove_from_mob(I)
+			I.loc = src
+			beaker = I
 			updateUsrDialog()
 	else if(processing)
-		user << "<span class='notice'>\The [src] is currently processing.</span>"
-	else if(istype(O, /obj/item/weapon/storage/bag/plants))
+		user << SPAN_NOTICE("\The [src] is currently processing.")
+	else if(istype(I, /obj/item/weapon/storage/bag/plants))
 		var/i = 0
 		for(var/obj/item/weapon/reagent_containers/food/snacks/grown/G in contents)
 			i++
 		if(i >= 10)
-			user << "<span class='notice'>\The [src] is already full! Activate it.</span>"
+			user << SPAN_NOTICE("\The [src] is already full! Activate it.")
 		else
-			for(var/obj/item/weapon/reagent_containers/food/snacks/grown/G in O.contents)
+			for(var/obj/item/weapon/reagent_containers/food/snacks/grown/G in I.contents)
 				G.loc = src
 				i++
 				if(i >= 10)
-					user << "<span class='notice'>You fill \the [src] to its capacity.</span>"
+					user << SPAN_NOTICE("You fill \the [src] to its capacity.")
 					break
 			if(i < 10)
-				user << "<span class='notice'>You empty \the [O] into \the [src].</span>"
+				user << SPAN_NOTICE("You empty \the [I] into \the [src].")
 
 
-	else if(!istype(O, /obj/item/weapon/reagent_containers/food/snacks/grown))
-		user << "<span class='notice'>You cannot put this in \the [src].</span>"
+	else if(!istype(I, /obj/item/weapon/reagent_containers/food/snacks/grown))
+		user << SPAN_NOTICE("You cannot put this in \the [src].")
 	else
 		var/i = 0
 		for(var/obj/item/weapon/reagent_containers/food/snacks/grown/G in contents)
 			i++
 		if(i >= 10)
-			user << "<span class='notice'>\The [src] is full! Activate it.</span>"
+			user << SPAN_NOTICE("\The [src] is full! Activate it.")
 		else
-			user.remove_from_mob(O)
-			O.loc = src
-			user << "<span class='notice'>You put \the [O] in \the [src]</span>"
+			user.remove_from_mob(I)
+			I.loc = src
+			user << SPAN_NOTICE("You put \the [I] in \the [src]")
 	update_icon()
 	return
 
@@ -143,7 +134,7 @@
 	if (stat) //NOPOWER etc
 		return
 	if(processing)
-		usr << "<span class='notice'>The biogenerator is in the process of working.</span>"
+		usr << SPAN_NOTICE("The biogenerator is in the process of working.")
 		return
 	var/S = 0
 	for(var/obj/item/weapon/reagent_containers/food/snacks/grown/I in contents)

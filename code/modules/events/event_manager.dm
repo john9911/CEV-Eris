@@ -15,7 +15,8 @@
 	var/list/datum/event_container/event_containers = list(
 			EVENT_LEVEL_MUNDANE 	= new/datum/event_container/mundane,
 			EVENT_LEVEL_MODERATE	= new/datum/event_container/moderate,
-			EVENT_LEVEL_MAJOR 		= new/datum/event_container/major
+			EVENT_LEVEL_MAJOR 		= new/datum/event_container/major,
+			EVENT_LEVEL_ECONOMY	= new/datum/event_container/economy
 		)
 
 	var/datum/event_meta/new_event = new
@@ -287,6 +288,7 @@
 		new type(new /datum/event_meta(EVENT_LEVEL_MAJOR))
 		message_admins("[key_name_admin(usr)] has triggered an event. ([type])", 1)
 
+ADMIN_VERB_ADD(/client/proc/event_manager_panel, R_ADMIN, FALSE)
 /client/proc/event_manager_panel()
 	set name = "Event Manager Panel"
 	set category = "Admin"

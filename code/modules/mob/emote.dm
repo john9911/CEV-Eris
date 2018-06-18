@@ -6,7 +6,7 @@
 		src << "You are unable to emote."
 		return
 
-	var/muzzled = istype(src.wear_mask, /obj/item/clothing/mask/muzzle)
+	var/muzzled = istype(src.wear_mask, /obj/item/clothing/mask/muzzle) || istype(src.wear_mask, /obj/item/weapon/grenade)
 	if(m_type == 2 && muzzled) return
 
 	var/input
@@ -29,7 +29,7 @@
 		for(var/mob/M in player_list)
 			if (!M.client)
 				continue //skip monkeys and leavers
-			if (istype(M, /mob/new_player))
+			if (isnewplayer(M))
 				continue
 			if(findtext(message," snores.")) //Because we have so many sleeping people.
 				break
@@ -63,16 +63,16 @@
 /mob/proc/emote_dead(var/message)
 
 	if(client.prefs.muted & MUTE_DEADCHAT)
-		src << "<span class='danger'>You cannot send deadchat emotes (muted).</span>"
+		src << SPAN_DANGER("You cannot send deadchat emotes (muted).")
 		return
 
 	if(!is_preference_enabled(/datum/client_preference/show_dsay))
-		src << "<span class='danger'>You have deadchat muted.</span>"
+		src << SPAN_DANGER("You have deadchat muted.")
 		return
 
 	if(!src.client.holder)
 		if(!config.dsay_allowed)
-			src << "<span class='danger'>Deadchat is globally muted.</span>"
+			src << SPAN_DANGER("Deadchat is globally muted.")
 			return
 
 

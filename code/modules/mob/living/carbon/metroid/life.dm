@@ -162,7 +162,7 @@
 		nutrition = 0
 		adjustToxLoss(rand(1,3))
 		if (client && prob(5))
-			src << "<span class='danger'>You are starving!</span>"
+			src << SPAN_DANGER("You are starving!")
 
 	else if (nutrition >= get_grow_nutrition() && amount_grown < 10)
 		nutrition -= 20
@@ -224,7 +224,7 @@
 				if(issilicon(L) && (rabid || attacked)) // They can't eat silicons, but they can glomp them in defence
 					targets += L // Possible target found!
 
-				if(istype(L, /mob/living/carbon/human)) //Ignore slime(wo)men
+				if(ishuman(L)) //Ignore slime(wo)men
 					var/mob/living/carbon/human/H = L
 					if(H.species.name == "Slime")
 						continue
@@ -302,7 +302,7 @@
 				return
 
 		if(Target.Adjacent(src))
-			if(istype(Target, /mob/living/silicon)) // Glomp the silicons
+			if(issilicon(Target)) // Glomp the silicons
 				if(!Atkcool)
 					a_intent = I_HURT
 					UnarmedAttack(Target)

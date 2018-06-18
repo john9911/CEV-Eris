@@ -42,8 +42,8 @@
 	src.set_dir(turn(src.dir, 90))
 	return 1
 
-/obj/machinery/power/emitter/initialize()
-	..()
+/obj/machinery/power/emitter/Initialize()
+	. = ..()
 	if(state == 2 && anchored)
 		connect_to_network()
 		if(_wifi_id)
@@ -90,9 +90,9 @@
 			playsound(loc, 'sound/machines/machine_switch.ogg', 100, 1)
 			update_icon()
 		else
-			user << "<span class='warning'>The controls are locked!</span>"
+			user << SPAN_WARNING("The controls are locked!")
 	else
-		user << "<span class='warning'>\The [src] needs to be firmly secured to the floor first.</span>"
+		user << SPAN_WARNING("\The [src] needs to be firmly secured to the floor first.")
 		return 1
 
 
@@ -104,7 +104,7 @@
 			src.use_power = 1	*/
 	return 1
 
-/obj/machinery/power/emitter/process()
+/obj/machinery/power/emitter/Process()
 	if(stat & (BROKEN))
 		return
 	if(src.state != 2 || (!powernet && active_power_usage))
@@ -148,70 +148,56 @@
 		A.damage = round(power_per_shot/EMITTER_DAMAGE_POWER_TRANSFER)
 		A.launch( get_step(src.loc, src.dir) )
 
-/obj/machinery/power/emitter/attackby(obj/item/W, mob/user)
+/obj/machinery/power/emitter/attackby(obj/item/I, mob/user)
 
-	if(istype(W, /obj/item/weapon/wrench))
-		if(active)
-			user << "Turn off [src] first."
-			return
-		switch(state)
-			if(0)
-				state = 1
-				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-				user.visible_message("[user.name] secures [src] to the floor.", \
-					"You secure the external reinforcing bolts to the floor.", \
-					"You hear a ratchet")
-				src.anchored = 1
-			if(1)
-				state = 0
-				playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-				user.visible_message("[user.name] unsecures [src] reinforcing bolts from the floor.", \
-					"You undo the external reinforcing bolts.", \
-					"You hear a ratchet")
-				src.anchored = 0
-			if(2)
-				user << "<span class='warning'>\The [src] needs to be unwelded from the floor.</span>"
-		return
+	var/list/usable_qualities = list(QUALITY_BOLT_TURNING)
+	if(state)
+		usable_qualities.Add(QUALITY_WELDING)
 
-	if(istype(W, /obj/item/weapon/weldingtool))
-		var/obj/item/weapon/weldingtool/WT = W
-		if(active)
-			user << "Turn off [src] first."
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_BOLT_TURNING)
+			if(active)
+				user << SPAN_WARNING("Turn off [src] first.")
+				return
+			if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+				state = !state
+				anchored = !anchored
+				user.visible_message("[user.name] [anchored? "un":""]secures [src] reinforcing bolts [anchored? "to":"from"] the floor.", \
+					"You [anchored? "secure":"undo"] the external reinforcing bolts.", \
+					"You hear a ratchet")
 			return
-		switch(state)
-			if(0)
-				user << "<span class='warning'>\The [src] needs to be wrenched to the floor.</span>"
-			if(1)
-				if (WT.remove_fuel(0,user))
-					playsound(src.loc, 'sound/items/Welder2.ogg', 50, 1)
-					user.visible_message("[user.name] starts to weld [src] to the floor.", \
-						"You start to weld [src] to the floor.", \
-						"You hear welding")
-					if (do_after(user,20,src))
-						if(!src || !WT.isOn()) return
+
+		if(QUALITY_WELDING)
+			if(active)
+				user << "Turn off [src] first."
+				return
+			switch(state)
+				if(0)
+					user << SPAN_WARNING("\The [src] needs to be wrenched to the floor.")
+					return
+				if(1)
+					if (I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
 						state = 2
-						user << "You weld [src] to the floor."
+						user << SPAN_NOTICE("You weld [src] to the floor.")
 						connect_to_network()
-				else
-					user << "<span class='warning'>You need more welding fuel to complete this task.</span>"
-			if(2)
-				if (WT.remove_fuel(0,user))
-					playsound(src.loc, 'sound/items/Welder2.ogg', 50, 1)
-					user.visible_message("[user.name] starts to cut [src] free from the floor.", \
-						"You start to cut [src] free from the floor.", \
-						"You hear welding")
-					if (do_after(user,20,src))
-						if(!src || !WT.isOn()) return
+						return
+				if(2)
+					if (I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
 						state = 1
-						user << "You cut [src] free from the floor."
+						user << SPAN_NOTICE("You cut [src] free from the floor.")
 						disconnect_from_network()
-				else
-					user << "<span class='warning'>You need more welding fuel to complete this task.</span>"
-		return
+						return
+			return
 
-	if(istype(W, /obj/item/weapon/card/id) || istype(W, /obj/item/device/pda))
+		if(ABORT_CHECK)
+			return
+
+	if(istype(I, /obj/item/weapon/card/id) || istype(I, /obj/item/device/pda))
 		if(emagged)
-			user << "<span class='warning'>The lock seems to be broken.</span>"
+			user << SPAN_WARNING("The lock seems to be broken.")
 			return
 		if(src.allowed(user))
 			if(active)
@@ -219,9 +205,9 @@
 				user << "The controls are now [src.locked ? "locked." : "unlocked."]"
 			else
 				src.locked = 0 //just in case it somehow gets locked
-				user << "<span class='warning'>The controls can only be locked when [src] is online.</span>"
+				user << SPAN_WARNING("The controls can only be locked when [src] is online.")
 		else
-			user << "<span class='warning'>Access denied.</span>"
+			user << SPAN_WARNING("Access denied.")
 		return
 	..()
 	return
@@ -230,5 +216,5 @@
 	if(!emagged)
 		locked = 0
 		emagged = 1
-		user.visible_message("[user.name] emags [src].","<span class='warning'>You short out the lock.</span>")
+		user.visible_message("[user.name] emags [src].",SPAN_WARNING("You short out the lock."))
 		return 1

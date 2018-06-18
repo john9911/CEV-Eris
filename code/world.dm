@@ -22,13 +22,14 @@ var/global/datum/global_init/init = new ()
 
 	initialize_chemical_reagents()
 	initialize_chemical_reactions()
+	initialize_integrated_circuits_list()
 
 	qdel(src) //we're done
 
 /datum/global_init/Destroy()
 	return 1
 
-/var/game_id = null
+var/game_id = null
 /proc/generate_gameid()
 	if(game_id != null)
 		return
@@ -75,12 +76,14 @@ var/global/datum/global_init/init = new ()
 		config.server_name += " #[(world.port % 1000) / 100]"
 
 	if(config && config.log_runtime)
-		log = file("data/logs/runtime/[time2text(world.realtime,"YYYY-MM-DD-(hh-mm-ss)")]-runtime.log")
+		log = file("data/logs/runtime/[time2text(world.realtime, "YYYY-MM-DD-(hh-mm-ss)")]-runtime.log")
 
 	callHook("startup")
 	//Emergency Fix
 	load_mods()
 	//end-emergency fix
+
+	generate_body_modification_lists()
 
 	src.update_status()
 
@@ -104,45 +107,32 @@ var/global/datum/global_init/init = new ()
 	if(config.generate_asteroid)
 		// These values determine the specific area that the map is applied to.
 		// Because we do not use Bay's default map, we check the config file to see if custom parameters are needed, so we need to avoid hardcoding.
-		if(config.asteroid_z_levels)
-			for(var/z_level in config.asteroid_z_levels)
-				// In case we got fed a string instead of a number...
-				z_level = text2num(z_level)
+		if(maps_data.asteroid_leves)
+			for(var/z_level in maps_data.asteroid_leves)
 				if(!isnum(z_level))
 					// If it's still not a number, we probably got fed some nonsense string.
 					admin_notice("<span class='danger'>Error: ASTEROID_Z_LEVELS config wasn't given a number.</span>")
 				// Now for the actual map generating.  This occurs for every z-level defined in the config.
-				new /datum/random_map/automata/cave_system(null,1,1,z_level,300,300)
+				new /datum/random_map/automata/cave_system(null, 1, 1, z_level, 300, 300)
 				// Let's add ore too.
 				new /datum/random_map/noise/ore(null, 1, 1, z_level, 64, 64)
 		else
 			admin_notice("<span class='danger'>Error: No asteroid z-levels defined in config!</span>")
-		// Update all turfs to ensure everything looks good post-generation. Yes,
-		// it's brute-forcey, but frankly the alternative is a mine turf rewrite.
-		for(var/turf/simulated/mineral/M in world) // Ugh.
-			M.updateMineralOverlays()
-		for(var/turf/simulated/floor/asteroid/M in world) // Uuuuuugh.
-			M.updateMineralOverlays()
-
-	// Create autolathe recipes, as above.
-	populate_lathe_recipes()
-
-	// Create robolimbs for chargen.
-	populate_robolimb_list()
 
 	processScheduler = new
 	master_controller = new /datum/controller/game_controller()
-	spawn(1)
-		processScheduler.deferSetupFor(/datum/controller/process/ticker)
-		processScheduler.setup()
-		master_controller.setup()
+
+	processScheduler.deferSetupFor(/datum/controller/process/ticker)
+	processScheduler.setup()
+	Master.Initialize(10, FALSE)
+
 #ifdef UNIT_TEST
 		initialize_unit_tests()
 #endif
 
 
 
-	spawn(3000)		//so we aren't adding to the round-start lag
+	spawn(2000)		//so we aren't adding to the round-start lag
 		if(config.ToRban)
 			ToRban_autoupdate()
 
@@ -169,11 +159,11 @@ var/world_topic_spam_protect_time = world.timeofday
 				n++
 		return n
 
-	else if (copytext(T,1,7) == "status")
+	else if (copytext(T, 1, 7) == "status")
 		var/input[] = params2list(T)
 		var/list/s = list()
 		s["version"] = game_version
-		s["mode"] = master_mode
+		s["storyteller"] = master_storyteller
 		s["respawn"] = config.abandon_allowed
 		s["enter"] = config.enter_allowed
 		s["vote"] = config.allow_vote_mode
@@ -182,7 +172,7 @@ var/world_topic_spam_protect_time = world.timeofday
 
 		// This is dumb, but spacestation13.com's banners break if player count isn't the 8th field of the reply, so... this has to go here.
 		s["players"] = 0
-		s["stationtime"] = stationtime2text()
+		s["shiptime"] = stationtime2text()
 		s["roundduration"] = roundduration2text()
 
 		if(input["status"] == "2")
@@ -258,7 +248,7 @@ var/world_topic_spam_protect_time = world.timeofday
 		else
 			return "unknown"
 
-	else if(copytext(T,1,5) == "info")
+	else if(copytext(T, 1, 5) == "info")
 		var/input[] = params2list(T)
 		if(input["key"] != config.comms_password)
 			if(world_topic_spam_protect_ip == addr && abs(world_topic_spam_protect_time - world.time) < 50)
@@ -279,11 +269,10 @@ var/world_topic_spam_protect_time = world.timeofday
 
 		var/list/match = list()
 
-		for(var/mob/M in mob_list)
+		for(var/mob/M in SSmobs.mob_list)
 			var/strings = list(M.name, M.ckey)
 			if(M.mind)
 				strings += M.mind.assigned_role
-				strings += M.mind.special_role
 			for(var/text in strings)
 				if(ckey(text) in ckeysearch)
 					match[M] += 10 // an exact match is far better than a partial one
@@ -307,11 +296,13 @@ var/world_topic_spam_protect_time = world.timeofday
 			info["key"] = M.key
 			info["name"] = M.name == M.real_name ? M.name : "[M.name] ([M.real_name])"
 			info["role"] = M.mind ? (M.mind.assigned_role ? M.mind.assigned_role : "No role") : "No mind"
+/*
 			var/turf/MT = get_turf(M)
 			info["loc"] = M.loc ? "[M.loc]" : "null"
 			info["turf"] = MT ? "[MT] @ [MT.x], [MT.y], [MT.z]" : "null"
 			info["area"] = MT ? "[MT.loc]" : "null"
-			info["antag"] = M.mind ? (M.mind.special_role ? M.mind.special_role : "Not antag") : "No mind"
+*/
+			info["antag"] = M.mind ? (M.mind.antagonist.len ? "Antag" : "Not antag") : "No mind"
 			info["hasbeenrev"] = M.mind ? M.mind.has_been_rev : "No mind"
 			info["stat"] = M.stat
 			info["type"] = M.type
@@ -335,7 +326,7 @@ var/world_topic_spam_protect_time = world.timeofday
 				ret[M.key] = M.name
 			return list2params(ret)
 
-	else if(copytext(T,1,9) == "adminmsg")
+	else if(copytext(T, 1, 9) == "adminmsg")
 		/*
 			We got an adminmsg from IRC bot lets split the input then validate the input.
 			expected output:
@@ -389,48 +380,6 @@ var/world_topic_spam_protect_time = world.timeofday
 
 		return "Message Successful"
 
-	else if(copytext(T,1,6) == "notes")
-		/*
-			We got a request for notes from the IRC Bot
-			expected output:
-				1. notes = ckey of person the notes lookup is for
-				2. validationkey = the key the bot has, it should match the gameservers commspassword in it's configuration.
-		*/
-		var/input[] = params2list(T)
-		if(input["key"] != config.comms_password)
-			if(world_topic_spam_protect_ip == addr && abs(world_topic_spam_protect_time - world.time) < 50)
-
-				spawn(50)
-					world_topic_spam_protect_time = world.time
-					return "Bad Key (Throttled)"
-
-			world_topic_spam_protect_time = world.time
-			world_topic_spam_protect_ip = addr
-			return "Bad Key"
-
-		return show_player_info_irc(ckey(input["notes"]))
-
-	else if(copytext(T,1,4) == "age")
-		var/input[] = params2list(T)
-		if(input["key"] != config.comms_password)
-			if(world_topic_spam_protect_ip == addr && abs(world_topic_spam_protect_time - world.time) < 50)
-				spawn(50)
-					world_topic_spam_protect_time = world.time
-					return "Bad Key (Throttled)"
-
-			world_topic_spam_protect_time = world.time
-			world_topic_spam_protect_ip = addr
-			return "Bad Key"
-
-		var/age = get_player_age(input["age"])
-		if(isnum(age))
-			if(age >= 0)
-				return "[age]"
-			else
-				return "Ckey not found"
-		else
-			return "Database connection failed or not set up"
-
 
 /world/Reboot(var/reason)
 	/*spawn(0)
@@ -446,17 +395,17 @@ var/world_topic_spam_protect_time = world.timeofday
 	..(reason)
 
 /hook/startup/proc/loadMode()
-	world.load_mode()
+	world.load_storyteller()
 	return 1
 
-/world/proc/load_mode()
+/world/proc/load_storyteller()
 	var/list/Lines = file2list("data/mode.txt")
 	if(Lines.len)
 		if(Lines[1])
-			master_mode = Lines[1]
-			log_misc("Saved mode is '[master_mode]'")
+			master_storyteller = Lines[1]
+			log_misc("Saved storyteller is '[master_storyteller]'")
 
-/world/proc/save_mode(var/the_mode)
+/world/proc/save_storyteller(var/the_mode)
 	var/F = file("data/mode.txt")
 	fdel(F)
 	F << the_mode
@@ -473,9 +422,8 @@ var/world_topic_spam_protect_time = world.timeofday
 /proc/load_configuration()
 	config = new /datum/configuration()
 	config.load("config/config.txt")
-	config.load("config/game_options.txt","game_options")
+	config.load("config/game_options.txt", "game_options")
 	config.loadsql("config/dbconfig.txt")
-	config.loadforumsql("config/forumdbconfig.txt")
 
 /hook/startup/proc/loadMods()
 	world.load_mods()
@@ -540,8 +488,8 @@ var/world_topic_spam_protect_time = world.timeofday
 	var/list/features = list()
 
 	if(ticker)
-		if(master_mode)
-			features += master_mode
+		if(master_storyteller)
+			features += master_storyteller
 	else
 		features += "<b>STARTING</b>"
 
@@ -596,13 +544,13 @@ proc/setup_database_connection()
 	if(!dbcon)
 		dbcon = new()
 
-	var/user = sqlfdbklogin
-	var/pass = sqlfdbkpass
-	var/db = sqlfdbkdb
+	var/user = sqllogin
+	var/pass = sqlpass
+	var/db = sqldb
 	var/address = sqladdress
 	var/port = sqlport
 
-	dbcon.Connect("dbi:mysql:[db]:[address]:[port]","[user]","[pass]")
+	dbcon.Connect("dbi:mysql:[db]:[address]:[port]", "[user]", "[pass]")
 	. = dbcon.IsConnected()
 	if ( . )
 		failed_db_connections = 0	//If this connection succeeded, reset the failed connections counter.
@@ -621,48 +569,3 @@ proc/establish_db_connection()
 		return setup_database_connection()
 	else
 		return 1
-
-
-/hook/startup/proc/connectOldDB()
-	if(!setup_old_database_connection())
-		world.log << "Your server failed to establish a connection with the SQL database."
-	else
-		world.log << "SQL database connection established."
-	return 1
-
-//These two procs are for the old database, while it's being phased out. See the tgstation.sql file in the SQL folder for more information.
-proc/setup_old_database_connection()
-
-	if(failed_old_db_connections > FAILED_DB_CONNECTION_CUTOFF)	//If it failed to establish a connection more than 5 times in a row, don't bother attempting to conenct anymore.
-		return 0
-
-	if(!dbcon_old)
-		dbcon_old = new()
-
-	var/user = sqllogin
-	var/pass = sqlpass
-	var/db = sqldb
-	var/address = sqladdress
-	var/port = sqlport
-
-	dbcon_old.Connect("dbi:mysql:[db]:[address]:[port]","[user]","[pass]")
-	. = dbcon_old.IsConnected()
-	if ( . )
-		failed_old_db_connections = 0	//If this connection succeeded, reset the failed connections counter.
-	else
-		failed_old_db_connections++		//If it failed, increase the failed connections counter.
-		world.log << dbcon.ErrorMsg()
-
-	return .
-
-//This proc ensures that the connection to the feedback database (global variable dbcon) is established
-proc/establish_old_db_connection()
-	if(failed_old_db_connections > FAILED_DB_CONNECTION_CUTOFF)
-		return 0
-
-	if(!dbcon_old || !dbcon_old.IsConnected())
-		return setup_old_database_connection()
-	else
-		return 1
-
-#undef FAILED_DB_CONNECTION_CUTOFF

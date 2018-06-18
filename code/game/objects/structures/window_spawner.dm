@@ -25,12 +25,15 @@
 /obj/effect/wingrille_spawn/attack_generic()
 	activate()
 
-/obj/effect/wingrille_spawn/initialize()
-	..()
+/obj/effect/wingrille_spawn/Initialize()
+	. = ..()
 	if(!win_path)
 		return
 	if(ticker && ticker.current_state < GAME_STATE_PLAYING)
+		if(activated)
+			return
 		activate()
+		return INITIALIZE_HINT_QDEL
 
 /obj/effect/wingrille_spawn/proc/activate()
 	if(activated) return
@@ -57,7 +60,6 @@
 	activated = 1
 	for(var/obj/effect/wingrille_spawn/other in neighbours)
 		if(!other.activated) other.activate()
-	qdel(src)
 
 /obj/effect/wingrille_spawn/proc/handle_window_spawn(var/obj/structure/window/W)
 	return
@@ -83,7 +85,7 @@
 /obj/effect/wingrille_spawn/reinforced_plasma
 	name = "reinforced plasma window grille spawner"
 	icon_state = "pr-wingrille"
-	win_path = /obj/structure/window/plasmareinforced
+	win_path = /obj/structure/window/reinforced/plasma
 
 /obj/effect/wingrille_spawn/reinforced/polarized
 	name = "polarized window grille spawner"

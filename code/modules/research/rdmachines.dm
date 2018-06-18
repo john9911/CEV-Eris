@@ -2,7 +2,7 @@
 
 //All devices that link into the R&D console fall into thise type for easy identification and some shared procs.
 
-var/list/default_material_composition = list("steel" = 0, "glass" = 0, "gold" = 0, "silver" = 0, "plasma" = 0, "uranium" = 0, "diamond" = 0)
+var/list/default_material_composition = list(MATERIAL_STEEL = 0, MATERIAL_GLASS = 0, MATERIAL_GOLD = 0, MATERIAL_SILVER = 0, MATERIAL_PLASMA = 0, MATERIAL_URANIUM = 0, MATERIAL_DIAMOND = 0)
 /obj/machinery/r_n_d
 	name = "R&D Device"
 	icon = 'icons/obj/machines/research.dmi'
@@ -17,50 +17,16 @@ var/list/default_material_composition = list("steel" = 0, "glass" = 0, "gold" = 
 /obj/machinery/r_n_d/attack_hand(mob/user as mob)
 	return
 
-/obj/machinery/r_n_d/proc/getMaterialType(var/name)
-	switch(name)
-		if(DEFAULT_WALL_MATERIAL)
-			return /obj/item/stack/material/steel
-		if("glass")
-			return /obj/item/stack/material/glass
-		if("gold")
-			return /obj/item/stack/material/gold
-		if("silver")
-			return /obj/item/stack/material/silver
-		if("plasma")
-			return /obj/item/stack/material/plasma
-		if("uranium")
-			return /obj/item/stack/material/uranium
-		if("diamond")
-			return /obj/item/stack/material/diamond
-	return null
-
-/obj/machinery/r_n_d/proc/getMaterialName(var/type)
-	switch(type)
-		if(/obj/item/stack/material/steel)
-			return DEFAULT_WALL_MATERIAL
-		if(/obj/item/stack/material/glass)
-			return "glass"
-		if(/obj/item/stack/material/gold)
-			return "gold"
-		if(/obj/item/stack/material/silver)
-			return "silver"
-		if(/obj/item/stack/material/plasma)
-			return "plasma"
-		if(/obj/item/stack/material/uranium)
-			return "uranium"
-		if(/obj/item/stack/material/diamond)
-			return "diamond"
-
 /obj/machinery/r_n_d/proc/eject(var/material, var/amount)
 	if(!(material in materials))
 		return
-	var/obj/item/stack/material/sheetType = getMaterialType(material)
-	var/perUnit = initial(sheetType.perunit)
-	var/eject = round(materials[material] / perUnit)
+	var/eject = materials[material]
 	eject = amount == -1 ? eject : min(eject, amount)
 	if(eject < 1)
 		return
-	var/obj/item/stack/material/S = new sheetType(loc)
+
+	var/stack_type = material_stack_type(material)
+
+	var/obj/item/stack/material/S = new stack_type(loc)
 	S.amount = eject
-	materials[material] -= eject * perUnit
+	materials[material] -= eject

@@ -9,7 +9,7 @@ var/list/adminfaxes = list()	//cache for faxes that have been sent to admins
 	icon = 'icons/obj/library.dmi'
 	icon_state = "fax"
 	insert_anim = "faxsend"
-	req_one_access = list(access_lawyer, access_heads, access_armory, access_qm)
+	req_one_access = list(access_heads, access_armory, access_merchant)
 
 	use_power = 1
 	idle_power_usage = 30
@@ -96,7 +96,7 @@ var/list/adminfaxes = list()	//cache for faxes that have been sent to admins
 		if(copyitem)
 			copyitem.loc = usr.loc
 			usr.put_in_hands(copyitem)
-			usr << "<span class='notice'>You take \the [copyitem] out of \the [src].</span>"
+			usr << SPAN_NOTICE("You take \the [copyitem] out of \the [src].")
 			copyitem = null
 			updateUsrDialog()
 

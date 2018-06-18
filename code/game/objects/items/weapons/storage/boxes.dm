@@ -46,7 +46,7 @@
 	if ( !found )	// User is too far away
 		return
 	// Now make the cardboard
-	user << "<span class='notice'>You fold [src] flat.</span>"
+	user << SPAN_NOTICE("You fold [src] flat.")
 	new src.foldable(get_turf(src))
 	qdel(src)
 
@@ -151,38 +151,13 @@
 		new /obj/item/weapon/dnainjector/m2h(src)
 		new /obj/item/weapon/dnainjector/m2h(src)
 
-
-/obj/item/weapon/storage/box/blanks
-	name = "box of blank shells"
-	desc = "It has a picture of a gun and several warning symbols on the front."
-
-	New()
-		..()
-		new /obj/item/ammo_casing/shotgun/blank(src)
-		new /obj/item/ammo_casing/shotgun/blank(src)
-		new /obj/item/ammo_casing/shotgun/blank(src)
-		new /obj/item/ammo_casing/shotgun/blank(src)
-		new /obj/item/ammo_casing/shotgun/blank(src)
-		new /obj/item/ammo_casing/shotgun/blank(src)
-		new /obj/item/ammo_casing/shotgun/blank(src)
-
-/obj/item/weapon/storage/box/beanbags
-	name = "box of beanbag shells"
-	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
-
-	New()
-		..()
-		new /obj/item/ammo_casing/shotgun/beanbag(src)
-		new /obj/item/ammo_casing/shotgun/beanbag(src)
-		new /obj/item/ammo_casing/shotgun/beanbag(src)
-		new /obj/item/ammo_casing/shotgun/beanbag(src)
-		new /obj/item/ammo_casing/shotgun/beanbag(src)
-		new /obj/item/ammo_casing/shotgun/beanbag(src)
-		new /obj/item/ammo_casing/shotgun/beanbag(src)
-
 /obj/item/weapon/storage/box/shotgunammo
 	name = "box of shotgun slugs"
 	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
+	icon_state = "ammo"
+
+/obj/item/weapon/storage/box/shotgunammo/slug
+	name = "box of shotgun slugs"
 
 	New()
 		..()
@@ -194,9 +169,35 @@
 		new /obj/item/ammo_casing/shotgun(src)
 		new /obj/item/ammo_casing/shotgun(src)
 
-/obj/item/weapon/storage/box/shotgunshells
+
+/obj/item/weapon/storage/box/shotgunammo/blanks
+	name = "box of blank shells"
+
+	New()
+		..()
+		new /obj/item/ammo_casing/shotgun/blank(src)
+		new /obj/item/ammo_casing/shotgun/blank(src)
+		new /obj/item/ammo_casing/shotgun/blank(src)
+		new /obj/item/ammo_casing/shotgun/blank(src)
+		new /obj/item/ammo_casing/shotgun/blank(src)
+		new /obj/item/ammo_casing/shotgun/blank(src)
+		new /obj/item/ammo_casing/shotgun/blank(src)
+
+/obj/item/weapon/storage/box/shotgunammo/beanbags
+	name = "box of beanbag shells"
+
+	New()
+		..()
+		new /obj/item/ammo_casing/shotgun/beanbag(src)
+		new /obj/item/ammo_casing/shotgun/beanbag(src)
+		new /obj/item/ammo_casing/shotgun/beanbag(src)
+		new /obj/item/ammo_casing/shotgun/beanbag(src)
+		new /obj/item/ammo_casing/shotgun/beanbag(src)
+		new /obj/item/ammo_casing/shotgun/beanbag(src)
+		new /obj/item/ammo_casing/shotgun/beanbag(src)
+
+/obj/item/weapon/storage/box/shotgunammo/buckshot
 	name = "box of shotgun shells"
-	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
 
 	New()
 		..()
@@ -208,9 +209,8 @@
 		new /obj/item/ammo_casing/shotgun/pellet(src)
 		new /obj/item/ammo_casing/shotgun/pellet(src)
 
-/obj/item/weapon/storage/box/flashshells
+/obj/item/weapon/storage/box/shotgunammo/flashshells
 	name = "box of illumination shells"
-	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
 
 	New()
 		..()
@@ -222,9 +222,8 @@
 		new /obj/item/ammo_casing/shotgun/flash(src)
 		new /obj/item/ammo_casing/shotgun/flash(src)
 
-/obj/item/weapon/storage/box/stunshells
+/obj/item/weapon/storage/box/shotgunammo/stunshells
 	name = "box of stun shells"
-	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
 
 	New()
 		..()
@@ -236,9 +235,8 @@
 		new /obj/item/ammo_casing/shotgun/stunshell(src)
 		new /obj/item/ammo_casing/shotgun/stunshell(src)
 
-/obj/item/weapon/storage/box/practiceshells
+/obj/item/weapon/storage/box/shotgunammo/practiceshells
 	name = "box of practice shells"
-	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
 
 	New()
 		..()
@@ -253,6 +251,7 @@
 /obj/item/weapon/storage/box/sniperammo
 	name = "box of 14.5mm shells"
 	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
+	icon_state = "ammo"
 
 	New()
 		..()
@@ -573,7 +572,7 @@
 	icon = 'icons/obj/cigarettes.dmi'
 	icon_state = "matchbox"
 	item_state = "zippo"
-	w_class = 1
+	w_class = ITEM_SIZE_TINY
 	slot_flags = SLOT_BELT
 	can_hold = list(/obj/item/weapon/flame/match)
 
@@ -584,10 +583,12 @@
 
 	attackby(obj/item/weapon/flame/match/W as obj, mob/user as mob)
 		if(istype(W) && !W.lit && !W.burnt)
+			playsound(src, 'sound/items/matchstrike.ogg', 20, 1, 1)
 			W.lit = 1
 			W.damtype = "burn"
 			W.icon_state = "match_lit"
-			processing_objects.Add(W)
+			W.tool_qualities = list(QUALITY_CAUTERIZING = 10)
+			START_PROCESSING(SSobj, W)
 		W.update_icon()
 		return
 
@@ -644,7 +645,7 @@
 	icon_state = "portafreezer"
 	item_state = "medicalpack"
 	foldable = null
-	max_w_class = 3
+	max_w_class = ITEM_SIZE_NORMAL
 	can_hold = list(/obj/item/organ, /obj/item/weapon/reagent_containers/food, /obj/item/weapon/reagent_containers/glass)
 	max_storage_space = 21
 	use_to_pickup = 1 // for picking up broken bulbs, not that most people will try

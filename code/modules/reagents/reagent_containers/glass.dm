@@ -12,7 +12,7 @@
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25,30,60)
 	volume = 60
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	flags = OPENCONTAINER
 	unacidable = 1 //glass doesn't dissolve in acid
 
@@ -52,16 +52,16 @@
 		if(!..(user, 2))
 			return
 		if(reagents && reagents.reagent_list.len)
-			user << "<span class='notice'>It contains [reagents.total_volume] units of liquid.</span>"
+			user << SPAN_NOTICE("It contains [reagents.total_volume] units of liquid.")
 		else
-			user << "<span class='notice'>It is empty.</span>"
+			user << SPAN_NOTICE("It is empty.")
 		if(!is_open_container())
-			user << "<span class='notice'>Airtight lid seals it completely.</span>"
+			user << SPAN_NOTICE("Airtight lid seals it completely.")
 
 	attack_self()
 		..()
 		if(is_open_container())
-			playsound(src,'sound/effects/Lid_Removal_Bottle_mono.wav',50,1)
+			playsound(src,'sound/effects/Lid_Removal_Bottle_mono.ogg',50,1)
 			usr << "<span class = 'notice'>You put the lid on \the [src].</span>"
 			flags ^= OPENCONTAINER
 		else
@@ -86,23 +86,23 @@
 			return
 
 		if(reagents.total_volume)
-			playsound(src,'sound/effects/Splash_Small_01_mono.wav',50,1)
-			user << "<span class='notice'>You splash the solution onto [target].</span>"
+			playsound(src,'sound/effects/Splash_Small_01_mono.ogg',50,1)
+			user << SPAN_NOTICE("You splash the solution onto [target].")
 			reagents.splash(target, reagents.total_volume)
 			return
 
 	attackby(obj/item/weapon/W as obj, mob/user as mob)
-		if(istype(W, /obj/item/weapon/pen) || istype(W, /obj/item/device/flashlight/pen))
+		if(istype(W, /obj/item/weapon/pen) || istype(W, /obj/item/device/lighting/toggleable/flashlight/pen))
 			var/tmp_label = sanitizeSafe(input(user, "Enter a label for [name]", "Label", label_text), MAX_NAME_LEN)
 			if(length(tmp_label) > 10)
-				user << "<span class='notice'>The label can be at most 10 characters long.</span>"
+				user << SPAN_NOTICE("The label can be at most 10 characters long.")
 			else
 				user << "<span class='notice'>You set the label to \"[tmp_label]\".</span>"
 				label_text = tmp_label
 				update_name_label()
 
 	proc/update_name_label()
-		playsound(src,'sound/effects/PEN_Ball_Point_Pen_Circling_01_mono.wav',40,1)
+		playsound(src,'sound/effects/PEN_Ball_Point_Pen_Circling_01_mono.ogg',40,1)
 		if(label_text == "")
 			name = base_name
 		else
@@ -114,7 +114,7 @@
 	icon = 'icons/obj/chemical.dmi'
 	icon_state = "beaker"
 	item_state = "beaker"
-	matter = list("glass" = 500)
+	matter = list(MATERIAL_GLASS = 1)
 
 	New()
 		..()
@@ -125,12 +125,12 @@
 
 	pickup(mob/user)
 		..()
-		playsound(src,'sound/items/Glass_Fragment_take.wav',50,1)
+		playsound(src,'sound/items/Glass_Fragment_take.ogg',50,1)
 		update_icon()
 
 	dropped(mob/user)
 		..()
-		playsound(src,'sound/items/Glass_Fragment_drop.wav',50,1)
+		playsound(src,'sound/items/Glass_Fragment_drop.ogg',50,1)
 		update_icon()
 
 	attack_hand()
@@ -164,7 +164,7 @@
 	name = "large beaker"
 	desc = "A large beaker."
 	icon_state = "beakerlarge"
-	matter = list("glass" = 5000)
+	matter = list(MATERIAL_GLASS = 2)
 	volume = 120
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25,30,60,120)
@@ -174,7 +174,7 @@
 	name = "cryostasis beaker"
 	desc = "A cryostasis beaker that allows for chemical storage without reactions."
 	icon_state = "beakernoreact"
-	matter = list("glass" = 500)
+	matter = list(MATERIAL_GLASS = 1)
 	volume = 60
 	amount_per_transfer_from_this = 10
 	flags = OPENCONTAINER | NOREACT
@@ -183,7 +183,7 @@
 	name = "bluespace beaker"
 	desc = "A bluespace beaker, powered by experimental bluespace technology."
 	icon_state = "beakerbluespace"
-	matter = list("glass" = 5000)
+	matter = list(MATERIAL_GLASS = 2)
 	volume = 300
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25,30,60,120,300)
@@ -193,7 +193,7 @@
 	name = "vial"
 	desc = "A small glass vial."
 	icon_state = "vial"
-	matter = list("glass" = 250)
+	matter = list(MATERIAL_GLASS = 1)
 	volume = 30
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25)
@@ -217,8 +217,8 @@
 	icon = 'icons/obj/janitor.dmi'
 	icon_state = "bucket"
 	item_state = "bucket"
-	matter = list(DEFAULT_WALL_MATERIAL = 200)
-	w_class = 3.0
+	matter = list(MATERIAL_PLASTIC = 2)
+	w_class = ITEM_SIZE_NORMAL
 	amount_per_transfer_from_this = 20
 	possible_transfer_amounts = list(10,20,30,60,120)
 	volume = 120
@@ -227,7 +227,7 @@
 
 /obj/item/weapon/reagent_containers/glass/bucket/attackby(var/obj/D, mob/user as mob)
 
-	if(isprox(D))
+	if(is_proximity_sensor(D))
 		user << "You add [D] to [src]."
 		qdel(D)
 		user.put_in_hands(new /obj/item/weapon/bucket_sensor)
@@ -236,10 +236,10 @@
 		return
 	else if(istype(D, /obj/item/weapon/mop))
 		if(reagents.total_volume < 1)
-			user << "<span class='warning'>\The [src] is empty!</span>"
+			user << SPAN_WARNING("\The [src] is empty!")
 		else
 			reagents.trans_to_obj(D, 5)
-			user << "<span class='notice'>You wet \the [D] in \the [src].</span>"
+			user << SPAN_NOTICE("You wet \the [D] in \the [src].")
 			playsound(loc, 'sound/effects/slosh.ogg', 25, 1)
 		return
 	else
@@ -278,7 +278,7 @@
 	item_state = "canister"
 	m_amt = 300
 	g_amt = 0
-	w_class = 4.0
+	w_class = ITEM_SIZE_LARGE
 
 	amount_per_transfer_from_this = 20
 	possible_transfer_amounts = list(10,20,30,60)

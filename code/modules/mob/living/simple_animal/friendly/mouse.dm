@@ -3,12 +3,7 @@
 	real_name = "mouse"
 	desc = "It's a small rodent."
 	icon_state = "mouse_gray"
-	item_state = "mouse_gray"
-	icon_living = "mouse_gray"
-	icon_dead = "mouse_gray_dead"
-	speak = list("Squeek!","SQUEEK!","Squeek?")
 	speak_emote = list("squeeks","squeeks","squiks")
-	emote_hear = list("squeeks","squeaks","squiks")
 	emote_see = list("runs in a circle", "shakes", "scritches at something")
 	pass_flags = PASSTABLE
 	speak_chance = 1
@@ -32,7 +27,7 @@
 	mob_size = MOB_MINISCULE
 	possession_candidate = 1
 
-	can_pull_size = 1
+	can_pull_size = ITEM_SIZE_TINY
 	can_pull_mobs = MOB_PULL_NONE
 
 /mob/living/simple_animal/mouse/Life()
@@ -53,7 +48,7 @@
 			icon_state = "mouse_[body_color]"
 			wander = 1
 		else if(prob(5))
-			audible_emote("snuffles.")
+			visible_emote("snuffles.")
 
 /mob/living/simple_animal/mouse/lay_down()
 	..()
@@ -72,7 +67,6 @@
 	if(!body_color)
 		body_color = pick( list("brown","gray","white") )
 	icon_state = "mouse_[body_color]"
-	item_state = "mouse_[body_color]"
 	icon_living = "mouse_[body_color]"
 	icon_dead = "mouse_[body_color]_dead"
 	desc = "It's a small [body_color] rodent, often seen hiding in maintenance areas and making a nuisance of itself."

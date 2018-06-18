@@ -4,15 +4,6 @@
 /datum/uplink_item/item/badassery
 	category = /datum/uplink_category/badassery
 
-/datum/uplink_item/item/badassery/balloon
-	name = "For showing that You Are The BOSS (Useless Balloon)"
-	item_cost = DEFAULT_TELECRYSTAL_AMOUNT
-	path = /obj/item/toy/syndicateballoon
-
-/datum/uplink_item/item/badassery/balloon/NT
-	name = "For showing that you love NT SOO much (Useless Balloon)"
-	path = /obj/item/toy/nanotrasenballoon
-
 /**************
 * Random Item *
 **************/
@@ -59,7 +50,7 @@
 
 /datum/uplink_item/item/badassery/surplus/New()
 	..()
-	antag_roles = list(MODE_MERCENARY)
+	antag_roles = list(ROLE_MERCENARY)
 	desc = "A crate containing [item_worth] telecrystal\s worth of surplus leftovers."
 
 /datum/uplink_item/item/badassery/surplus/get_goods(var/obj/item/device/uplink/U, var/loc)

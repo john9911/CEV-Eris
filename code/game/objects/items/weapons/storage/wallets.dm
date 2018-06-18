@@ -3,12 +3,12 @@
 	desc = "It can hold a few small and personal things."
 	storage_slots = 10
 	icon_state = "wallet"
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	can_hold = list(
 		/obj/item/weapon/spacecash,
 		/obj/item/weapon/card,
 		/obj/item/clothing/mask/smokable/cigarette/,
-		/obj/item/device/flashlight/pen,
+		/obj/item/device/lighting/toggleable/flashlight/pen,
 		/obj/item/seeds,
 		/obj/item/stack/medical,
 		/obj/item/weapon/coin,
@@ -21,7 +21,7 @@
 		/obj/item/weapon/pen,
 		/obj/item/weapon/photo,
 		/obj/item/weapon/reagent_containers/dropper,
-		/obj/item/weapon/screwdriver,
+		/obj/item/weapon/tool/screwdriver,
 		/obj/item/weapon/stamp)
 	slot_flags = SLOT_ID
 
@@ -51,10 +51,10 @@
 			if("id")
 				icon_state = "walletid"
 				return
-			if("silver")
+			if(MATERIAL_SILVER)
 				icon_state = "walletid_silver"
 				return
-			if("gold")
+			if(MATERIAL_GOLD)
 				icon_state = "walletid_gold"
 				return
 			if("centcom")

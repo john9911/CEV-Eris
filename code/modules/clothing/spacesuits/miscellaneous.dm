@@ -8,18 +8,23 @@
 	permeability_coefficient = 0.01
 	armor = list(melee = 65, bullet = 50, laser = 50,energy = 25, bomb = 50, bio = 100, rad = 50)
 
-//Captain's space suit This is not the proper path but I don't currently know enough about how this all works to mess with it.
+//Captain's space suit
+// This is not the proper path but I don't currently know enough about how this all works to mess with it.
 /obj/item/clothing/suit/armor/captain
 	name = "Captain's armor"
 	desc = "A bulky, heavy-duty piece of exclusive corporate armor. YOU are in charge!"
 	icon_state = "caparmor"
 	item_state = "capspacesuit"
-	w_class = 4
+	w_class = ITEM_SIZE_LARGE
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.02
 	item_flags = STOPPRESSUREDAMAGE
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS
-	allowed = list(/obj/item/weapon/tank/emergency_oxygen, /obj/item/device/flashlight,/obj/item/weapon/gun/energy, /obj/item/weapon/gun/projectile, /obj/item/ammo_magazine, /obj/item/ammo_casing, /obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs)
+	allowed = list(
+		/obj/item/weapon/tank/emergency_oxygen, /obj/item/device/lighting/toggleable/flashlight,
+		/obj/item/weapon/gun/energy, /obj/item/weapon/gun/projectile, /obj/item/ammo_magazine,
+		/obj/item/ammo_casing, /obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs
+	)
 	slowdown = 1.5
 	armor = list(melee = 65, bullet = 50, laser = 50, energy = 25, bomb = 50, bio = 100, rad = 50)
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT|HIDETAIL
@@ -41,16 +46,6 @@
 	flags_inv = BLOCKHAIR
 	siemens_coefficient = 0.6
 
-//how is this a space helmet?
-/obj/item/clothing/head/helmet/space/deathsquad/beret
-	name = "officer's beret"
-	desc = "An armored beret commonly used by special operations officers."
-	icon_state = "beret_badge"
-	armor = list(melee = 65, bullet = 55, laser = 35,energy = 20, bomb = 30, bio = 30, rad = 30)
-	item_flags = STOPPRESSUREDAMAGE
-	flags_inv = BLOCKHAIR
-	siemens_coefficient = 0.9
-
 //Space santa outfit suit
 /obj/item/clothing/head/helmet/space/santahat
 	name = "Santa's hat"
@@ -69,30 +64,6 @@
 	slowdown = 0
 	item_flags = STOPPRESSUREDAMAGE
 	allowed = list(/obj/item) //for stuffing exta special presents
-
-//Space pirate outfit
-/obj/item/clothing/head/helmet/space/pirate
-	name = "pirate hat"
-	desc = "Yarr."
-	icon_state = "pirate"
-	item_state = "pirate"
-	armor = list(melee = 60, bullet = 50, laser = 30,energy = 15, bomb = 30, bio = 30, rad = 30)
-	item_flags = STOPPRESSUREDAMAGE
-	flags_inv = BLOCKHAIR
-	body_parts_covered = 0
-	siemens_coefficient = 0.9
-
-/obj/item/clothing/suit/space/pirate
-	name = "pirate coat"
-	desc = "Yarr."
-	icon_state = "pirate"
-	item_state = "pirate"
-	w_class = 3
-	allowed = list(/obj/item/weapon/gun,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/weapon/tank/emergency_oxygen)
-	slowdown = 0
-	armor = list(melee = 60, bullet = 50, laser = 30,energy = 15, bomb = 30, bio = 30, rad = 30)
-	siemens_coefficient = 0.9
-	body_parts_covered = UPPER_TORSO|ARMS
 
 //Orange emergency space suit
 /obj/item/clothing/head/helmet/space/emergency

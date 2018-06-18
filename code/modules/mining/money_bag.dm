@@ -7,7 +7,7 @@
 	flags = CONDUCT
 	force = 10.0
 	throwforce = 2.0
-	w_class = 4.0
+	w_class = ITEM_SIZE_LARGE
 
 /obj/item/weapon/moneybag/attack_hand(user as mob)
 	var/amt_gold = 0
@@ -68,17 +68,17 @@
 	if(href_list["remove"])
 		var/obj/item/weapon/coin/COIN
 		switch(href_list["remove"])
-			if("gold")
+			if(MATERIAL_GOLD)
 				COIN = locate(/obj/item/weapon/coin/gold,src.contents)
-			if("silver")
+			if(MATERIAL_SILVER)
 				COIN = locate(/obj/item/weapon/coin/silver,src.contents)
 			if("iron")
 				COIN = locate(/obj/item/weapon/coin/iron,src.contents)
-			if("diamond")
+			if(MATERIAL_DIAMOND)
 				COIN = locate(/obj/item/weapon/coin/diamond,src.contents)
 			if("plasma")
 				COIN = locate(/obj/item/weapon/coin/plasma,src.contents)
-			if("uranium")
+			if(MATERIAL_URANIUM)
 				COIN = locate(/obj/item/weapon/coin/uranium,src.contents)
 		if(!COIN)
 			return

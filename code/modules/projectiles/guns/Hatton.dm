@@ -1,5 +1,5 @@
 /obj/item/weapon/hatton_magazine
-	name="Hatton magazine"
+	name="Excelsior BD \"Hatton\" gas tube"
 	icon_state="Hatton_box1"
 	icon='icons/obj/Hatton.dmi'
 	var/charge=1
@@ -17,19 +17,19 @@
 
 
 /obj/item/weapon/hatton
-	name = "Hatton"
-	desc = "Honey, where is my arm?"
+	name = "Excelsior BD \"Hatton\""
+	desc = "More instrument than a weapon, this breaching device was designed for emergency situations."
 	icon = 'icons/obj/Hatton.dmi'
 	icon_state = "Hatton_Hammer_1"
 	item_state = "Hatton_Hammer_1"
 	flags = PASSTABLE | CONDUCT
 	slot_flags = SLOT_BELT
 	//m_amt = 2000
-	w_class = 3
-	origin_tech = "combat=1"
+	w_class = ITEM_SIZE_NORMAL
+	origin_tech = "combat=2"
 	attack_verb = list("struck", "hit", "bashed")
 	var/obj/item/weapon/hatton_magazine/magazine=new()
-	var/fire_sound = 'sound/weapons/Laser2.ogg'
+	var/fire_sound = 'sound/weapons/pulse.ogg'
 
 
 
@@ -67,7 +67,7 @@
 		user.put_in_hands(magazine)
 		magazine.update_icon()
 		magazine = null
-		user << "<span class='notice'>You pull the magazine out of \the [src]!</span>"
+		user << SPAN_NOTICE("You pull the magazine out of \the [src]!")
 	update_icon()
 	return
 
@@ -104,7 +104,7 @@
 		user << "\red You don't have the dexterity to do this!"
 		return
 
-	if(istype(user, /mob/living))
+	if(isliving(user))
 		var/mob/living/M = user
 		if (HULK in M.mutations)
 			M << "\red Your meaty finger is much too large for the trigger guard!"
@@ -120,10 +120,10 @@
 		click_empty()
 		return
 
-	if(istype(user, /mob/living))
+	if(isliving(user))
 		var/mob/living/M = user
 		if ((CLUMSY in M.mutations) && prob(50))
-			M << "<span class='danger'>[src] blows up in your face.</span>"
+			M << SPAN_DANGER("[src] blows up in your face.")
 			M.drop_item()
 			Fire(get_turf(M))
 			del(src)
@@ -157,7 +157,7 @@
 
 
 /mob/hatton_act()
-	if(istype(src, /mob/living/carbon/human))
+	if(ishuman(src))
 		var/mob/living/carbon/human/H = src
 		H.take_overall_damage(35, 10)
 	else

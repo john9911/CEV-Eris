@@ -9,24 +9,10 @@
 	input_level_max = 0
 	output_level_max = 0
 	icon_state = "gsmes"
+	circuit = /obj/item/weapon/circuitboard/batteryrack
 	var/cells_amount = 0
 	var/capacitors_amount = 0
 	var/global/list/br_cache = null
-
-/obj/machinery/power/smes/batteryrack/New()
-	..()
-	add_parts()
-	RefreshParts()
-	return
-
-//Maybe this should be moved up to obj/machinery
-/obj/machinery/power/smes/batteryrack/proc/add_parts()
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/batteryrack
-	component_parts += new /obj/item/weapon/cell/high
-	component_parts += new /obj/item/weapon/cell/high
-	component_parts += new /obj/item/weapon/cell/high
-	return
 
 
 /obj/machinery/power/smes/batteryrack/RefreshParts()
@@ -40,7 +26,7 @@
 	output_level_max = 50000 + max_level * 20000
 
 	var/C = 0
-	for(var/obj/item/weapon/cell/PC in component_parts)
+	for(var/obj/item/weapon/cell/large/PC in component_parts)
 		C += PC.maxcharge
 		cells_amount++
 	capacity = C * 40   //Basic cells are such crap. Hyper cells needed to get on normal SMES levels.
@@ -49,7 +35,7 @@
 /obj/machinery/power/smes/batteryrack/update_icon()
 	overlays.Cut()
 	if(stat & BROKEN)	return
-	
+
 	if(!br_cache)
 		br_cache = list()
 		br_cache.len = 7
@@ -60,7 +46,7 @@
 		br_cache[5] = image('icons/obj/power.dmi', "gsmes_og2")
 		br_cache[6] = image('icons/obj/power.dmi', "gsmes_og3")
 		br_cache[7] = image('icons/obj/power.dmi', "gsmes_og4")
-	
+
 	if (output_attempt)
 		overlays += br_cache[1]
 	if(inputting)
@@ -79,7 +65,7 @@
 /obj/machinery/power/smes/batteryrack/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob) //these can only be moved by being reconstructed, solves having to remake the powernet.
 	..() //SMES attackby for now handles screwdriver, cable coils and wirecutters, no need to repeat that here
 	if(open_hatch)
-		if(istype(W, /obj/item/weapon/crowbar))
+		if(istype(W, /obj/item/weapon/tool/crowbar))
 			if (charge < (capacity / 100))
 				if (!output_attempt && !input_attempt)
 					playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
@@ -91,21 +77,21 @@
 					qdel(src)
 					return 1
 				else
-					user << "<span class='warning'>Turn off the [src] before dismantling it.</span>"
+					user << SPAN_WARNING("Turn off the [src] before dismantling it.")
 			else
-				user << "<span class='warning'>Better let [src] discharge before dismantling it.</span>"
-		else if ((istype(W, /obj/item/weapon/stock_parts/capacitor) && (capacitors_amount < 5)) || (istype(W, /obj/item/weapon/cell) && (cells_amount < 5)))
+				user << SPAN_WARNING("Better let [src] discharge before dismantling it.")
+		else if ((istype(W, /obj/item/weapon/stock_parts/capacitor) && (capacitors_amount < 5)) || (istype(W, /obj/item/weapon/cell/large) && (cells_amount < 5)))
 			if (charge < (capacity / 100))
 				if (!output_attempt && !input_attempt)
 					user.drop_item()
 					component_parts += W
 					W.loc = src
 					RefreshParts()
-					user << "<span class='notice'>You upgrade the [src] with [W.name].</span>"
+					user << SPAN_NOTICE("You upgrade the [src] with [W.name].")
 				else
-					user << "<span class='warning'>Turn off the [src] before dismantling it.</span>"
+					user << SPAN_WARNING("Turn off the [src] before dismantling it.")
 			else
-				user << "<span class='warning'>Better let [src] discharge before putting your hand inside it.</span>"
+				user << SPAN_WARNING("Better let [src] discharge before putting your hand inside it.")
 		else
 			user.set_machine(src)
 			interact(user)
@@ -117,16 +103,8 @@
 /obj/machinery/power/smes/batteryrack/makeshift
 	name = "makeshift PSU"
 	desc = "A rack of batteries connected by a mess of wires posing as a PSU."
+	circuit = /obj/item/weapon/circuitboard/apc
 	var/overcharge_percent = 0
-
-
-/obj/machinery/power/smes/batteryrack/makeshift/add_parts()
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/ghettosmes
-	component_parts += new /obj/item/weapon/cell/high
-	component_parts += new /obj/item/weapon/cell/high
-	component_parts += new /obj/item/weapon/cell/high
-	return
 
 
 /obj/machinery/power/smes/batteryrack/makeshift/update_icon()
@@ -195,7 +173,7 @@
 
 
 #define SMESRATE 0.05			// rate of internal charge to external power
-/obj/machinery/power/smes/batteryrack/makeshift/process()
+/obj/machinery/power/smes/batteryrack/makeshift/Process()
 	if(stat & BROKEN)	return
 
 	//store machine state to see if we need to update the icon overlays

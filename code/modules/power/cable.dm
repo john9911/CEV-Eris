@@ -97,7 +97,7 @@ var/list/possible_cable_coil_colours = list(
 	if(powernet)
 		cut_cable_from_powernet()				// update the powernets
 	cable_list -= src							//remove it from global cable list
-	..()										// then go ahead and delete the cable
+	. = ..()										// then go ahead and delete the cable
 
 ///////////////////////////////////
 // General procedures
@@ -129,67 +129,79 @@ var/list/possible_cable_coil_colours = list(
 //   - Cable coil : merge cables
 //   - Multitool : get the power currently passing through the cable
 //
-/obj/structure/cable/attackby(obj/item/W, mob/user)
+/obj/structure/cable/attackby(obj/item/I, mob/user)
+
+	src.add_fingerprint(user)
 
 	var/turf/T = src.loc
 	if(!T.is_plating())
 		return
 
-	if(istype(W, /obj/item/weapon/wirecutters))
-		if(d1 == 12 || d2 == 12)
-			user << "<span class='warning'>You must cut this cable from above.</span>"
-			return
-
-		if(breaker_box)
-			user << "\red This cable is connected to nearby breaker box. Use breaker box to interact with it."
-			return
-
-		if (shock(user, 50))
-			return
-
-		if(src.d1)	// 0-X cables are 1 unit, X-X cables are 2 units long
-			new/obj/item/stack/cable_coil(T, 2, color)
-		else
-			new/obj/item/stack/cable_coil(T, 1, color)
-
-		for(var/mob/O in viewers(src, null))
-			O.show_message("<span class='warning'>[user] cuts the cable.</span>", 1)
-
-		if(d1 == 11 || d2 == 11)
-			var/turf/turf = GetBelow(src)
-			if(turf)
-				for(var/obj/structure/cable/c in turf)
-					if(c.d1 == 12 || c.d2 == 12)
-						qdel(c)
-
-		investigate_log("was cut by [key_name(usr, usr.client)] in [user.loc.loc]","wires")
-
-		qdel(src)
+	if(QUALITY_WIRE_CUTTING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_INSTANT, QUALITY_WIRE_CUTTING, FAILCHANCE_EASY, required_stat = STAT_PRD))
+			if(!shock(user, 50))
+				cutting(user)
 		return
 
+	if(QUALITY_CUTTING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_INSTANT, QUALITY_CUTTING, FAILCHANCE_EASY, required_stat = STAT_PRD))
+			if(!shock(user, 50))
+				cutting(user)
+		return
 
-	else if(istype(W, /obj/item/stack/cable_coil))
-		var/obj/item/stack/cable_coil/coil = W
+	else if(istype(I, /obj/item/stack/cable_coil))
+		var/obj/item/stack/cable_coil/coil = I
 		if (coil.get_amount() < 1)
 			user << "Not enough cable"
 			return
 		coil.cable_join(src, user)
 
-	else if(istype(W, /obj/item/device/multitool))
+	else if(istype(I, /obj/item/weapon/tool/multitool))
 
 		if(powernet && (powernet.avail > 0))		// is it powered?
-			user << "<span class='warning'>[powernet.avail]W in power network.</span>"
+			user << SPAN_WARNING("[powernet.avail]W in power network.")
 
 		else
-			user << "<span class='warning'>The cable is not powered.</span>"
+			user << SPAN_WARNING("The cable is not powered.")
 
 		shock(user, 5, 0.2)
 
 	else
-		if (W.flags & CONDUCT)
+		if (I.flags & CONDUCT)
 			shock(user, 50, 0.7)
 
-	src.add_fingerprint(user)
+
+/obj/structure/cable/proc/cutting(mob/user)
+
+	var/turf/T = src.loc
+
+	if(d1 == 12 || d2 == 12)
+		user << SPAN_WARNING("You must cut this cable from above.")
+		return
+
+	if(breaker_box)
+		user << SPAN_WARNING("This cable is connected to nearby breaker box. Use breaker box to interact with it.")
+		return
+
+	if(src.d1)	// 0-X cables are 1 unit, X-X cables are 2 units long
+		new/obj/item/stack/cable_coil(T, 2, color)
+	else
+		new/obj/item/stack/cable_coil(T, 1, color)
+
+	for(var/mob/O in viewers(src, null))
+		O.show_message(SPAN_WARNING("[user] cuts the cable."), 1)
+
+	if(d1 == 11 || d2 == 11)
+		var/turf/turf = GetBelow(src)
+		if(turf)
+			for(var/obj/structure/cable/c in turf)
+				if(c.d1 == 12 || c.d2 == 12)
+					qdel(c)
+
+	investigate_log("was cut by [key_name(usr, usr.client)] in [user.loc.loc]","wires")
+
+	qdel(src)
+	return
 
 // shock the user with probability prb
 /obj/structure/cable/proc/shock(mob/user, prb, var/siemens_coeff = 1.0)
@@ -466,10 +478,10 @@ obj/structure/cable/proc/cableColor(var/colorC)
 	color = COLOR_RED
 	desc = "A coil of power cable."
 	throwforce = WEAPON_FORCE_HARMLESS
-	w_class = 2.0
+	w_class = ITEM_SIZE_SMALL
 	throw_speed = 2
 	throw_range = 5
-	matter = list(DEFAULT_WALL_MATERIAL = 50, "glass" = 20)
+	matter = list(MATERIAL_STEEL = 1, MATERIAL_PLASTIC = 1)
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	item_state = "coil"
@@ -506,19 +518,19 @@ obj/structure/cable/proc/cableColor(var/colorC)
 		var/obj/item/organ/external/S = H.organs_by_name[user.targeted_organ]
 
 		if (!S) return
-		if(!(S.status & ORGAN_ROBOT) || user.a_intent != I_HELP)
+		if(S.robotic < ORGAN_ROBOT || user.a_intent != I_HELP)
 			return ..()
 
 		if(S.burn_dam)
 			if(S.burn_dam < ROBOLIMB_SELF_REPAIR_CAP)
 				S.heal_damage(0,15,0,1)
 				user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
-				user.visible_message("<span class='danger'>\The [user] patches some damaged wiring on \the [M]'s [S.name] with \the [src].</span>")
+				user.visible_message(SPAN_DANGER("\The [user] patches some damaged wiring on \the [M]'s [S.name] with \the [src]."))
 			else if(S.open != 2)
-				user << "<span class='danger'>The damage is far too severe to patch over externally.</span>"
+				user << SPAN_DANGER("The damage is far too severe to patch over externally.")
 			return 1
 		else if(S.open != 2)
-			user << "<span class='notice'>Nothing to fix!</span>"
+			user << SPAN_NOTICE("Nothing to fix!")
 
 	else
 		return ..()
@@ -546,13 +558,13 @@ obj/structure/cable/proc/cableColor(var/colorC)
 		final_color = possible_cable_coil_colours["Red"]
 		selected_color = "red"
 	color = final_color
-	user << "<span class='notice'>You change \the [src]'s color to [lowertext(selected_color)].</span>"
+	user << SPAN_NOTICE("You change \the [src]'s color to [lowertext(selected_color)].")
 
 /obj/item/stack/cable_coil/proc/update_wclass()
 	if(amount == 1)
-		w_class = 1.0
+		w_class = ITEM_SIZE_TINY
 	else
-		w_class = 2.0
+		w_class = ITEM_SIZE_SMALL
 
 /obj/item/stack/cable_coil/examine(mob/user)
 	if(get_dist(src, user) > 1)
@@ -578,7 +590,7 @@ obj/structure/cable/proc/cableColor(var/colorC)
 			return
 		var/obj/item/weapon/handcuffs/cable/B = new /obj/item/weapon/handcuffs/cable(usr.loc)
 		B.color = color
-		usr << "<span class='notice'>You wind some cable together to make some restraints.</span>"
+		usr << SPAN_NOTICE("You wind some cable together to make some restraints.")
 		src.use(15)
 	else
 		usr << "\blue You cannot do that."
@@ -649,14 +661,14 @@ obj/structure/cable/proc/cableColor(var/colorC)
 
 		for(var/obj/structure/cable/LC in F)
 			if((LC.d1 == dirn && LC.d2 == 0 ) || ( LC.d2 == dirn && LC.d1 == 0))
-				user << "<span class='warning'>There's already a cable at that position.</span>"
+				user << SPAN_WARNING("There's already a cable at that position.")
 				return
 ///// Z-Level Stuff
 		// check if the target is open space
 		if(istype(F, /turf/simulated/open))
 			for(var/obj/structure/cable/LC in F)
 				if((LC.d1 == dirn && LC.d2 == 11 ) || ( LC.d2 == dirn && LC.d1 == 11))
-					user << "<span class='warning'>There's already a cable at that position.</span>"
+					user << SPAN_WARNING("There's already a cable at that position.")
 					return
 
 			var/obj/structure/cable/C = new(F)

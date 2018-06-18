@@ -1,4 +1,4 @@
-/client/proc/cmd_admin_drop_everything(mob/M as mob in mob_list)
+/client/proc/cmd_admin_drop_everything(mob/M as mob in SSmobs.mob_list)
 	set category = null
 	set name = "Drop Everything"
 	if(!holder)
@@ -15,35 +15,9 @@
 	log_admin("[key_name(usr)] made [key_name(M)] drop everything!")
 	message_admins("[key_name_admin(usr)] made [key_name_admin(M)] drop everything!", 1)
 
-
-/client/proc/cmd_admin_prison(mob/M as mob in mob_list)
-	set category = "Admin"
-	set name = "Prison"
-	if(!holder)
-		src << "Only administrators may use this command."
-		return
-	if (ismob(M))
-		if(istype(M, /mob/living/silicon/ai))
-			alert("The AI can't be sent to prison you jerk!", null, null, null, null, null)
-			return
-		//strip their stuff before they teleport into a cell :downs:
-		for(var/obj/item/W in M)
-			M.drop_from_inventory(W)
-		//teleport person to cell
-		M.Paralyse(5)
-		sleep(5)	//so they black out before warping
-		M.loc = pick(prisonwarp)
-		if(istype(M, /mob/living/carbon/human))
-			var/mob/living/carbon/human/prisoner = M
-			prisoner.equip_to_slot_or_del(new /obj/item/clothing/under/color/orange(prisoner), slot_w_uniform)
-			prisoner.equip_to_slot_or_del(new /obj/item/clothing/shoes/color/orange(prisoner), slot_shoes)
-		spawn(50)
-			M << "\red You have been sent to the prison station!"
-		log_admin("[key_name(usr)] sent [key_name(M)] to the prison station.")
-		message_admins("\blue [key_name_admin(usr)] sent [key_name_admin(M)] to the prison station.", 1)
-
-
-/client/proc/cmd_admin_subtle_message(mob/M as mob in mob_list)
+ADMIN_VERB_ADD(/client/proc/cmd_admin_subtle_message, R_ADMIN, FALSE)
+//send an message to somebody as a 'voice in their head'
+/client/proc/cmd_admin_subtle_message(mob/M as mob in SSmobs.mob_list)
 	set category = "Special Verbs"
 	set name = "Subtle Message"
 
@@ -65,42 +39,8 @@
 	message_admins("\blue \bold SubtleMessage: [key_name_admin(usr)] -> [key_name_admin(M)] : [msg]", 1)
 
 
-/client/proc/cmd_mentor_check_new_players()	//Allows mentors / admins to determine who the newer players are.
-	set category = "Admin"
-	set name = "Check new Players"
-	if(!holder)
-		src << "Only staff members may use this command."
-
-	var/age = alert(src, "Age check", "Show accounts yonger then _____ days","7", "30" , "All")
-
-	if(age == "All")
-		age = 9999999
-	else
-		age = text2num(age)
-
-	var/missing_ages = 0
-	var/msg = ""
-
-	var/highlight_special_characters = 1
-	if(is_mentor(usr.client))
-		highlight_special_characters = 0
-
-	for(var/client/C in clients)
-		if(C.player_age == "Requires database")
-			missing_ages = 1
-			continue
-		if(C.player_age < age)
-			msg += "[key_name(C, 1, 1, highlight_special_characters)]: account is [C.player_age] days old<br>"
-
-	if(missing_ages)
-		src << "Some accounts did not have proper ages set in their clients.  This function requires database to be present"
-
-	if(msg != "")
-		src << browse(msg, "window=Player_age_check")
-	else
-		src << "No matches for that age range found."
-
-
+ADMIN_VERB_ADD(/client/proc/cmd_admin_world_narrate, R_ADMIN, FALSE)
+//sends text to all players with no padding
 /client/proc/cmd_admin_world_narrate() // Allows administrators to fluff events a little easier -- TLE
 	set category = "Special Verbs"
 	set name = "Global Narrate"
@@ -118,6 +58,8 @@
 	message_admins("\blue \bold GlobalNarrate: [key_name_admin(usr)] : [msg]<BR>", 1)
 
 
+ADMIN_VERB_ADD(/client/proc/cmd_admin_direct_narrate, R_ADMIN, FALSE)
+//send text directly to a player with no padding. Useful for narratives and fluff-text
 /client/proc/cmd_admin_direct_narrate(var/mob/M)	// Targetted narrate -- TLE
 	set category = "Special Verbs"
 	set name = "Direct Narrate"
@@ -142,7 +84,7 @@
 	message_admins("\blue \bold DirectNarrate: [key_name(usr)] to ([M.name]/[M.key]): [msg]<BR>", 1)
 
 
-/client/proc/cmd_admin_godmode(mob/M as mob in mob_list)
+/client/proc/cmd_admin_godmode(mob/M as mob in SSmobs.mob_list)
 	set category = "Special Verbs"
 	set name = "Godmode"
 	if(!holder)
@@ -205,6 +147,7 @@ proc/cmd_admin_mute(mob/M as mob, mute_type, automute = 0)
 	M << "<span class = 'alert'>You have been [muteunmute] from [mute_string].</span>"
 
 
+ADMIN_VERB_ADD(/client/proc/cmd_admin_add_random_ai_law, R_FUN, FALSE)
 /client/proc/cmd_admin_add_random_ai_law()
 	set category = "Fun"
 	set name = "Add Random AI Law"
@@ -234,7 +177,7 @@ Ccomp's first proc.
 
 	var/list/mobs = list()
 	var/list/ghosts = list()
-	var/list/sortmob = sortAtom(mob_list)                           // get the mob list.
+	var/list/sortmob = sortAtom(SSmobs.mob_list)                           // get the mob list.
 	var/any=0
 	for(var/mob/observer/ghost/M in sortmob)
 		mobs.Add(M)                                             //filter it where it's only ghosts
@@ -253,6 +196,8 @@ Ccomp's first proc.
 		return mobs
 
 
+ADMIN_VERB_ADD(/client/proc/allow_character_respawn, R_ADMIN, FALSE)
+// Allows a ghost to respawn
 /client/proc/allow_character_respawn()
 	set category = "Special Verbs"
 	set name = "Allow player to respawn"
@@ -282,6 +227,7 @@ Ccomp's first proc.
 	message_admins("Admin [key_name_admin(usr)] allowed [key_name_admin(G)] to bypass the 30 minute respawn limit", 1)
 
 
+ADMIN_VERB_ADD(/client/proc/toggle_antagHUD_use, R_ADMIN, FALSE)
 /client/proc/toggle_antagHUD_use()
 	set category = "Server"
 	set name = "Toggle antagHUD usage"
@@ -315,7 +261,7 @@ Ccomp's first proc.
 	message_admins("Admin [key_name_admin(usr)] has [action] antagHUD usage for observers", 1)
 
 
-
+ADMIN_VERB_ADD(/client/proc/toggle_antagHUD_restrictions, R_ADMIN, FALSE)
 /client/proc/toggle_antagHUD_restrictions()
 	set category = "Server"
 	set name = "Toggle antagHUD Restrictions"
@@ -347,6 +293,7 @@ If a guy was gibbed and you want to revive him, this is a good way to do so.
 Works kind of like entering the game with a new character. Character receives a new mind if they didn't have one.
 Traitors and the like can also be revived with the previous role mostly intact.
 /N */
+ADMIN_VERB_ADD(/client/proc/respawn_character, R_FUN, FALSE)
 /client/proc/respawn_character()
 	set category = "Special Verbs"
 	set name = "Respawn Character"
@@ -368,7 +315,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 		usr << "<font color='red'>There is no active key like that in the game or the person is not currently a ghost.</font>"
 		return
 
-	var/mob/living/carbon/human/new_character = new(pick(latejoin))//The mob being spawned.
+	var/mob/living/carbon/human/new_character = new()//The mob being spawned.
 
 	var/datum/data/record/record_found			//Referenced to later to either randomize or not randomize the character.
 	if(G_found.mind && !G_found.mind.active)	//mind isn't currently in use by someone/something
@@ -400,7 +347,6 @@ Traitors and the like can also be revived with the previous role mostly intact.
 
 	if(G_found.mind && !G_found.mind.active)
 		G_found.mind.transfer_to(new_character)	//be careful when doing stuff like this! I've already checked the mind isn't in use
-		new_character.mind.special_verbs = list()
 	else
 		new_character.mind_initialize()
 	if(!new_character.mind.assigned_role)	new_character.mind.assigned_role = "Assistant"//If they somehow got a null assigned role.
@@ -432,12 +378,8 @@ Traitors and the like can also be revived with the previous role mostly intact.
 	var/player_key = G_found.key
 
 	//Now for special roles and equipment.
-	var/datum/antagonist/antag_data = get_antag_data(new_character.mind.special_role)
-	if(antag_data)
-		antag_data.add_antagonist(new_character.mind)
-		antag_data.place_mob(new_character)
-	else
-		job_master.EquipRank(new_character, new_character.mind.assigned_role, 1)
+	job_master.EquipRank(new_character, new_character.mind.assigned_role, 1)
+	job_master.LateSpawn(new_character.client, new_character.mind.assigned_role)
 
 	//Announces the character on all the systems, based on the record.
 	if(!issilicon(new_character))//If they are not a cyborg/AI.
@@ -456,6 +398,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 
 	return new_character
 
+ADMIN_VERB_ADD(/client/proc/cmd_admin_add_freeform_ai_law, R_FUN, FALSE)
 /client/proc/cmd_admin_add_freeform_ai_law()
 	set category = "Fun"
 	set name = "Add Custom AI law"
@@ -465,14 +408,14 @@ Traitors and the like can also be revived with the previous role mostly intact.
 	var/input = sanitize(input(usr, "Please enter anything you want the AI to do. Anything. Serious.", "What?", "") as text|null)
 	if(!input)
 		return
-	for(var/mob/living/silicon/ai/M in mob_list)
+	for(var/mob/living/silicon/ai/M in SSmobs.mob_list)
 		if (M.stat == 2)
 			usr << "Upload failed. No signal is being detected from the AI."
 		else if (M.see_in_dark == 0)
 			usr << "Upload failed. Only a faint signal is being detected from the AI, and it is not responding to our requests. It may be low on power."
 		else
 			M.add_ion_law(input)
-			for(var/mob/living/silicon/ai/O in mob_list)
+			for(var/mob/living/silicon/ai/O in SSmobs.mob_list)
 				O << "\red " + input + "\red...LAWS UPDATED"
 				O.show_laws()
 
@@ -484,7 +427,8 @@ Traitors and the like can also be revived with the previous role mostly intact.
 		command_announcement.Announce("Ion storm detected near the ship. Please check all AI-controlled equipment for errors.", "Anomaly Alert", new_sound = 'sound/AI/ionstorm.ogg')
 
 
-/client/proc/cmd_admin_rejuvenate(mob/living/M as mob in mob_list)
+ADMIN_VERB_ADD(/client/proc/cmd_admin_rejuvenate, R_ADMIN, FALSE)
+/client/proc/cmd_admin_rejuvenate(mob/living/M as mob in SSmobs.mob_list)
 	set category = "Special Verbs"
 	set name = "Rejuvenate"
 	if(!holder)
@@ -504,6 +448,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 		alert("Admin revive disabled")
 
 
+ADMIN_VERB_ADD(/client/proc/cmd_admin_create_centcom_report, R_ADMIN, FALSE)
 /client/proc/cmd_admin_create_centcom_report()
 	set category = "Special Verbs"
 	set name = "Create Command Report"
@@ -531,6 +476,8 @@ Traitors and the like can also be revived with the previous role mostly intact.
 	message_admins("[key_name_admin(src)] has created a command report", 1)
 
 
+ADMIN_VERB_ADD(/client/proc/cmd_admin_delete, R_ADMIN|R_SERVER|R_DEBUG, FALSE)
+//delete an instance/object/mob/etc
 /client/proc/cmd_admin_delete(atom/O as obj|mob|turf in range(world.view))
 	set category = "Admin"
 	set name = "Delete"
@@ -545,6 +492,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 
 		qdel(O)
 
+ADMIN_VERB_ADD(/client/proc/cmd_admin_list_open_jobs, R_DEBUG, FALSE)
 /client/proc/cmd_admin_list_open_jobs()
 	set category = "Admin"
 	set name = "List free slots"
@@ -607,7 +555,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 	else
 		return
 
-/client/proc/cmd_admin_gib(mob/M as mob in mob_list)
+/client/proc/cmd_admin_gib(mob/M as mob in SSmobs.mob_list)
 	set category = "Special Verbs"
 	set name = "Gib"
 
@@ -628,6 +576,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 	M.gib()
 
 
+ADMIN_VERB_ADD(/client/proc/cmd_admin_gib_self, R_FUN, FALSE)
 /client/proc/cmd_admin_gib_self()
 	set name = "Gibself"
 	set category = "Fun"
@@ -704,7 +653,9 @@ Traitors and the like can also be revived with the previous role mostly intact.
 	// I will both remove their SVN access and permanently ban them from my servers.
 	return
 
-/client/proc/cmd_admin_check_contents(mob/living/M as mob in mob_list)
+ADMIN_VERB_ADD(/client/proc/cmd_admin_check_contents, R_ADMIN, FALSE)
+//displays the contents of an instance
+/client/proc/cmd_admin_check_contents(mob/living/M as mob in SSmobs.mob_list)
 	set category = "Special Verbs"
 	set name = "Check Contents"
 
@@ -744,6 +695,8 @@ Traitors and the like can also be revived with the previous role mostly intact.
 			T.ttemp = 293.15
 */
 
+ADMIN_VERB_ADD(/client/proc/toggle_view_range, R_ADMIN, FALSE)
+//changes how far we can see
 /client/proc/toggle_view_range()
 	set category = "Special Verbs"
 	set name = "Change View Range"
@@ -759,51 +712,42 @@ Traitors and the like can also be revived with the previous role mostly intact.
 
 
 
+ADMIN_VERB_ADD(/client/proc/admin_call_shuttle, R_ADMIN, FALSE)
+//allows us to call the emergency shuttle
 /client/proc/admin_call_shuttle()
 
 	set category = "Admin"
-	set name = "Call Shuttle"
+	set name = "Call Evacuation"
 
-	if ((!( ticker ) || !emergency_shuttle.location()))
+	if(!ticker || !evacuation_controller)
 		return
 
 	if(!check_rights(R_ADMIN))	return
 
-	var/confirm = alert(src, "You sure?", "Confirm", "Yes", "No")
-	if(confirm != "Yes") return
-
-	var/choice
-	if(ticker.mode.auto_recall_shuttle)
-		choice = input("The shuttle will just return if you call it. Call anyway?") in list("Confirm", "Cancel")
-		if(choice == "Confirm")
-			emergency_shuttle.auto_recall = 1	//enable auto-recall
-		else
-			return
-
-	choice = input("Is this an emergency evacuation or a crew transfer?") in list("Emergency", "Crew Transfer")
-	if (choice == "Emergency")
-		emergency_shuttle.call_evac()
-	else
-		emergency_shuttle.call_transfer()
+	if(alert(src, "Are you sure?", "Confirm", "Yes", "No") != "Yes") return
 
 
+	var/choice = input("Is this an emergency evacuation or a crew transfer?") in list("Emergency", "Crew Transfer")
+	evacuation_controller.call_evacuation(usr, (choice == "Emergency"))
 
 	log_admin("[key_name(usr)] admin-called the emergency shuttle.")
 	message_admins("\blue [key_name_admin(usr)] admin-called the emergency shuttle.", 1)
 	return
 
+ADMIN_VERB_ADD(/client/proc/admin_cancel_shuttle, R_ADMIN, FALSE)
+//allows us to cancel the emergency shuttle, sending it back to centcomm
 /client/proc/admin_cancel_shuttle()
 	set category = "Admin"
-	set name = "Cancel Shuttle"
+	set name = "Cancel Evacuation"
 
 	if(!check_rights(R_ADMIN))	return
 
 	if(alert(src, "You sure?", "Confirm", "Yes", "No") != "Yes") return
 
-	if(!ticker || !emergency_shuttle.can_recall())
+	if(!ticker || !evacuation_controller)
 		return
 
-	emergency_shuttle.recall()
+	evacuation_controller.cancel_evacuation()
 
 	log_admin("[key_name(usr)] admin-recalled the emergency shuttle.")
 	message_admins("\blue [key_name_admin(usr)] admin-recalled the emergency shuttle.", 1)
@@ -812,19 +756,19 @@ Traitors and the like can also be revived with the previous role mostly intact.
 
 /client/proc/admin_deny_shuttle()
 	set category = "Admin"
-	set name = "Toggle Deny Shuttle"
+	set name = "Toggle Deny Evac"
 
-	if (!ticker)
+	if (!ticker || !evacuation_controller)
 		return
 
 	if(!check_rights(R_ADMIN))	return
 
-	emergency_shuttle.deny_shuttle = !emergency_shuttle.deny_shuttle
+	evacuation_controller.deny = !evacuation_controller.deny
 
-	log_admin("[key_name(src)] has [emergency_shuttle.deny_shuttle ? "denied" : "allowed"] the shuttle to be called.")
-	message_admins("[key_name_admin(usr)] has [emergency_shuttle.deny_shuttle ? "denied" : "allowed"] the shuttle to be called.")
+	log_admin("[key_name(src)] has [evacuation_controller.deny ? "denied" : "allowed"] the shuttle to be called.")
+	message_admins("[key_name_admin(usr)] has [evacuation_controller.deny ? "denied" : "allowed"] the shuttle to be called.")
 
-/client/proc/cmd_admin_attack_log(mob/M as mob in mob_list)
+/client/proc/cmd_admin_attack_log(mob/M as mob in SSmobs.mob_list)
 	set category = "Special Verbs"
 	set name = "Attack Log"
 
@@ -833,7 +777,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 		usr << t
 
 
-
+ADMIN_VERB_ADD(/client/proc/everyone_random, R_FUN, FALSE)
 /client/proc/everyone_random()
 	set category = "Fun"
 	set name = "Make Everyone Random"
@@ -841,7 +785,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 
 	if(!check_rights(R_FUN))	return
 
-	if (ticker && ticker.mode)
+	if (ticker.current_state != GAME_STATE_PREGAME)
 		usr << "Nope you can't do this, the game's already started. This only works before rounds!"
 		return
 
@@ -867,7 +811,7 @@ Traitors and the like can also be revived with the previous role mostly intact.
 	ticker.random_players = 1
 
 
-
+ADMIN_VERB_ADD(/client/proc/toggle_random_events, R_SERVER, FALSE)
 /client/proc/toggle_random_events()
 	set category = "Server"
 	set name = "Toggle random events on/off"

@@ -10,5 +10,7 @@
 	. = ..()
 	if(!.)
 		return
-	if (ticker.mode) alert("The game mode is [ticker.mode.name]")
-	else alert("For some reason there's a ticker, but not a game mode")
+	if (ticker.storyteller)
+		alert("The storyteller is [ticker.storyteller.name]")
+	else
+		alert("For some reason there's a ticker, but not a game mode")

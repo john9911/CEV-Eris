@@ -9,13 +9,13 @@ mob/proc/airflow_stun()
 	if(last_airflow_stun > world.time - vsc.airflow_stun_cooldown)	return 0
 
 	if(!(status_flags & CANSTUN) && !(status_flags & CANWEAKEN))
-		src << "<span class='notice'>You stay upright as the air rushes past you.</span>"
+		src << SPAN_NOTICE("You stay upright as the air rushes past you.")
 		return 0
 	if(buckled)
-		src << "<span class='notice'>Air suddenly rushes past you!</span>"
+		src << SPAN_NOTICE("Air suddenly rushes past you!")
 		return 0
 	if(!lying)
-		src << "<span class='warning'>The sudden rush of air knocks you over!</span>"
+		src << SPAN_WARNING("The sudden rush of air knocks you over!")
 	Weaken(5)
 	last_airflow_stun = world.time
 
@@ -87,7 +87,7 @@ obj/item/check_airflow_movable(n)
 	if(!src.AirflowCanMove(n))
 		return
 	if(ismob(src))
-		src << "<span class='danger'>You are sucked away by airflow!</span>"
+		src << SPAN_DANGER("You are sucked away by airflow!")
 	last_airflow = world.time
 	var/airflow_falloff = 9 - sqrt((x - airflow_dest.x) ** 2 + (y - airflow_dest.y) ** 2)
 	if(airflow_falloff < 1)
@@ -110,11 +110,11 @@ obj/item/check_airflow_movable(n)
 			if(airflow_time++ >= airflow_speed - 7)
 				if(od)
 					density = 0
-				sleep(1 * tick_multiplier)
+				sleep(1 * (config.Ticklag*2))
 		else
 			if(od)
 				density = 0
-			sleep(max(1,10-(airflow_speed+3)) * tick_multiplier)
+			sleep(max(1,10-(airflow_speed+3)) * (config.Ticklag*2))
 		if(od)
 			density = 1
 		if ((!( src.airflow_dest ) || src.loc == src.airflow_dest))
@@ -167,9 +167,9 @@ obj/item/check_airflow_movable(n)
 		airflow_speed -= vsc.airflow_speed_decay
 		if(airflow_speed > 7)
 			if(airflow_time++ >= airflow_speed - 7)
-				sleep(1 * tick_multiplier)
+				sleep(1 * (config.Ticklag*2))
 		else
-			sleep(max(1,10-(airflow_speed+3)) * tick_multiplier)
+			sleep(max(1,10-(airflow_speed+3)) * (config.Ticklag*2))
 		if ((!( src.airflow_dest ) || src.loc == src.airflow_dest))
 			src.airflow_dest = locate(min(max(src.x + xo, 1), world.maxx), min(max(src.y + yo, 1), world.maxy), src.z)
 		if ((src.x == 1 || src.x == world.maxx || src.y == 1 || src.y == world.maxy))
@@ -199,15 +199,15 @@ atom/movable/proc/airflow_hit(atom/A)
 
 mob/airflow_hit(atom/A)
 	for(var/mob/M in hearers(src))
-		M.show_message("<span class='danger'>\The [src] slams into \a [A]!</span>",1,"<span class='danger'>You hear a loud slam!</span>",2)
+		M.show_message(SPAN_DANGER("\The [src] slams into \a [A]!"),1,SPAN_DANGER("You hear a loud slam!"),2)
 	playsound(src.loc, "smash.ogg", 25, 1, -1)
-	var/weak_amt = istype(A,/obj/item) ? A:w_class : rand(1,5) //Heheheh
+	var/weak_amt = istype(A,/obj/item) ? A:w_class : rand(ITEM_SIZE_TINY,ITEM_SIZE_HUGE) //Heheheh
 	Weaken(weak_amt)
 	. = ..()
 
 obj/airflow_hit(atom/A)
 	for(var/mob/M in hearers(src))
-		M.show_message("<span class='danger'>\The [src] slams into \a [A]!</span>",1,"<span class='danger'>You hear a loud slam!</span>",2)
+		M.show_message(SPAN_DANGER("\The [src] slams into \a [A]!"),1,SPAN_DANGER("You hear a loud slam!"),2)
 	playsound(src.loc, "smash.ogg", 25, 1, -1)
 	. = ..()
 
@@ -217,21 +217,21 @@ obj/item/airflow_hit(atom/A)
 
 mob/living/carbon/human/airflow_hit(atom/A)
 //	for(var/mob/M in hearers(src))
-//		M.show_message("<span class='danger'>[src] slams into [A]!</span>",1,"<span class='danger'>You hear a loud slam!</span>",2)
+//		M.show_message(SPAN_DANGER("[src] slams into [A]!"),1,SPAN_DANGER("You hear a loud slam!"),2)
 	playsound(src.loc, "punch", 25, 1, -1)
 	if (prob(33))
 		loc:add_blood(src)
 		bloody_body(src)
 	var/b_loss = airflow_speed * vsc.airflow_damage
 
-	var/blocked = run_armor_check("head","melee")
-	apply_damage(b_loss/3, BRUTE, "head", blocked, 0, "Airflow")
+	var/blocked = run_armor_check(BP_HEAD,"melee")
+	apply_damage(b_loss/3, BRUTE, BP_HEAD, blocked, 0, "Airflow")
 
-	blocked = run_armor_check("chest","melee")
-	apply_damage(b_loss/3, BRUTE, "chest", blocked, 0, "Airflow")
+	blocked = run_armor_check(BP_CHEST,"melee")
+	apply_damage(b_loss/3, BRUTE, BP_CHEST, blocked, 0, "Airflow")
 
-	blocked = run_armor_check("groin","melee")
-	apply_damage(b_loss/3, BRUTE, "groin", blocked, 0, "Airflow")
+	blocked = run_armor_check(BP_GROIN,"melee")
+	apply_damage(b_loss/3, BRUTE, BP_GROIN, blocked, 0, "Airflow")
 
 	if(airflow_speed > 10)
 		Paralyse(round(airflow_speed * vsc.airflow_stun))

@@ -55,10 +55,26 @@ var/list/name_to_material
 		populate_material_list()
 	return name_to_material[name]
 
+/proc/get_material_name_by_stack_type(stype)
+	if(!name_to_material)
+		populate_material_list()
+
+	for(var/name in name_to_material)
+		var/material/M = name_to_material[name]
+		if(M.stack_type == stype)
+			return M.name
+	return null
+
 /proc/material_display_name(name)
 	var/material/material = get_material_by_name(name)
 	if(material)
 		return material.display_name
+	return null
+
+/proc/material_stack_type(name)
+	var/material/material = get_material_by_name(name)
+	if(material)
+		return material.stack_type
 	return null
 
 // Material definition and procs follow.
@@ -119,10 +135,10 @@ var/list/name_to_material
 // Placeholders for light tiles and rglass.
 /material/proc/build_rod_product(var/mob/user, var/obj/item/stack/used_stack, var/obj/item/stack/target_stack)
 	if(!rod_product)
-		user << "<span class='warning'>You cannot make anything out of \the [target_stack]</span>"
+		user << SPAN_WARNING("You cannot make anything out of \the [target_stack]")
 		return
 	if(used_stack.get_amount() < 1 || target_stack.get_amount() < 1)
-		user << "<span class='warning'>You need one rod and one sheet of [display_name] to make anything useful.</span>"
+		user << SPAN_WARNING("You need one rod and one sheet of [display_name] to make anything useful.")
 		return
 	used_stack.use(1)
 	target_stack.use(1)
@@ -132,15 +148,15 @@ var/list/name_to_material
 
 /material/proc/build_wired_product(var/mob/user, var/obj/item/stack/used_stack, var/obj/item/stack/target_stack)
 	if(!wire_product)
-		user << "<span class='warning'>You cannot make anything out of \the [target_stack]</span>"
+		user << SPAN_WARNING("You cannot make anything out of \the [target_stack]")
 		return
 	if(used_stack.get_amount() < 5 || target_stack.get_amount() < 1)
-		user << "<span class='warning'>You need five wires and one sheet of [display_name] to make anything useful.</span>"
+		user << SPAN_WARNING("You need five wires and one sheet of [display_name] to make anything useful.")
 		return
 
 	used_stack.use(5)
 	target_stack.use(1)
-	user << "<span class='notice'>You attach wire to the [name].</span>"
+	user << SPAN_NOTICE("You attach wire to the [name].")
 	var/obj/item/product = new wire_product(get_turf(user))
 	if(!(user.l_hand && user.r_hand))
 		user.put_in_hands(product)
@@ -169,8 +185,8 @@ var/list/name_to_material
 	if(islist(composite_material))
 		for(var/material_string in composite_material)
 			temp_matter[material_string] = composite_material[material_string]
-	else if(SHEET_MATERIAL_AMOUNT)
-		temp_matter[name] = SHEET_MATERIAL_AMOUNT
+	else
+		temp_matter[name] = 1
 	return temp_matter
 
 // As above.
@@ -288,7 +304,7 @@ var/list/name_to_material
 	if(temperature < ignition_point)
 		return 0
 	var/totalPlasma = 0
-	for(var/turf/simulated/floor/target_tile in range(2,T))
+	for(var/turf/simulated/floor/target_tile in trange(2, T))
 		var/plasmaToDeduce = (temperature/30) * effect_multiplier
 		totalPlasma += plasmaToDeduce
 		target_tile.assume_gas("plasma", plasmaToDeduce, 200+T0C)
@@ -319,7 +335,7 @@ var/list/name_to_material
 	stack_type = /obj/item/stack/material/marble
 
 /material/steel
-	name = DEFAULT_WALL_MATERIAL
+	name = MATERIAL_STEEL
 	stack_type = /obj/item/stack/material/steel
 	integrity = 150
 	icon_base = "solid"
@@ -328,8 +344,8 @@ var/list/name_to_material
 	hitsound = 'sound/weapons/genhit.ogg'
 
 /material/steel/holographic
-	name = "holo" + DEFAULT_WALL_MATERIAL
-	display_name = DEFAULT_WALL_MATERIAL
+	name = "holo" + MATERIAL_STEEL
+	display_name = MATERIAL_STEEL
 	stack_type = null
 	shard_type = SHARD_NONE
 
@@ -345,7 +361,6 @@ var/list/name_to_material
 	hardness = 80
 	weight = 23
 	stack_origin_tech = list(TECH_MATERIAL = 2)
-	composite_material = list(DEFAULT_WALL_MATERIAL = 3750, "platinum" = 3750) //todo
 	hitsound = 'sound/weapons/genhit.ogg'
 
 /material/plasteel/titanium
@@ -380,12 +395,12 @@ var/list/name_to_material
 		return 0
 
 	if(!user.IsAdvancedToolUser())
-		user << "<span class='warning'>This task is too complex for your clumsy hands.</span>"
+		user << SPAN_WARNING("This task is too complex for your clumsy hands.")
 		return 1
 
 	var/turf/T = user.loc
 	if(!istype(T))
-		user << "<span class='warning'>You must be standing on open flooring to build a window.</span>"
+		user << SPAN_WARNING("You must be standing on open flooring to build a window.")
 		return 1
 
 	var/title = "Sheet-[used_stack.name] ([used_stack.get_amount()] sheet\s left)"
@@ -418,12 +433,12 @@ var/list/name_to_material
 				failed_to_build = 1
 			if(!failed_to_build && choice == "Windoor")
 				if(!is_reinforced())
-					user << "<span class='warning'>This material is not reinforced enough to use for a door.</span>"
+					user << SPAN_WARNING("This material is not reinforced enough to use for a door.")
 					return
 				if((locate(/obj/structure/windoor_assembly) in T.contents) || (locate(/obj/machinery/door/window) in T.contents))
 					failed_to_build = 1
 	if(failed_to_build)
-		user << "<span class='warning'>There is no room in this location.</span>"
+		user << SPAN_WARNING("There is no room in this location.")
 		return 1
 
 	var/build_path = /obj/structure/windoor_assembly
@@ -434,7 +449,7 @@ var/list/name_to_material
 		build_path = created_window
 
 	if(used_stack.get_amount() < sheets_needed)
-		user << "<span class='warning'>You need at least [sheets_needed] sheets to build this.</span>"
+		user << SPAN_WARNING("You need at least [sheets_needed] sheets to build this.")
 		return 1
 
 	// Build the structure and update sheet count etc.
@@ -458,7 +473,7 @@ var/list/name_to_material
 	hardness = 40
 	weight = 30
 	stack_origin_tech = "materials=2"
-	composite_material = list(DEFAULT_WALL_MATERIAL = 1875,"glass" = 3750)
+	composite_material = list(MATERIAL_STEEL = 2,MATERIAL_GLASS = 3)
 	window_options = list("One Direction" = 1, "Full Window" = 4, "Windoor" = 5)
 	created_window = /obj/structure/window/reinforced
 	wire_product = null
@@ -482,7 +497,7 @@ var/list/name_to_material
 	stack_type = /obj/item/stack/material/glass/plasmarglass
 	stack_origin_tech = list(TECH_MATERIAL = 5)
 	composite_material = list() //todo
-	created_window = /obj/structure/window/plasmareinforced
+	created_window = /obj/structure/window/reinforced/plasma
 	hardness = 40
 	weight = 30
 	//stack_origin_tech = list(TECH_MATERIAL = 2)
@@ -610,29 +625,6 @@ var/list/name_to_material
 	melting_point = T0C+300
 	flags = MATERIAL_PADDING
 
-/material/cult
-	name = "cult"
-	display_name = "disturbing stone"
-	icon_base = "cult"
-	icon_colour = "#402821"
-	icon_reinf = "reinf_cult"
-	shard_type = SHARD_STONE_PIECE
-	sheet_singular_name = "brick"
-	sheet_plural_name = "bricks"
-
-/material/cult/place_dismantled_girder(var/turf/target)
-	new /obj/structure/girder/cult(target)
-
-/material/cult/place_dismantled_product(var/turf/target)
-	new /obj/effect/decal/cleanable/blood(target)
-
-/material/cult/reinf
-	name = "cult2"
-	display_name = "human remains"
-
-/material/cult/reinf/place_dismantled_product(var/turf/target)
-	new /obj/item/remains/human(target)
-
 /material/resin
 	name = "resin"
 	icon_colour = "#E85DD8"
@@ -644,7 +636,7 @@ var/list/name_to_material
 
 /material/resin/can_open_material_door(var/mob/living/user)
 	var/mob/living/carbon/M = user
-	if(istype(M) && locate(/obj/item/organ/xenos/hivenode) in M.internal_organs)
+	if(istype(M) && locate(/obj/item/organ/internal/xenos/hivenode) in M.internal_organs)
 		return 1
 	return 0
 

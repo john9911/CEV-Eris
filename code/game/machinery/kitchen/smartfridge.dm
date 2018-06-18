@@ -133,7 +133,7 @@
 			return 1
 	return 0
 
-/obj/machinery/smartfridge/drying_rack/process()
+/obj/machinery/smartfridge/drying_rack/Process()
 	..()
 	if(inoperable())
 		return
@@ -169,7 +169,7 @@
 		return
 	return
 
-/obj/machinery/smartfridge/process()
+/obj/machinery/smartfridge/Process()
 	if(stat & (BROKEN|NOPOWER))
 		return
 	if(src.seconds_electrified > 0)
@@ -194,7 +194,7 @@
 ********************/
 
 /obj/machinery/smartfridge/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(istype(O, /obj/item/weapon/screwdriver))
+	if(istype(O, /obj/item/weapon/tool/screwdriver))
 		panel_open = !panel_open
 		user.visible_message("[user] [panel_open ? "opens" : "closes"] the maintenance panel of \the [src].", "You [panel_open ? "open" : "close"] the maintenance panel of \the [src].")
 		overlays.Cut()
@@ -203,18 +203,18 @@
 		nanomanager.update_uis(src)
 		return
 
-	if(istype(O, /obj/item/device/multitool)||istype(O, /obj/item/weapon/wirecutters))
+	if(istype(O, /obj/item/weapon/tool/multitool)||istype(O, /obj/item/weapon/tool/wirecutters))
 		if(panel_open)
 			attack_hand(user)
 		return
 
 	if(stat & NOPOWER)
-		user << "<span class='notice'>\The [src] is unpowered and useless.</span>"
+		user << SPAN_NOTICE("\The [src] is unpowered and useless.")
 		return
 
 	if(accept_check(O))
 		if(contents.len >= max_n_of_items)
-			user << "<span class='notice'>\The [src] is full.</span>"
+			user << SPAN_NOTICE("\The [src] is full.")
 			return 1
 		else
 			user.remove_from_mob(O)
@@ -223,7 +223,7 @@
 				item_quants[O.name]++
 			else
 				item_quants[O.name] = 1
-			user.visible_message("<span class='notice'>[user] has added \the [O] to \the [src].</span>", "<span class='notice'>You add \the [O] to \the [src].</span>")
+			user.visible_message(SPAN_NOTICE("[user] has added \the [O] to \the [src]."), SPAN_NOTICE("You add \the [O] to \the [src]."))
 
 			nanomanager.update_uis(src)
 
@@ -233,7 +233,7 @@
 		for(var/obj/G in P.contents)
 			if(accept_check(G))
 				if(contents.len >= max_n_of_items)
-					user << "<span class='notice'>\The [src] is full.</span>"
+					user << SPAN_NOTICE("\The [src] is full.")
 					return 1
 				else
 					P.remove_from_storage(G,src)
@@ -244,14 +244,14 @@
 					plants_loaded++
 		if(plants_loaded)
 
-			user.visible_message("<span class='notice'>[user] loads \the [src] with \the [P].</span>", "<span class='notice'>You load \the [src] with \the [P].</span>")
+			user.visible_message(SPAN_NOTICE("[user] loads \the [src] with \the [P]."), SPAN_NOTICE("You load \the [src] with \the [P]."))
 			if(P.contents.len > 0)
-				user << "<span class='notice'>Some items are refused.</span>"
+				user << SPAN_NOTICE("Some items are refused.")
 
 		nanomanager.update_uis(src)
 
 	else
-		user << "<span class='notice'>\The [src] smartly refuses [O].</span>"
+		user << SPAN_NOTICE("\The [src] smartly refuses [O].")
 		return 1
 
 /obj/machinery/smartfridge/secure/emag_act(var/remaining_charges, var/mob/user)
@@ -355,7 +355,7 @@
 		return 0
 	spawn(0)
 		throw_item.throw_at(target,16,3,src)
-	src.visible_message("<span class='warning'>[src] launches [throw_item.name] at [target.name]!</span>")
+	src.visible_message(SPAN_WARNING("[src] launches [throw_item.name] at [target.name]!"))
 	return 1
 
 /************************
@@ -366,6 +366,6 @@
 	if(stat & (NOPOWER|BROKEN)) return 0
 	if(usr.contents.Find(src) || (in_range(src, usr) && istype(loc, /turf)))
 		if(!allowed(usr) && !emagged && locked != -1 && href_list["vend"])
-			usr << "<span class='warning'>Access denied.</span>"
+			usr << SPAN_WARNING("Access denied.")
 			return 0
 	return ..()

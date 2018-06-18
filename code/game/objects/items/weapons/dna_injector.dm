@@ -8,7 +8,7 @@
 	var/s_time = 10.0
 	throw_speed = 1
 	throw_range = 5
-	w_class = 1.0
+	w_class = ITEM_SIZE_TINY
 	slot_flags = SLOT_EARS
 	var/uses = 1
 	var/nofail
@@ -64,7 +64,7 @@
 		return buf.dna.SetUIValue(real_block,val)
 
 /obj/item/weapon/dnainjector/proc/inject(mob/M as mob, mob/user as mob)
-	if(istype(M,/mob/living))
+	if(isliving(M))
 		var/mob/living/L = M
 		L.apply_effect(rand(5,20), IRRADIATE, check_protection = 0)
 
@@ -98,14 +98,14 @@
 	return uses
 
 /obj/item/weapon/dnainjector/attack(mob/M as mob, mob/user as mob)
-	if (!istype(M, /mob))
+	if (!ismob(M))
 		return
 	if (!usr.IsAdvancedToolUser())
 		return
 	if(inuse)
 		return 0
 
-	user.visible_message("<span class='danger'>\The [user] is trying to inject \the [M] with \the [src]!</span>")
+	user.visible_message(SPAN_DANGER("\The [user] is trying to inject \the [M] with \the [src]!"))
 	inuse = 1
 	s_time = world.time
 	spawn(50)
@@ -117,11 +117,11 @@
 	user.setClickCooldown(DEFAULT_QUICK_COOLDOWN)
 	user.do_attack_animation(M)
 
-	M.visible_message("<span class='danger'>\The [M] has been injected with \the [src] by \the [user].</span>")
+	M.visible_message(SPAN_DANGER("\The [M] has been injected with \the [src] by \the [user]."))
 
 	var/mob/living/carbon/human/H = M
 	if(!istype(H))
-		user << "<span class='warning'>Apparently it didn't work...</span>"
+		user << SPAN_WARNING("Apparently it didn't work...")
 		return
 
 	// Used by admin log.

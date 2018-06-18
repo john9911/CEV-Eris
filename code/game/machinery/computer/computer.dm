@@ -7,7 +7,6 @@
 	use_power = 1
 	idle_power_usage = 300
 	active_power_usage = 300
-	var/circuit = null //The path to the circuit board type. If circuit==null, the computer can't be disassembled.
 	var/processing = 0
 	var/CheckFaceFlag = 1 //for direction check
 	var/icon_keyboard = "generic_key"
@@ -15,11 +14,12 @@
 	var/light_range_on = 1.5
 	var/light_power_on = 2
 
-/obj/machinery/computer/initialize()
+/obj/machinery/computer/Initialize()
+	. = ..()
 	power_change()
 	update_icon()
 
-/obj/machinery/computer/process()
+/obj/machinery/computer/Process()
 	if(stat & (NOPOWER|BROKEN))
 		return 0
 	return 1
@@ -61,6 +61,7 @@
 		set_light(0)
 		if(icon_keyboard)
 			overlays += image(icon,"[icon_keyboard]_off")
+		update_openspace()
 		return
 	else
 		set_light(light_range_on, light_power_on)
@@ -72,6 +73,7 @@
 
 	if(icon_keyboard)
 		overlays += image(icon, icon_keyboard)
+	update_openspace()
 
 /obj/machinery/computer/power_change()
 	..()
@@ -91,29 +93,29 @@
 	text = replacetext(text, "\n", "<BR>")
 	return text
 
-/obj/machinery/computer/attackby(I as obj, user as mob)
-	if(istype(I, /obj/item/weapon/screwdriver) && circuit)
-		playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
-		if(do_after(user, 20, src))
-			var/obj/structure/computerframe/A = new /obj/structure/computerframe( src.loc )
-			var/obj/item/weapon/circuitboard/M = new circuit( A )
-			A.circuit = M
+/obj/machinery/computer/attackby(obj/item/I, mob/user)
+	if(QUALITY_SCREW_DRIVING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_NORMAL, QUALITY_SCREW_DRIVING, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+			var/obj/structure/computerframe/A = new /obj/structure/computerframe(src.loc)
+			A.dir = src.dir
+			A.circuit = circuit
 			A.anchored = 1
 			for (var/obj/C in src)
 				C.loc = src.loc
 			if (src.stat & BROKEN)
-				user << "<span class='notice'>The broken glass falls out.</span>"
-				new /obj/item/weapon/material/shard( src.loc )
+				user << SPAN_NOTICE("The broken glass falls out.")
+				new /obj/item/weapon/material/shard(src.loc)
 				A.state = 3
 				A.icon_state = "3"
 			else
-				user << "<span class='notice'>You disconnect the monitor.</span>"
+				user << SPAN_NOTICE("You disconnect the monitor.")
 				A.state = 4
 				A.icon_state = "4"
-			M.deconstruct(src)
+			circuit.deconstruct(src)
 			qdel(src)
 	else
 		..()
+
 /obj/machinery/computer/Topic(href, href_list)
 	if(..())
 		return 1

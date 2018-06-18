@@ -5,9 +5,8 @@
 /datum/event/rogue_drone/start()
 	//spawn them at the same place as carp
 	var/list/possible_spawns = list()
-	for(var/obj/effect/landmark/C in landmarks_list)
-		if(C.name == "carpspawn")
-			possible_spawns.Add(C)
+	for(var/obj/landmark/mob/carpspawn/C in landmarks_list)
+		possible_spawns.Add(C)
 
 	//25% chance for this to be a false alarm
 	var/num
@@ -37,7 +36,7 @@
 		var/datum/effect/effect/system/spark_spread/sparks = new /datum/effect/effect/system/spark_spread()
 		sparks.set_up(3, 0, D.loc)
 		sparks.start()
-		D.z = config.admin_levels[1]
+		D.z = maps_data.admin_levels[1]
 		D.has_loot = 0
 
 		qdel(D)

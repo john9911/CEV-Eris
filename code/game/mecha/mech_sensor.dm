@@ -36,7 +36,7 @@
 	return istype(O, /obj/mecha) || istype(O, /obj/vehicle)
 
 /obj/machinery/mech_sensor/proc/give_feedback(O as obj)
-	var/block_message = "<span class='warning'>Movement control overridden. Area denial active.</span>"
+	var/block_message = SPAN_WARNING("Movement control overridden. Area denial active.")
 	var/feedback_timer = 0
 	if(feedback_timer)
 		return
@@ -69,7 +69,8 @@
 	else
 		icon_state = "airlock_sensor_off"
 
-/obj/machinery/mech_sensor/initialize()
+/obj/machinery/mech_sensor/Initialize()
+	. = ..()
 	set_frequency(frequency)
 
 /obj/machinery/mech_sensor/proc/set_frequency(new_frequency)

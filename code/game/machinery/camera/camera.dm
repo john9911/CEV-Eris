@@ -36,6 +36,8 @@
 	var/affected_by_emp_until = 0
 
 /obj/machinery/camera/New()
+	..()
+
 	wires = new(src)
 	assembly = new(src)
 	assembly.state = 4
@@ -50,15 +52,13 @@
 		if(loc)
 			error("[src.name] in [get_area(src)] (x:[src.x] y:[src.y] z:[src.z] has errored. [src.network?"Empty network list":"Null network list"]")
 		else
-			error("[src.name] in [get_area(src)]has errored. [src.network?"Empty network list":"Null network list"]")
+			error("[src.name] in [get_area(src)] has errored. [src.network?"Empty network list":"Null network list"]")
 		ASSERT(src.network)
 		ASSERT(src.network.len > 0)
 
-	if(!c_tag)
+	if(isturf(loc) && !c_tag)
 		var/area/A = get_area(src)
 		c_tag = A.get_camera_tag(src)
-
-	..()
 
 /obj/machinery/camera/Destroy()
 	deactivate(null, 0) //kick anyone viewing out
@@ -69,7 +69,7 @@
 	wires = null
 	return ..()
 
-/obj/machinery/camera/process()
+/obj/machinery/camera/Process()
 	if((stat & EMPED) && world.time >= affected_by_emp_until)
 		stat &= ~EMPED
 		cancelCameraAlarm()
@@ -91,7 +91,7 @@
 			kick_viewers()
 			update_icon()
 			update_coverage()
-			processing_objects |= src
+			START_PROCESSING(SSmachines, src)
 
 /obj/machinery/camera/bullet_act(var/obj/item/projectile/P)
 	take_damage(P.get_structure_damage())
@@ -108,10 +108,10 @@
 
 /obj/machinery/camera/hitby(AM as mob|obj)
 	..()
-	if (istype(AM, /obj))
+	if (isobj(AM))
 		var/obj/O = AM
 		if (O.throwforce >= src.toughness)
-			visible_message("<span class='warning'><B>[src] was hit by [O].</B></span>")
+			visible_message(SPAN_WARNING("<B>[src] was hit by [O].</B>"))
 		take_damage(O.throwforce)
 
 /obj/machinery/camera/proc/setViewRange(var/num = 7)
@@ -125,58 +125,76 @@
 	if(user.species.can_shred(user))
 		set_status(0)
 		user.do_attack_animation(src)
-		visible_message("<span class='warning'>\The [user] slashes at [src]!</span>")
+		visible_message(SPAN_WARNING("\The [user] slashes at [src]!"))
 		playsound(src.loc, 'sound/weapons/slash.ogg', 100, 1)
 		add_hiddenprint(user)
 		destroy()
 
-/obj/machinery/camera/attackby(obj/item/W as obj, mob/living/user as mob)
+/obj/machinery/camera/attackby(obj/item/I, mob/living/user)
 	update_coverage()
 	// DECONSTRUCTION
-	if(isscrewdriver(W))
-		//user << "<span class='notice'>You start to [panel_open ? "close" : "open"] the camera's panel.</span>"
-		//if(toggle_panel(user)) // No delay because no one likes screwdrivers trying to be hip and have a duration cooldown
-		panel_open = !panel_open
-		user.visible_message("<span class='warning'>[user] screws the camera's panel [panel_open ? "open" : "closed"]!</span>",
-		"<span class='notice'>You screw the camera's panel [panel_open ? "open" : "closed"].</span>")
-		playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
 
-	else if((iswirecutter(W) || ismultitool(W)) && panel_open)
+	var/list/usable_qualities = list(QUALITY_SCREW_DRIVING)
+	if((wires.CanDeconstruct() || (stat & BROKEN)))
+		usable_qualities.Add(QUALITY_WELDING)
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_WELDING)
+			if((wires.CanDeconstruct() || (stat & BROKEN)))
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("You weld the assembly securely into place.")
+					if(assembly)
+						assembly.loc = src.loc
+						assembly.anchored = 1
+						assembly.camera_name = c_tag
+						assembly.camera_network = english_list(network, "Exodus", ",", ",")
+						assembly.update_icon()
+						assembly.dir = src.dir
+						if(stat & BROKEN)
+							assembly.state = 2
+							user << SPAN_NOTICE("You repaired \the [src] frame.")
+						else
+							assembly.state = 1
+							user << SPAN_NOTICE("You cut \the [src] free from the wall.")
+							new /obj/item/stack/cable_coil(src.loc, length=2)
+						assembly = null //so qdel doesn't eat it.
+					qdel(src)
+					return
+			return
+
+
+		if(QUALITY_SCREW_DRIVING)
+			if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+				panel_open = !panel_open
+				user.visible_message("<span class='warning'>[user] screws the camera's panel [panel_open ? "open" : "closed"]!</span>",
+				"<span class='notice'>You screw the camera's panel [panel_open ? "open" : "closed"].</span>")
+				return
+			return
+
+
+		if(ABORT_CHECK)
+			return
+
+
+	if(istype(I, /obj/item/weapon/tool) && panel_open)
 		interact(user)
 
-	else if(iswelder(W) && (wires.CanDeconstruct() || (stat & BROKEN)))
-		if(weld(W, user))
-			if(assembly)
-				assembly.loc = src.loc
-				assembly.anchored = 1
-				assembly.camera_name = c_tag
-				assembly.camera_network = english_list(network, "Exodus", ",", ",")
-				assembly.update_icon()
-				assembly.dir = src.dir
-				if(stat & BROKEN)
-					assembly.state = 2
-					user << "<span class='notice'>You repaired \the [src] frame.</span>"
-				else
-					assembly.state = 1
-					user << "<span class='notice'>You cut \the [src] free from the wall.</span>"
-					new /obj/item/stack/cable_coil(src.loc, length=2)
-				assembly = null //so qdel doesn't eat it.
-			qdel(src)
-
 	// OTHER
-	else if (can_use() && (istype(W, /obj/item/weapon/paper) || istype(W, /obj/item/device/pda)) && isliving(user))
+	else if (can_use() && (istype(I, /obj/item/weapon/paper) || istype(I, /obj/item/device/pda)) && isliving(user))
 		var/mob/living/U = user
 		var/obj/item/weapon/paper/X = null
 		var/obj/item/device/pda/P = null
 
 		var/itemname = ""
 		var/info = ""
-		if(istype(W, /obj/item/weapon/paper))
-			X = W
+		if(istype(I, /obj/item/weapon/paper))
+			X = I
 			itemname = X.name
 			info = X.info
 		else
-			P = W
+			P = I
 			itemname = P.name
 			info = P.notehtml
 		U << "You hold \a [itemname] up to the camera ..."
@@ -192,34 +210,32 @@
 					O << "[U] holds \a [itemname] up to one of the cameras ..."
 					O << browse(text("<HTML><HEAD><TITLE>[]</TITLE></HEAD><BODY><TT>[]</TT></BODY></HTML>", itemname, info), text("window=[]", itemname))
 
-	else if (istype(W, /obj/item/weapon/camera_bug))
+	else if (istype(I, /obj/item/weapon/camera_bug))
 		if (!src.can_use())
-			user << "<span class='warning'>Camera non-functional.</span>"
+			user << SPAN_WARNING("Camera non-functional.")
 			return
 		if (src.bugged)
-			user << "<span class='notice'>Camera bug removed.</span>"
+			user << SPAN_NOTICE("Camera bug removed.")
 			src.bugged = 0
 		else
-			user << "<span class='notice'>Camera bugged.</span>"
+			user << SPAN_NOTICE("Camera bugged.")
 			src.bugged = 1
 
-	else if(W.damtype == BRUTE || W.damtype == BURN) //bashing cameras
+	else if(I.damtype == BRUTE || I.damtype == BURN) //bashing cameras
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
-		if (W.force >= src.toughness)
+		if (I.force >= src.toughness)
 			user.do_attack_animation(src)
-			visible_message("<span class='warning'><b>[src] has been [pick(W.attack_verb)] with [W] by [user]!</b></span>")
-			if (istype(W, /obj/item)) //is it even possible to get into attackby() with non-items?
-				var/obj/item/I = W
-				if (I.hitsound)
-					playsound(loc, I.hitsound, 50, 1, -1)
-		take_damage(W.force)
+			visible_message(SPAN_WARNING("<b>[src] has been [pick(I.attack_verb)] with [I] by [user]!</b>"))
+			if (I.hitsound)
+				playsound(loc, I.hitsound, 50, 1, -1)
+		take_damage(I.force)
 
 	else
 		..()
 
 /obj/machinery/camera/proc/deactivate(user as mob, var/choice = 1)
 	// The only way for AI to reactivate cameras are malf abilities, this gives them different messages.
-	if(istype(user, /mob/living/silicon/ai))
+	if(isAI(user))
 		user = null
 
 	if(choice != 1)
@@ -229,17 +245,17 @@
 		set_status(!src.status)
 		if (!(src.status))
 			if(user)
-				visible_message("<span class='notice'> [user] has deactivated [src]!</span>")
+				visible_message(SPAN_NOTICE(" [user] has deactivated [src]!"))
 			else
-				visible_message("<span class='notice'> [src] clicks and shuts down. </span>")
+				visible_message(SPAN_NOTICE(" [src] clicks and shuts down. "))
 			playsound(src.loc, 'sound/items/Wirecutter.ogg', 100, 1)
 			icon_state = "[initial(icon_state)]1"
 			add_hiddenprint(user)
 		else
 			if(user)
-				visible_message("<span class='notice'> [user] has reactivated [src]!</span>")
+				visible_message(SPAN_NOTICE(" [user] has reactivated [src]!"))
 			else
-				visible_message("<span class='notice'> [src] clicks and reactivates itself. </span>")
+				visible_message(SPAN_NOTICE(" [src] clicks and reactivates itself. "))
 			playsound(src.loc, 'sound/items/Wirecutter.ogg', 100, 1)
 			icon_state = initial(icon_state)
 			add_hiddenprint(user)
@@ -364,32 +380,12 @@
 
 	return null
 
-/obj/machinery/camera/proc/weld(var/obj/item/weapon/weldingtool/WT, var/mob/user)
-
-	if(busy)
-		return 0
-	if(!WT.isOn())
-		return 0
-
-	// Do after stuff here
-	user << "<span class='notice'>You start to weld the [src]..</span>"
-	playsound(src.loc, 'sound/items/Welder.ogg', 50, 1)
-	WT.eyecheck(user)
-	busy = 1
-	if(do_after(user, 100, src))
-		busy = 0
-		if(!WT.isOn())
-			return 0
-		return 1
-	busy = 0
-	return 0
-
 /obj/machinery/camera/interact(mob/living/user as mob)
-	if(!panel_open || istype(user, /mob/living/silicon/ai))
+	if(!panel_open || isAI(user))
 		return
 
 	if(stat & BROKEN)
-		user << "<span class='warning'>\The [src] is broken.</span>"
+		user << SPAN_WARNING("\The [src] is broken.")
 		return
 
 	user.set_machine(src)
@@ -442,7 +438,7 @@
 
 /obj/machinery/camera/proc/nano_structure()
 	var/cam[0]
-	cam["name"] = sanitize(c_tag)
+	cam["name"] = sanitize(strip_improper(c_tag))
 	cam["deact"] = !can_use()
 	cam["camera"] = "\ref[src]"
 	cam["x"] = x

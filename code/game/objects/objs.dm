@@ -1,6 +1,7 @@
 /obj
 	//Used to store information about the contents of the object.
 	var/list/matter
+	var/list/matter_reagents
 	var/w_class // Size of the object.
 	var/unacidable = 0 //universal "unacidabliness" var, here so you can use it in any obj.
 	animate_movement = 2
@@ -12,8 +13,12 @@
 	var/armor_penetration = 0
 	var/corporation = null
 
-/obj/examine(mob/user,distance=-1)
-	if(..(user,2))
+/obj/get_fall_damage()
+	return w_class * 2
+
+/obj/examine(mob/user, distance=-1, infix, suffix)
+	..(user, distance, infix, suffix)
+	if(get_dist(user, src) <= 2)
 		if (corporation)
 			if (corporation in global.global_corporations)
 				var/datum/corporation/C = global_corporations[corporation]
@@ -26,7 +31,7 @@
 
 
 /obj/Destroy()
-	processing_objects -= src
+	STOP_PROCESSING(SSobj, src)
 	return ..()
 
 /obj/Topic(href, href_list, var/datum/topic_state/state = default_state)
@@ -45,7 +50,7 @@
 /obj/CanUseTopic(var/mob/user, var/datum/topic_state/state)
 	if(user.CanUseObjTopic(src))
 		return ..()
-	user << "<span class='danger'>\icon[src]Access Denied!</span>"
+	user << SPAN_DANGER("\icon[src]Access Denied!")
 	return STATUS_CLOSE
 
 /mob/living/silicon/CanUseObjTopic(var/obj/O)
@@ -75,8 +80,8 @@
 
 /obj/item/proc/is_used_on(obj/O, mob/user)
 
-/obj/proc/process()
-	processing_objects.Remove(src)
+/obj/Process()
+	STOP_PROCESSING(SSobj, src)
 	return 0
 
 /obj/assume_air(datum/gas_mixture/giver)
@@ -105,7 +110,7 @@
 			if ((M.client && M.machine == src))
 				is_in_use = 1
 				src.attack_hand(M)
-		if (istype(usr, /mob/living/silicon/ai) || istype(usr, /mob/living/silicon/robot))
+		if (isAI(usr) || isrobot(usr))
 			if (!(usr in nearby))
 				if (usr.client && usr.machine==src) // && M.machine == src is omitted because if we triggered this by using the dialog, it doesn't matter if our machine changed in between triggering it and this - the dialog is probably still supposed to refresh.
 					is_in_use = 1
@@ -113,7 +118,7 @@
 
 		// check for TK users
 
-		if (istype(usr, /mob/living/carbon/human))
+		if (ishuman(usr))
 			if(istype(usr.l_hand, /obj/item/tk_grab) || istype(usr.r_hand, /obj/item/tk_grab/))
 				if(!(usr in nearby))
 					if(usr.client && usr.machine==src)
@@ -182,3 +187,28 @@
 
 /obj/proc/show_message(msg, type, alt, alt_type)//Message, type of message (1 or 2), alternative message, alt message type (1 or 2)
 	return
+
+/obj/proc/add_hearing()
+	hearing_objects |= src
+
+/obj/proc/remove_hearing()
+	hearing_objects.Remove(src)
+
+/obj/proc/eject_item(var/obj/item/I, var/mob/living/M)
+	if(!I || !M.IsAdvancedToolUser())
+		return FALSE
+	M.put_in_hands(I)
+	playsound(src.loc, 'sound/weapons/guns/interact/pistol_magin.ogg', 75, 1)
+	M.visible_message(
+		"[M] remove [I] from [src].",
+		SPAN_NOTICE("You remove [I] from [src].")
+	)
+	return TRUE
+
+/obj/proc/insert_item(var/obj/item/I, var/mob/living/M)
+	if(!I || !M.unEquip(I))
+		return FALSE
+	I.forceMove(src)
+	playsound(src.loc, 'sound/weapons/guns/interact/pistol_magout.ogg', 75, 1)
+	M << SPAN_NOTICE("You insert [I] into [src].")
+	return TRUE

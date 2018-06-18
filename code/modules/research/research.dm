@@ -54,7 +54,24 @@ research holder datum.
 		known_tech += new T(src)
 	for(var/D in typesof(/datum/design) - /datum/design)
 		possible_designs += new D(src)
+	generate_integrated_circuit_designs()
 	RefreshResearch()
+
+/datum/tech/proc/getCost(current_level = null)
+	// Calculates tech disk's supply points sell cost
+	if(!current_level)
+		current_level = initial(level)
+
+	if(current_level >= level)
+		return 0
+
+	var/cost = 0
+	for(var/i = current_level + 1 to level)
+		if(i == initial(level))
+			continue
+		cost += i*rare
+
+	return cost
 
 /datum/research/techonly
 
@@ -129,6 +146,21 @@ research holder datum.
 		if(initial(check_tech.id) == ID)
 			return  initial(check_tech.name)
 
+/datum/research/proc/generate_integrated_circuit_designs()
+	spawn(2 SECONDS) // So the list has time to initialize.
+		for(var/obj/item/integrated_circuit/IC in all_integrated_circuits)
+			if(IC.spawn_flags & IC_SPAWN_RESEARCH)
+				var/datum/design/D = new /datum/design/circuit(src)
+				D.name = "Custom circuitry \[[IC.category_text]\] ([IC.name])"
+				D.id = "ic-[lowertext(IC.name)]"
+				if(IC.origin_tech && IC.origin_tech.len)
+					D.req_tech = IC.origin_tech.Copy()
+				else
+					D.req_tech = list(TECH_ENGINEERING = 2, TECH_DATA = 2)
+				D.build_path = IC.type
+				possible_designs += D
+
+
 /***************************************************************
 **						Technology Datums					  **
 **	Includes all the various technoliges and what they make.  **
@@ -139,6 +171,7 @@ research holder datum.
 	var/desc = "description"			//General description of what it does and what it makes.
 	var/id = "id"						//An easily referenced ID. Must be alphanumeric, lower-case, and no symbols.
 	var/level = 1						//A simple number scale of the research level. Level 0 = Secret tech.
+	var/rare = 1						//How much CentCom wants to get that tech. Used in supply shuttle tech cost calculation.
 
 /datum/tech/materials
 	name = "Materials Research"
@@ -154,6 +187,7 @@ research holder datum.
 	name = "Plasma Research"
 	desc = "Research into the mysterious substance colloqually known as 'plasma'."
 	id = TECH_PLASMA
+	rare = 3
 
 /datum/tech/powerstorage
 	name = "Power Manipulation Technology"
@@ -164,6 +198,7 @@ research holder datum.
 	name = "'Blue-space' Research"
 	desc = "Research into the sub-reality known as 'blue-space'"
 	id = TECH_BLUESPACE
+	rare = 2
 
 /datum/tech/biotech
 	name = "Biological Technology"
@@ -200,11 +235,11 @@ research holder datum.
 /obj/item/weapon/disk/tech_disk
 	name = "technology disk"
 	desc = "A disk for storing technology data for further research."
-	icon = 'icons/obj/cloning.dmi'
-	icon_state = "datadisk2"
+	icon = 'icons/obj/discs.dmi'
+	icon_state = "blue"
 	item_state = "card-id"
-	w_class = 2.0
-	matter = list(DEFAULT_WALL_MATERIAL = 30, "glass" = 10)
+	w_class = ITEM_SIZE_SMALL
+	matter = list(MATERIAL_PLASTIC = 1, MATERIAL_GLASS = 1)
 	var/datum/tech/stored
 
 /obj/item/weapon/disk/tech_disk/New()
@@ -214,11 +249,11 @@ research holder datum.
 /obj/item/weapon/disk/design_disk
 	name = "component design disk"
 	desc = "A disk for storing device design data for construction in lathes."
-	icon = 'icons/obj/cloning.dmi'
-	icon_state = "datadisk2"
+	icon = 'icons/obj/discs.dmi'
+	icon_state = "yellow"
 	item_state = "card-id"
-	w_class = 2.0
-	matter = list(DEFAULT_WALL_MATERIAL = 30, "glass" = 10)
+	w_class = ITEM_SIZE_SMALL
+	matter = list(MATERIAL_PLASTIC = 1, MATERIAL_GLASS = 1)
 	var/datum/design/blueprint
 
 /obj/item/weapon/disk/design_disk/New()

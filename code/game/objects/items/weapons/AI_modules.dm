@@ -14,7 +14,7 @@ AI MODULES
 	desc = "An AI Module for transmitting encrypted instructions to the AI."
 	flags = CONDUCT
 	force = WEAPON_FORCE_WEAK
-	w_class = 2.0
+	w_class = ITEM_SIZE_SMALL
 	throwforce = WEAPON_FORCE_WEAK
 	throw_speed = 3
 	throw_range = 15
@@ -34,17 +34,13 @@ AI MODULES
 			usr << "You haven't selected an AI to transmit laws to!"
 			return
 
-		if(ticker && ticker.mode && ticker.mode.name == "blob")
-			usr << "Law uploads have been disabled by [company_name]!"
-			return
-
 		if (comp.current.stat == 2 || comp.current.control_disabled == 1)
 			usr << "Upload failed. No signal is being detected from the AI."
 		else if (comp.current.see_in_dark == 0)
 			usr << "Upload failed. Only a faint signal is being detected from the AI, and it is not responding to our requests. It may be low on power."
 		else
 			src.transmitInstructions(comp.current, usr)
-			for(var/mob/living/silicon/robot/R in mob_list)
+			for(var/mob/living/silicon/robot/R in SSmobs.mob_list)
 				if(R.lawupdate && (R.connected_ai == comp.current))
 					R << "These are your laws now:"
 					R.show_laws()
@@ -365,7 +361,7 @@ AI MODULES
 	log_law_changes(target, sender)
 
 	lawchanges.Add("The law is '[newFreeFormLaw]'")
-	target << "<span class='danger'>BZZZZT</span>"
+	target << SPAN_DANGER("BZZZZT")
 	var/law = "[newFreeFormLaw]"
 	target.add_ion_law(law)
 	target.show_laws()

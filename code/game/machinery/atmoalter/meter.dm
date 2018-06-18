@@ -16,11 +16,12 @@
 	src.target = locate(/obj/machinery/atmospherics/pipe) in loc
 	return 1
 
-/obj/machinery/meter/initialize()
+/obj/machinery/meter/Initialize()
+	. = ..()
 	if (!target)
 		src.target = locate(/obj/machinery/atmospherics/pipe) in loc
 
-/obj/machinery/meter/process()
+/obj/machinery/meter/Process()
 	if(!target)
 		icon_state = "meterX"
 		return 0
@@ -68,11 +69,11 @@
 /obj/machinery/meter/examine(mob/user)
 	var/t = "A gas flow meter. "
 
-	if(get_dist(user, src) > 3 && !(istype(user, /mob/living/silicon/ai) || isghost(user)))
-		t += "<span class='warning'>You are too far away to read it.</span>"
+	if(get_dist(user, src) > 3 && !(isAI(user) || isghost(user)))
+		t += SPAN_WARNING("You are too far away to read it.")
 
 	else if(stat & (NOPOWER|BROKEN))
-		t += "<span class='warning'>The display is off.</span>"
+		t += SPAN_WARNING("The display is off.")
 
 	else if(src.target)
 		var/datum/gas_mixture/environment = target.return_air()
@@ -87,21 +88,21 @@
 
 /obj/machinery/meter/Click()
 
-	if(istype(usr, /mob/living/silicon/ai)) // ghosts can call ..() for examine
+	if(isAI(usr)) // ghosts can call ..() for examine
 		usr.examinate(src)
 		return 1
 
 	return ..()
 
 /obj/machinery/meter/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if (!istype(W, /obj/item/weapon/wrench))
+	if (!istype(W, /obj/item/weapon/tool/wrench))
 		return ..()
 	playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-	user << "<span class='notice'>You begin to unfasten \the [src]...</span>"
+	user << SPAN_NOTICE("You begin to unfasten \the [src]...")
 	if (do_after(user, 40, src))
 		user.visible_message( \
-			"<span class='notice'>\The [user] unfastens \the [src].</span>", \
-			"<span class='notice'>You have unfastened \the [src].</span>", \
+			SPAN_NOTICE("\The [user] unfastens \the [src]."), \
+			SPAN_NOTICE("You have unfastened \the [src]."), \
 			"You hear ratchet.")
 		new /obj/item/pipe_meter(src.loc)
 		qdel(src)
@@ -114,7 +115,8 @@
 	return 1
 
 
-/obj/machinery/meter/turf/initialize()
+/obj/machinery/meter/turf/Initialize()
+	. = ..()
 	if (!target)
 		src.target = loc
 

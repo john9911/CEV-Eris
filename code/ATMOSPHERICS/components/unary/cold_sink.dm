@@ -10,7 +10,7 @@
 	anchored = 1
 	use_power = 0
 	idle_power_usage = 5			// 5 Watts for thermostat related circuitry
-
+	circuit = /obj/item/weapon/circuitboard/unary_atmos/cooler
 	var/heatsink_temperature = T20C	// The constant temperature reservoir into which the freezer pumps heat. Probably the hull of the station or something.
 	var/internal_volume = 600		// L
 
@@ -21,18 +21,10 @@
 	var/cooling = 0
 
 /obj/machinery/atmospherics/unary/freezer/New()
-	..()
 	initialize_directions = dir
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/unary_atmos/cooler(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/stack/cable_coil(src, 2)
-	RefreshParts()
+	..()
 
-/obj/machinery/atmospherics/unary/freezer/initialize()
+/obj/machinery/atmospherics/unary/freezer/atmos_init()
 	if(node)
 		return
 
@@ -46,7 +38,7 @@
 	//copied from pipe construction code since heaters/freezers don't use fittings and weren't doing this check - this all really really needs to be refactored someday.
 	//check that there are no incompatible pipes/machinery in our own location
 	for(var/obj/machinery/atmospherics/M in src.loc)
-		if(M != src && (M.initialize_directions & node_connect) && M.check_connect_types(M,src))	// matches at least one direction on either type of pipe & same connection type
+		if(M != src && (M.initialize_directions & node_connect) && M.check_connect_types(M, src))	// matches at least one direction on either type of pipe & same connection type
 			node = null
 			break
 
@@ -117,7 +109,7 @@
 	playsound(loc, 'sound/machines/machine_switch.ogg', 100, 1)
 	add_fingerprint(usr)
 
-/obj/machinery/atmospherics/unary/freezer/process()
+/obj/machinery/atmospherics/unary/freezer/Process()
 	..()
 
 	if(stat & (NOPOWER|BROKEN) || !use_power)
@@ -164,22 +156,23 @@
 
 	power_rating = initial(power_rating) * cap_rating / 2			//more powerful
 	heatsink_temperature = initial(heatsink_temperature) / ((manip_rating + bin_rating) / 2)	//more efficient
-	air_contents.volume = max(initial(internal_volume) - 200, 0) + 200 * bin_rating
+	if(air_contents)
+		air_contents.volume = max(initial(internal_volume) - 200, 0) + 200 * bin_rating
 	set_power_level(power_setting)
 
 /obj/machinery/atmospherics/unary/freezer/proc/set_power_level(var/new_power_setting)
 	power_setting = new_power_setting
 	power_rating = max_power_rating * (power_setting/100)
 
-/obj/machinery/atmospherics/unary/freezer/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(default_deconstruction_screwdriver(user, O))
-		return
-	if(default_deconstruction_crowbar(user, O))
-		return
-	if(default_part_replacement(user, O))
+/obj/machinery/atmospherics/unary/freezer/attackby(var/obj/item/I, var/mob/user as mob)
+
+	if(default_deconstruction(I, user))
 		return
 
-	..()
+	if(default_part_replacement(I, user))
+		return
+
+	return
 
 /obj/machinery/atmospherics/unary/freezer/examine(mob/user)
 	..(user)

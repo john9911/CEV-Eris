@@ -5,7 +5,7 @@
 	icon_state = "dispenser"
 	density = 1
 	anchored = 1.0
-	w_class = 5
+	w_class = ITEM_SIZE_HUGE
 	var/oxygentanks = 10
 	var/plasmatanks = 10
 	var/list/oxytanks = list()	//sorry for the similar var names
@@ -47,18 +47,18 @@
 	return
 
 
-/obj/structure/dispenser/attackby(obj/item/I as obj, mob/user as mob)
+/obj/structure/dispenser/attackby(obj/item/I, mob/user)
 	if(istype(I, /obj/item/weapon/tank/oxygen) || istype(I, /obj/item/weapon/tank/air) || istype(I, /obj/item/weapon/tank/anesthetic))
 		if(oxygentanks < 10)
 			user.drop_item()
 			I.loc = src
 			oxytanks.Add(I)
 			oxygentanks++
-			user << "<span class='notice'>You put [I] in [src].</span>"
+			user << SPAN_NOTICE("You put [I] in [src].")
 			if(oxygentanks < 5)
 				update_icon()
 		else
-			user << "<span class='notice'>[src] is full.</span>"
+			user << SPAN_NOTICE("[src] is full.")
 		updateUsrDialog()
 		return
 	if(istype(I, /obj/item/weapon/tank/plasma))
@@ -67,21 +67,22 @@
 			I.loc = src
 			platanks.Add(I)
 			plasmatanks++
-			user << "<span class='notice'>You put [I] in [src].</span>"
+			user << SPAN_NOTICE("You put [I] in [src].")
 			if(oxygentanks < 6)
 				update_icon()
 		else
-			user << "<span class='notice'>[src] is full.</span>"
+			user << SPAN_NOTICE("[src] is full.")
 		updateUsrDialog()
 		return
-	if(istype(I, /obj/item/weapon/wrench))
-		if(anchored)
-			user << "<span class='notice'>You lean down and unwrench [src].</span>"
-			anchored = 0
-		else
-			user << "<span class='notice'>You wrench [src] into place.</span>"
-			anchored = 1
-		return
+	if(QUALITY_BOLT_TURNING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_NORMAL, QUALITY_BOLT_TURNING, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+			if(anchored)
+				user << SPAN_NOTICE("You lean down and unwrench [src].")
+				anchored = 0
+			else
+				user << SPAN_NOTICE("You wrench [src] into place.")
+				anchored = 1
+			return
 
 /obj/structure/dispenser/Topic(href, href_list)
 	if(usr.stat || usr.restrained())
@@ -97,7 +98,7 @@
 				else
 					O = new /obj/item/weapon/tank/oxygen(loc)
 				O.loc = loc
-				usr << "<span class='notice'>You take [O] out of [src].</span>"
+				usr << SPAN_NOTICE("You take [O] out of [src].")
 				oxygentanks--
 				update_icon()
 		if(href_list["plasma"])
@@ -109,7 +110,7 @@
 				else
 					P = new /obj/item/weapon/tank/plasma(loc)
 				P.loc = loc
-				usr << "<span class='notice'>You take [P] out of [src].</span>"
+				usr << SPAN_NOTICE("You take [P] out of [src].")
 				plasmatanks--
 				update_icon()
 		playsound(usr.loc, 'sound/machines/Custom_extout.ogg', 100, 1)

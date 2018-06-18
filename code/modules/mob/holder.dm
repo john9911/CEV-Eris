@@ -18,14 +18,14 @@ var/list/holder_mob_icon_cache = list()
 
 /obj/item/weapon/holder/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
 /obj/item/weapon/holder/Destroy()
 	last_holder = null
-	processing_objects.Remove(src)
-	..()
+	STOP_PROCESSING(SSobj, src)
+	. = ..()
 
-/obj/item/weapon/holder/process()
+/obj/item/weapon/holder/Process()
 	update_state()
 
 /obj/item/weapon/holder/dropped()
@@ -91,7 +91,7 @@ var/list/holder_mob_icon_cache = list()
 	origin_tech = list(TECH_MAGNET = 3, TECH_ENGINEERING = 5)
 
 /obj/item/weapon/holder/mouse
-	w_class = 1
+	w_class = ITEM_SIZE_TINY
 
 /obj/item/weapon/holder/borer
 	origin_tech = list(TECH_BIO = 6)
@@ -113,12 +113,12 @@ var/list/holder_mob_icon_cache = list()
 	grabber.put_in_hands(H)
 
 	if(self_grab)
-		grabber << "<span class='notice'>\The [src] clambers onto you!</span>"
-		src << "<span class='notice'>You climb up onto \the [grabber]!</span>"
+		grabber << SPAN_NOTICE("\The [src] clambers onto you!")
+		src << SPAN_NOTICE("You climb up onto \the [grabber]!")
 		grabber.equip_to_slot_if_possible(H, slot_back, 0, 1)
 	else
-		grabber << "<span class='notice'>You scoop up \the [src]!</span>"
-		src << "<span class='notice'>\The [grabber] scoops you up!</span>"
+		grabber << SPAN_NOTICE("You scoop up \the [src]!")
+		src << SPAN_NOTICE("\The [grabber] scoops you up!")
 
 	grabber.status_flags |= PASSEMOTES
 	H.sync(src)
@@ -134,22 +134,22 @@ var/list/holder_mob_icon_cache = list()
 	var/mob/living/carbon/human/owner = M
 	if(istype(owner) && owner.species)
 
-		var/skin_colour = rgb(owner.r_skin, owner.g_skin, owner.b_skin)
-		var/hair_colour = rgb(owner.r_hair, owner.g_hair, owner.b_hair)
-		var/eye_colour =  rgb(owner.r_eyes, owner.g_eyes, owner.b_eyes)
+		var/skin_color = owner.skin_color
+		var/hair_color = owner.hair_color
+		var/eyes_color =  owner.eyes_color
 		var/species_name = lowertext(owner.species.get_bodytype())
 
 		for(var/cache_entry in generate_for_slots)
-			var/cache_key = "[owner.species]-[cache_entry]-[skin_colour]-[hair_colour]"
+			var/cache_key = "[owner.species]-[cache_entry]-[skin_color]-[hair_color]"
 			if(!holder_mob_icon_cache[cache_key])
 
 				// Generate individual icons.
 				var/icon/mob_icon = icon(icon, "[species_name]_holder_[cache_entry]_base")
-				mob_icon.Blend(skin_colour, ICON_ADD)
+				mob_icon.Blend(skin_color, ICON_ADD)
 				var/icon/hair_icon = icon(icon, "[species_name]_holder_[cache_entry]_hair")
-				hair_icon.Blend(hair_colour, ICON_ADD)
+				hair_icon.Blend(hair_color, ICON_ADD)
 				var/icon/eyes_icon = icon(icon, "[species_name]_holder_[cache_entry]_eyes")
-				eyes_icon.Blend(eye_colour, ICON_ADD)
+				eyes_icon.Blend(eyes_color, ICON_ADD)
 
 				// Blend them together.
 				mob_icon.Blend(eyes_icon, ICON_OVERLAY)

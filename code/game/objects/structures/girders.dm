@@ -3,7 +3,7 @@
 	anchored = 1
 	density = 1
 	layer = 2
-	w_class = 5
+	w_class = ITEM_SIZE_HUGE
 	var/state = 0
 	var/health = 200
 	var/cover = 50 //how much cover the girder provides against projectiles.
@@ -20,7 +20,7 @@
 	if(!damage || !wallbreaker)
 		return 0
 	attack_animation(user)
-	visible_message("<span class='danger'>[user] [attack_message] the [src]!</span>")
+	visible_message(SPAN_DANGER("[user] [attack_message] the [src]!"))
 	spawn(1) dismantle()
 	return 1
 
@@ -53,73 +53,83 @@
 	if(reinf_material)
 		reinforce_girder()
 
-/obj/structure/girder/attackby(obj/item/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench) && state == 0)
-		if(anchored && !reinf_material)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 100, 1)
-			user << "<span class='notice'>Now disassembling the girder...</span>"
-			if(do_after(user, 40,src))
-				if(!src) return
-				user << "<span class='notice'>You dissasembled the girder!</span>"
-				dismantle()
-		else if(!anchored)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 100, 1)
-			user << "<span class='notice'>Now securing the girder...</span>"
-			if(get_turf(user, 40))
-				user << "<span class='notice'>You secured the girder!</span>"
-				reset_girder()
+/obj/structure/girder/attackby(obj/item/I, mob/user)
 
-	else if(istype(W, /obj/item/weapon/pickaxe/plasmacutter))
-		user << "<span class='notice'>Now slicing apart the girder...</span>"
-		if(do_after(user,30,src))
-			if(!src) return
-			user << "<span class='notice'>You slice apart the girder!</span>"
-			dismantle()
+	var/list/usable_qualities = list()
+	if(state == 0 && ((anchored && !reinf_material) || !anchored))
+		usable_qualities.Add(QUALITY_BOLT_TURNING)
+	if(state == 2 || (anchored && !reinf_material))
+		usable_qualities.Add(QUALITY_SCREW_DRIVING)
+	if(state == 0 && anchored)
+		usable_qualities.Add(QUALITY_PRYING)
+	if(state == 1)
+		usable_qualities.Add(QUALITY_WIRE_CUTTING)
 
-	else if(istype(W, /obj/item/weapon/pickaxe/diamonddrill))
-		user << "<span class='notice'>You drill through the girder!</span>"
-		dismantle()
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
 
-	else if(istype(W, /obj/item/weapon/screwdriver))
-		if(state == 2)
-			playsound(src.loc, 'sound/items/Screwdriver.ogg', 100, 1)
-			user << "<span class='notice'>Now unsecuring support struts...</span>"
-			if(do_after(user, 40,src))
-				if(!src) return
-				user << "<span class='notice'>You unsecured the support struts!</span>"
-				state = 1
-		else if(anchored && !reinf_material)
-			playsound(src.loc, 'sound/items/Screwdriver.ogg', 100, 1)
-			reinforcing = !reinforcing
-			user << "<span class='notice'>\The [src] can now be [reinforcing? "reinforced" : "constructed"]!</span>"
+		if(QUALITY_BOLT_TURNING)
+			if(state == 0)
+				if(anchored && !reinf_material)
+					user << SPAN_NOTICE("You start disassembling the girder...")
+					if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+						user << SPAN_NOTICE("You dissasembled the girder!")
+						dismantle()
+						return
+				if(!anchored)
+					user << SPAN_NOTICE("You start securing the girder...")
+					if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+						user << SPAN_NOTICE("You secured the girder!")
+						reset_girder()
+						return
+			return
 
-	else if(istype(W, /obj/item/weapon/wirecutters) && state == 1)
-		playsound(src.loc, 'sound/items/Wirecutter.ogg', 100, 1)
-		user << "<span class='notice'>Now removing support struts...</span>"
-		if(do_after(user, 40,src))
-			if(!src) return
-			user << "<span class='notice'>You removed the support struts!</span>"
-			reinf_material.place_dismantled_product(get_turf(src))
-			reinf_material = null
-			reset_girder()
+		if(QUALITY_PRYING)
+			if(state == 0 && anchored)
+				user << SPAN_NOTICE("You start dislodging the girder...")
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("You dislodged the girder!")
+					icon_state = "displaced"
+					anchored = 0
+					health = 50
+					cover = 25
+					return
+			return
 
-	else if(istype(W, /obj/item/weapon/crowbar) && state == 0 && anchored)
-		playsound(src.loc, 'sound/items/Crowbar.ogg', 100, 1)
-		user << "<span class='notice'>Now dislodging the girder...</span>"
-		if(do_after(user, 40,src))
-			if(!src) return
-			user << "<span class='notice'>You dislodged the girder!</span>"
-			icon_state = "displaced"
-			anchored = 0
-			health = 50
-			cover = 25
+		if(QUALITY_WIRE_CUTTING)
+			if(state == 1)
+				user << SPAN_NOTICE("You start removing support struts...")
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("You removed the support struts!")
+					reinf_material.place_dismantled_product(get_turf(src))
+					reinf_material = null
+					reset_girder()
+					return
+			return
 
-	else if(istype(W, /obj/item/stack/material))
+		if(QUALITY_SCREW_DRIVING)
+			if(state == 2)
+				user << SPAN_NOTICE("Now unsecuring support struts...")
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("You unsecured the support struts!")
+					state = 1
+					return
+			if(anchored && !reinf_material)
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_NORMAL, required_stat = STAT_PRD))
+					reinforcing = !reinforcing
+					user << SPAN_NOTICE("The [src] can now be [reinforcing? "reinforced" : "constructed"]!")
+					return
+			return
+
+		if(ABORT_CHECK)
+			return
+
+	if(istype(I, /obj/item/stack/material))
 		if(reinforcing && !reinf_material)
-			if(!reinforce_with_material(W, user))
+			if(!reinforce_with_material(I, user))
 				return ..()
 		else
-			if(!construct_wall(W, user))
+			if(!construct_wall(I, user))
 				return ..()
 
 	else
@@ -127,7 +137,7 @@
 
 /obj/structure/girder/proc/construct_wall(obj/item/stack/material/S, mob/user)
 	if(S.get_amount() < 2)
-		user << "<span class='notice'>There isn't enough material here to construct a wall.</span>"
+		user << SPAN_NOTICE("There isn't enough material here to construct a wall.")
 		return 0
 
 	var/material/M = name_to_material[S.default_type]
@@ -138,18 +148,18 @@
 	add_hiddenprint(usr)
 
 	if(M.integrity < 50)
-		user << "<span class='notice'>This material is too soft for use in wall construction.</span>"
+		user << SPAN_NOTICE("This material is too soft for use in wall construction.")
 		return 0
 
-	user << "<span class='notice'>You begin adding the plating...</span>"
+	user << SPAN_NOTICE("You begin adding the plating...")
 
 	if(!do_after(user,40,src) || !S.use(2))
 		return 1 //once we've gotten this far don't call parent attackby()
 
 	if(anchored)
-		user << "<span class='notice'>You added the plating!</span>"
+		user << SPAN_NOTICE("You added the plating!")
 	else
-		user << "<span class='notice'>You create a false wall! Push on it to open or close the passage.</span>"
+		user << SPAN_NOTICE("You create a false wall! Push on it to open or close the passage.")
 		wall_fake = 1
 
 	var/turf/Tsrc = get_turf(src)
@@ -164,11 +174,11 @@
 
 /obj/structure/girder/proc/reinforce_with_material(obj/item/stack/material/S, mob/user) //if the verb is removed this can be renamed.
 	if(reinf_material)
-		user << "<span class='notice'>\The [src] is already reinforced.</span>"
+		user << SPAN_NOTICE("\The [src] is already reinforced.")
 		return 0
 
 	if(S.get_amount() < 2)
-		user << "<span class='notice'>There isn't enough material here to reinforce the girder.</span>"
+		user << SPAN_NOTICE("There isn't enough material here to reinforce the girder.")
 		return 0
 
 	var/material/M = name_to_material[S.default_type]
@@ -176,10 +186,10 @@
 		user << "You cannot reinforce \the [src] with that; it is too soft."
 		return 0
 
-	user << "<span class='notice'>Now reinforcing...</span>"
+	user << SPAN_NOTICE("Now reinforcing...")
 	if (!do_after(user, 40,src) || !S.use(2))
 		return 1 //don't call parent attackby() past this point
-	user << "<span class='notice'>You added reinforcement!</span>"
+	user << SPAN_NOTICE("You added reinforcement!")
 
 	reinf_material = M
 	reinforce_girder()
@@ -193,12 +203,12 @@
 	reinforcing = 0
 
 /obj/structure/girder/proc/dismantle()
-	new /obj/item/stack/material/steel(get_turf(src))
+	new /obj/item/stack/material/steel(src.loc, 5)
 	qdel(src)
 
 /obj/structure/girder/attack_hand(mob/user as mob)
 	if (HULK in user.mutations)
-		visible_message("<span class='danger'>[user] smashes [src] apart!</span>")
+		visible_message(SPAN_DANGER("[user] smashes [src] apart!"))
 		dismantle()
 		return
 	return ..()
@@ -219,32 +229,3 @@
 			return
 		else
 	return
-
-/obj/structure/girder/cult
-	icon= 'icons/obj/cult.dmi'
-	icon_state= "cultgirder"
-	health = 250
-	cover = 70
-
-/obj/structure/girder/cult/dismantle()
-	new /obj/item/remains/human(get_turf(src))
-	qdel(src)
-
-/obj/structure/girder/cult/attackby(obj/item/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench))
-		playsound(src.loc, 'sound/items/Ratchet.ogg', 100, 1)
-		user << "<span class='notice'>Now disassembling the girder...</span>"
-		if(do_after(user,40,src))
-			user << "<span class='notice'>You dissasembled the girder!</span>"
-			dismantle()
-
-	else if(istype(W, /obj/item/weapon/pickaxe/plasmacutter))
-		user << "<span class='notice'>Now slicing apart the girder...</span>"
-		if(do_after(user,30,src))
-			user << "<span class='notice'>You slice apart the girder!</span>"
-		dismantle()
-
-	else if(istype(W, /obj/item/weapon/pickaxe/diamonddrill))
-		user << "<span class='notice'>You drill through the girder!</span>"
-		new /obj/item/remains/human(get_turf(src))
-		dismantle()

@@ -32,7 +32,7 @@
 	set category = "Object"
 	set src in oview(1)
 
-	if(!istype(usr, /mob/living)) //ew ew ew usr, but it's the only way to check.
+	if(!isliving(usr)) //ew ew ew usr, but it's the only way to check.
 		return
 
 	if( state != 4 )
@@ -82,8 +82,15 @@
 /obj/machinery/washing_machine/update_icon()
 	icon_state = "wm_[state][panel]"
 
+/obj/machinery/washing_machine/affect_grab(var/mob/user, var/mob/target)
+	if((state == 1) && hacked)
+		if(ishuman(user) && iscorgi(target))
+			target.forceMove(src)
+			state = 3
+			return TRUE
+
 /obj/machinery/washing_machine/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	/*if(istype(W,/obj/item/weapon/screwdriver))
+	/*if(istype(W,/obj/item/weapon/tool/screwdriver))
 		panel = !panel
 		user << "<span class='notice'>You [panel ? "open" : "close"] the [src]'s maintenance panel</span>"*/
 	if(istype(W,/obj/item/weapon/pen/crayon))
@@ -94,15 +101,6 @@
 				crayon.loc = src
 			else
 				..()
-		else
-			..()
-	else if(istype(W,/obj/item/weapon/grab))
-		if( (state == 1) && hacked)
-			var/obj/item/weapon/grab/G = W
-			if(ishuman(G.assailant) && iscorgi(G.affecting))
-				G.affecting.loc = src
-				qdel(G)
-				state = 3
 		else
 			..()
 	else if(istype(W,/obj/item/stack/material/hairlesshide) || \
@@ -158,9 +156,9 @@
 				W.loc = src
 				state = 3
 			else
-				user << "<span class='notice'>You can't put the item in right now.</span>"
+				user << SPAN_NOTICE("You can't put the item in right now.")
 		else
-			user << "<span class='notice'>The washing machine is full.</span>"
+			user << SPAN_NOTICE("The washing machine is full.")
 	else
 		..()
 	update_icon()
@@ -182,7 +180,7 @@
 			crayon = null
 			state = 1
 		if(5)
-			user << "<span class='warning'>The [src] is busy.</span>"
+			user << SPAN_WARNING("The [src] is busy.")
 		if(6)
 			state = 7
 		if(7)

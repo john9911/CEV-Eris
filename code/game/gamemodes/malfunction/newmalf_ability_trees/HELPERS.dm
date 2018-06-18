@@ -65,9 +65,10 @@
 	set desc = "Opens help window with overview of available hardware, software and other important information."
 	var/mob/living/silicon/ai/user = usr
 
-	var/help = file2text('ingame_manuals/malf_ai.html')
+	var/help = file2text('html/ingame_manuals/malf_ai.html')
 	if(!help)
-		help = "Error loading help (file /ingame_manuals/malf_ai.html is probably missing). Please report this to server administration staff."
+		help = "Error loading help (file html/ingame_manuals/malf_ai.html is probably missing). Please report this to server administration staff."
+		error("Failed to load html/ingame_manuals/malf_ai.html.")
 
 	user << browse(help, "window=malf_ai_help;size=600x500")
 
@@ -168,7 +169,7 @@
 // Description: Returns a list of all unhacked APCs
 /proc/get_unhacked_apcs(var/mob/living/silicon/ai/user)
 	var/list/H = list()
-	for(var/obj/machinery/power/apc/A in machines)
+	for(var/obj/machinery/power/apc/A in SSmachines.machinery)
 		if(A.hacker && A.hacker == user)
 			continue
 		H.Add(A)
@@ -181,8 +182,8 @@
 		return
 
 	var/list/L = list()
-	for(var/mob/living/silicon/robot/RB in mob_list)
-		if(istype(RB, /mob/living/silicon/robot/drone))
+	for(var/mob/living/silicon/robot/RB in SSmobs.mob_list)
+		if(isdrone(RB))
 			continue
 		if(RB.connected_ai == A)
 			continue
@@ -199,7 +200,7 @@
 		return
 
 	var/list/L = list()
-	for(var/mob/living/silicon/ai/AT in mob_list)
+	for(var/mob/living/silicon/ai/AT in SSmobs.mob_list)
 		if(L == A)
 			continue
 		L.Add(AT)

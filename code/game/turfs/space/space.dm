@@ -12,7 +12,7 @@
 /turf/space/New()
 	if(!istype(src, /turf/space/transit))
 		icon_state = "white"
-	//update_starlight()
+	update_starlight()
 	..()
 
 /turf/space/is_space()
@@ -23,16 +23,16 @@
 	for(var/obj/O in src)
 		O.hide(0)
 
+/turf/space/is_solid_structure()
+	return locate(/obj/structure/lattice, src) //counts as solid structure if it has a lattice
+
 /turf/space/proc/update_starlight()
-	return
-	//if(locate(/turf/simulated) in orange(src,1))
-	//	set_light(2,2) // Too lazy to port starlight configuration and its 0 by default anyway... ~Zve
-	/*if(!config.starlight)
+	if(!config.starlight)
 		return
-	if(locate(/turf/simulated) in orange(src,1))
-		set_light(config.starlight)
+	if(locate(/turf/simulated) in trange(1, src))
+		set_light(2, 1, config.starlight)
 	else
-		set_light(0)*/
+		set_light(0)
 
 /turf/space/attackby(obj/item/C as obj, mob/user as mob)
 
@@ -42,7 +42,7 @@
 			return
 		var/obj/item/stack/rods/R = C
 		if (R.use(1))
-			user << "<span class='notice'>Constructing support lattice ...</span>"
+			user << SPAN_NOTICE("Constructing support lattice ...")
 			playsound(src, 'sound/weapons/Genhit.ogg', 50, 1)
 			ReplaceWithLattice()
 		return
@@ -59,9 +59,9 @@
 			ChangeTurf(/turf/simulated/floor/airless)
 			return
 		else
-			user << "<span class='warning'>The plating is going to need some support.</span>"
+			user << SPAN_WARNING("The plating is going to need some support.")
 			return
-	if (istype(C, /obj/item/stack/tile/techgrey) || istype(C, /obj/item/stack/tile/techgrid))// андерплайтинг строится тут
+	if (istype(C, /obj/item/stack/tile/floor/techgrey) || istype(C, /obj/item/stack/tile/floor/techgrid))// this creates underplating
 		var/obj/structure/lattice/L = locate(/obj/structure/lattice, src)
 		if(L)
 			var/obj/item/stack/tile/S = C
@@ -73,7 +73,7 @@
 			ChangeTurf(/turf/simulated/floor/plating/under)
 			return
 		else
-			user << "<span class='warning'>The plating is going to need some support.</span>"
+			user << SPAN_WARNING("The plating is going to need some support.")
 	return
 
 
@@ -81,17 +81,17 @@
 
 /turf/space/Entered(atom/movable/A as mob|obj)
 	if(movement_disabled)
-		usr << "<span class='warning'>Movement is admin-disabled.</span>" //This is to identify lag problems
+		usr << SPAN_WARNING("Movement is admin-disabled.") //This is to identify lag problems
 		return
 	..()
 	if ((!(A) || src != A.loc))	return
 
 	inertial_drift(A)
 
-	if(ticker && ticker.mode)
+	if(ticker && ticker.storyteller)
 
 		// Okay, so let's make it so that people can travel z levels but not nuke disks!
-		// if(ticker.mode.name == "mercenary")	return
+		// if(ticker.mode.name == MODE_NUKE) return
 		if (A.x <= TRANSITIONEDGE || A.x >= (world.maxx - TRANSITIONEDGE + 1) || A.y <= TRANSITIONEDGE || A.y >= (world.maxy - TRANSITIONEDGE + 1))
 			A.touch_map_edge()
 

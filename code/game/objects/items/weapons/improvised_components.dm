@@ -7,7 +7,7 @@
 	thrown_force_divisor = 0.1
 
 /obj/item/weapon/material/butterflyconstruction/attackby(obj/item/W as obj, mob/user as mob)
-	if(istype(W,/obj/item/weapon/screwdriver))
+	if(istype(W,/obj/item/weapon/tool/screwdriver))
 		user << "You finish the concealed blade weapon."
 		new /obj/item/weapon/material/butterfly(user.loc, material.name)
 		qdel(src)
@@ -46,7 +46,7 @@
 	flags = CONDUCT
 	force = WEAPON_FORCE_PAINFULL
 	throwforce = WEAPON_FORCE_NORMAL
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 	attack_verb = list("hit", "bludgeoned", "whacked", "bonked")
 	force_divisor = 0.1
 	thrown_force_divisor = 0.1
@@ -57,10 +57,10 @@
 	if(istype(I, /obj/item/weapon/material/shard))
 		var/obj/item/weapon/material/tmp_shard = I
 		finished = new /obj/item/weapon/material/twohanded/spear(get_turf(user), tmp_shard.material.name)
-		user << "<span class='notice'>You fasten \the [I] to the top of the rod with the cable.</span>"
-	else if(istype(I, /obj/item/weapon/wirecutters))
+		user << SPAN_NOTICE("You fasten \the [I] to the top of the rod with the cable.")
+	else if(QUALITY_CUTTING in I.tool_qualities || QUALITY_WIRE_CUTTING in I.tool_qualities)
 		finished = new /obj/item/weapon/melee/baton/cattleprod(get_turf(user))
-		user << "<span class='notice'>You fasten the wirecutters to the top of the rod with the cable, prongs outward.</span>"
+		user << SPAN_NOTICE("You fasten the wirecutters to the top of the rod with the cable, prongs outward.")
 	if(finished)
 		user.drop_from_inventory(src)
 		user.drop_from_inventory(I)

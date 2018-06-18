@@ -258,7 +258,7 @@
 	M.eye_blind = max(M.eye_blind - 5, 0)
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
-		var/obj/item/organ/eyes/E = H.internal_organs_by_name["eyes"]
+		var/obj/item/organ/internal/eyes/E = H.internal_organs_by_name[O_EYES]
 		if(E && istype(E))
 			if(E.damage > 0)
 				E.damage = max(E.damage - 5 * removed, 0)
@@ -436,11 +436,11 @@
 /datum/reagent/methylphenidate/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	if(volume <= 0.1 && data != -1)
 		data = -1
-		M << "<span class='warning'>You lose focus...</span>"
+		M << SPAN_WARNING("You lose focus...")
 	else
 		if(world.time > data + ANTIDEPRESSANT_MESSAGE_DELAY)
 			data = world.time
-			M << "<span class='notice'>Your mind feels focused and undivided.</span>"
+			M << SPAN_NOTICE("Your mind feels focused and undivided.")
 
 /datum/reagent/citalopram
 	name = "Citalopram"
@@ -455,11 +455,11 @@
 /datum/reagent/citalopram/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	if(volume <= 0.1 && data != -1)
 		data = -1
-		M << "<span class='warning'>Your mind feels a little less stable...</span>"
+		M << SPAN_WARNING("Your mind feels a little less stable...")
 	else
 		if(world.time > data + ANTIDEPRESSANT_MESSAGE_DELAY)
 			data = world.time
-			M << "<span class='notice'>Your mind feels stable... a little stable.</span>"
+			M << SPAN_NOTICE("Your mind feels stable... a little stable.")
 
 /datum/reagent/paroxetine
 	name = "Paroxetine"
@@ -473,14 +473,14 @@
 /datum/reagent/paroxetine/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	if(volume <= 0.1 && data != -1)
 		data = -1
-		M << "<span class='warning'>Your mind feels much less stable...</span>"
+		M << SPAN_WARNING("Your mind feels much less stable...")
 	else
 		if(world.time > data + ANTIDEPRESSANT_MESSAGE_DELAY)
 			data = world.time
 			if(prob(90))
-				M << "<span class='notice'>Your mind feels much more stable.</span>"
+				M << SPAN_NOTICE("Your mind feels much more stable.")
 			else
-				M << "<span class='warning'>Your mind breaks apart...</span>"
+				M << SPAN_WARNING("Your mind breaks apart...")
 				M.hallucination += 200
 
 /datum/reagent/rezadone

@@ -9,8 +9,8 @@
 	throwforce = WEAPON_FORCE_NORMAL
 	throw_speed = 1
 	throw_range = 7
-	w_class = 4
-	max_w_class = 3
+	w_class = ITEM_SIZE_LARGE
+	max_w_class = ITEM_SIZE_NORMAL
 	max_storage_space = 14 //enough to hold all starting contents
 	origin_tech = list(TECH_COMBAT = 1)
 	attack_verb = list("robusted")
@@ -22,12 +22,12 @@
 
 	New()
 		..()
-		new /obj/item/weapon/crowbar/red(src)
+		new /obj/item/weapon/tool/crowbar(src)
 		new /obj/item/weapon/extinguisher/mini(src)
 		if(prob(50))
-			new /obj/item/device/flashlight(src)
+			new /obj/item/device/lighting/toggleable/flashlight(src)
 		else
-			new /obj/item/device/flashlight/flare(src)
+			new /obj/item/device/lighting/glowstick/flare(src)
 		new /obj/item/device/radio(src)
 
 /obj/item/weapon/storage/toolbox/mechanical
@@ -37,12 +37,12 @@
 
 	New()
 		..()
-		new /obj/item/weapon/screwdriver(src)
-		new /obj/item/weapon/wrench(src)
-		new /obj/item/weapon/weldingtool(src)
-		new /obj/item/weapon/crowbar(src)
-		new /obj/item/device/analyzer(src)
-		new /obj/item/weapon/wirecutters(src)
+		new /obj/item/weapon/tool/screwdriver(src)
+		new /obj/item/weapon/tool/wrench(src)
+		new /obj/item/weapon/tool/weldingtool(src)
+		new /obj/item/weapon/tool/crowbar(src)
+		new /obj/item/device/scanner/analyzer(src)
+		new /obj/item/weapon/tool/wirecutters(src)
 
 /obj/item/weapon/storage/toolbox/electrical
 	name = "electrical toolbox"
@@ -52,10 +52,10 @@
 	New()
 		..()
 		var/color = pick("red","yellow","green","blue","pink","orange","cyan","white")
-		new /obj/item/weapon/screwdriver(src)
-		new /obj/item/weapon/wirecutters(src)
+		new /obj/item/weapon/tool/screwdriver(src)
+		new /obj/item/weapon/tool/wirecutters(src)
 		new /obj/item/device/t_scanner(src)
-		new /obj/item/weapon/crowbar(src)
+		new /obj/item/weapon/tool/crowbar(src)
 		new /obj/item/stack/cable_coil(src,30,color)
 		new /obj/item/stack/cable_coil(src,30,color)
 		if(prob(5))
@@ -73,9 +73,9 @@
 	New()
 		..()
 		new /obj/item/clothing/gloves/insulated(src)
-		new /obj/item/weapon/screwdriver(src)
-		new /obj/item/weapon/wrench(src)
-		new /obj/item/weapon/weldingtool(src)
-		new /obj/item/weapon/crowbar(src)
-		new /obj/item/weapon/wirecutters(src)
-		new /obj/item/device/multitool(src)
+		new /obj/item/weapon/tool/screwdriver(src)
+		new /obj/item/weapon/tool/wrench(src)
+		new /obj/item/weapon/tool/weldingtool(src)
+		new /obj/item/weapon/tool/crowbar(src)
+		new /obj/item/weapon/tool/wirecutters(src)
+		new /obj/item/weapon/tool/multitool(src)

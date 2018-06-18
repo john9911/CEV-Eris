@@ -104,7 +104,7 @@
 		return
 
 	if(!istype(target))
-		if(istype(target, /mob/living/simple_animal/mouse))
+		if(ismouse(target))
 			new /obj/item/remains/mouse(get_turf(target))
 			qdel(target)
 		else if(istype(target, /mob/living/simple_animal/lizard))
@@ -113,22 +113,23 @@
 		return
 
 
-	if(!target_limb) target_limb = pick("l_foot","r_foot","l_leg","r_leg","l_hand","r_hand","l_arm", "r_arm","head","chest","groin")
+	if(!target_limb)
+		target_limb = pick(BP_ALL)
 	var/obj/item/organ/external/affecting = target.get_organ(target_limb)
 	var/damage = 0
 
 	if(get_trait(TRAIT_CARNIVOROUS))
 		if(get_trait(TRAIT_CARNIVOROUS) == 2)
 			if(affecting)
-				target << "<span class='danger'>\The [fruit]'s thorns pierce your [affecting.name] greedily!</span>"
+				target << SPAN_DANGER("\The [fruit]'s thorns pierce your [affecting.name] greedily!")
 			else
-				target << "<span class='danger'>\The [fruit]'s thorns pierce your flesh greedily!</span>"
+				target << SPAN_DANGER("\The [fruit]'s thorns pierce your flesh greedily!")
 			damage = get_trait(TRAIT_POTENCY)/2
 		else
 			if(affecting)
-				target << "<span class='danger'>\The [fruit]'s thorns dig deeply into your [affecting.name]!</span>"
+				target << SPAN_DANGER("\The [fruit]'s thorns dig deeply into your [affecting.name]!")
 			else
-				target << "<span class='danger'>\The [fruit]'s thorns dig deeply into your flesh!</span>"
+				target << SPAN_DANGER("\The [fruit]'s thorns dig deeply into your flesh!")
 			damage = get_trait(TRAIT_POTENCY)/5
 	else
 		return
@@ -156,7 +157,7 @@
 
 		if(!body_coverage)
 			return
-		target << "<span class='danger'>You are stung by \the [fruit]!</span>"
+		target << SPAN_DANGER("You are stung by \the [fruit]!")
 		for(var/rid in chems)
 			var/injecting = min(5,max(1,get_trait(TRAIT_POTENCY)/5))
 			target.reagents.add_reagent(rid,injecting)
@@ -245,11 +246,11 @@
 				apply_special_effect(M)
 			splatter(T,thrown)
 		if(origin_turf)
-			origin_turf.visible_message("<span class='danger'>The [thrown.name] explodes!</span>")
+			origin_turf.visible_message(SPAN_DANGER("The [thrown.name] explodes!"))
 		qdel(thrown)
 		return
 
-	if(istype(target,/mob/living))
+	if(isliving(target))
 		splatted = apply_special_effect(target,thrown)
 	else if(istype(target,/turf))
 		splatted = 1
@@ -259,7 +260,7 @@
 	if(get_trait(TRAIT_JUICY) && splatted)
 		splatter(origin_turf,thrown)
 		if(origin_turf)
-			origin_turf.visible_message("<span class='danger'>The [thrown.name] splatters against [target]!</span>")
+			origin_turf.visible_message(SPAN_DANGER("The [thrown.name] splatters against [target]!"))
 		qdel(thrown)
 
 /datum/seed/proc/handle_environment(var/turf/current_turf, var/datum/gas_mixture/environment, var/light_supplied, var/check_only)
@@ -329,7 +330,7 @@
 
 		var/list/turfs = list()
 		if(inner_teleport_radius > 0)
-			for(var/turf/T in orange(target,outer_teleport_radius))
+			for(var/turf/T in trange(outer_teleport_radius, get_turf(target)))
 				if(get_dist(target,T) >= inner_teleport_radius)
 					turfs |= T
 
@@ -508,7 +509,7 @@
 
 	if(!degree || get_trait(TRAIT_IMMUTABLE) > 0) return
 
-	source_turf.visible_message("<span class='notice'>\The [display_name] quivers!</span>")
+	source_turf.visible_message(SPAN_NOTICE("\The [display_name] quivers!"))
 
 	//This looks like shit, but it's a lot easier to read/change this way.
 	var/total_mutations = rand(1,1+degree)
@@ -516,7 +517,7 @@
 		switch(rand(0,11))
 			if(0) //Plant cancer!
 				set_trait(TRAIT_ENDURANCE,get_trait(TRAIT_ENDURANCE)-rand(10,20),null,0)
-				source_turf.visible_message("<span class='danger'>\The [display_name] withers rapidly!</span>")
+				source_turf.visible_message(SPAN_DANGER("\The [display_name] withers rapidly!"))
 			if(1)
 				set_trait(TRAIT_NUTRIENT_CONSUMPTION,get_trait(TRAIT_NUTRIENT_CONSUMPTION)+rand(-(degree*0.1),(degree*0.1)),5,0)
 				set_trait(TRAIT_WATER_CONSUMPTION,   get_trait(TRAIT_WATER_CONSUMPTION)   +rand(-degree,degree),50,0)
@@ -538,7 +539,7 @@
 				if(prob(degree*5))
 					set_trait(TRAIT_CARNIVOROUS,     get_trait(TRAIT_CARNIVOROUS)+rand(-degree,degree),2, 0)
 					if(get_trait(TRAIT_CARNIVOROUS))
-						source_turf.visible_message("<span class='notice'>\The [display_name] shudders hungrily.</span>")
+						source_turf.visible_message(SPAN_NOTICE("\The [display_name] shudders hungrily."))
 			if(6)
 				set_trait(TRAIT_WEED_TOLERANCE,      get_trait(TRAIT_WEED_TOLERANCE)+(rand(-2,2)*degree),10, 0)
 				if(prob(degree*5))
@@ -552,7 +553,7 @@
 				set_trait(TRAIT_POTENCY,             get_trait(TRAIT_POTENCY)+(rand(-20,20)*degree),200, 0)
 				if(prob(degree*5))
 					set_trait(TRAIT_SPREAD,          get_trait(TRAIT_SPREAD)+rand(-1,1),2, 0)
-					source_turf.visible_message("<span class='notice'>\The [display_name] spasms visibly, shifting in the tray.</span>")
+					source_turf.visible_message(SPAN_NOTICE("\The [display_name] spasms visibly, shifting in the tray."))
 			if(9)
 				set_trait(TRAIT_MATURATION,          get_trait(TRAIT_MATURATION)+(rand(-1,1)*degree),30, 0)
 				if(prob(degree*5))
@@ -561,12 +562,12 @@
 				if(prob(degree*2))
 					set_trait(TRAIT_BIOLUM,         !get_trait(TRAIT_BIOLUM))
 					if(get_trait(TRAIT_BIOLUM))
-						source_turf.visible_message("<span class='notice'>\The [display_name] begins to glow!</span>")
+						source_turf.visible_message(SPAN_NOTICE("\The [display_name] begins to glow!"))
 						if(prob(degree*2))
 							set_trait(TRAIT_BIOLUM_COLOUR,get_random_colour(0,75,190))
 							source_turf.visible_message("<span class='notice'>\The [display_name]'s glow </span><font color='[get_trait(TRAIT_BIOLUM_COLOUR)]'>changes colour</font>!")
 					else
-						source_turf.visible_message("<span class='notice'>\The [display_name]'s glow dims...</span>")
+						source_turf.visible_message(SPAN_NOTICE("\The [display_name]'s glow dims..."))
 			if(11)
 				set_trait(TRAIT_TELEPORTING,1)
 
@@ -672,13 +673,13 @@
 	return (P ? P : 0)
 
 //Place the plant products at the feet of the user.
-/datum/seed/proc/harvest(var/mob/user,var/yield_mod,var/harvest_sample,var/force_amount)
+/datum/seed/proc/harvest(var/mob/living/user,var/yield_mod,var/harvest_sample,var/force_amount)
 
 	if(!user)
 		return
 
 	if(!force_amount && get_trait(TRAIT_YIELD) == 0 && !harvest_sample)
-		if(istype(user)) user << "<span class='danger'>You fail to harvest anything useful.</span>"
+		if(istype(user)) user << SPAN_DANGER("You fail to harvest anything useful.")
 	else
 		if(istype(user)) user << "You [harvest_sample ? "take a sample" : "harvest"] from the [display_name]."
 
@@ -704,6 +705,9 @@
 					total_yield = get_trait(TRAIT_YIELD)
 				else
 					total_yield = get_trait(TRAIT_YIELD) + rand(yield_mod)
+				if(prob(user.stats.getStat(STAT_BIO)))
+					total_yield += 1
+					user << SPAN_NOTICE("You have managed to harvest more!")
 				total_yield = max(1,total_yield)
 
 		for(var/i = 0;i<total_yield;i++)
@@ -713,7 +717,7 @@
 			else
 				product = new /obj/item/weapon/reagent_containers/food/snacks/grown(get_turf(user),name)
 			if(get_trait(TRAIT_PRODUCT_COLOUR))
-				if(!istype(product, /mob))
+				if(!ismob(product))
 					product.color = get_trait(TRAIT_PRODUCT_COLOUR)
 					if(istype(product,/obj/item/weapon/reagent_containers/food))
 						var/obj/item/weapon/reagent_containers/food/food = product
@@ -730,8 +734,8 @@
 				product.set_light(get_trait(TRAIT_BIOLUM), l_color = clr)
 
 			//Handle spawning in living, mobile products.
-			if(istype(product,/mob/living))
-				product.visible_message("<span class='notice'>The pod disgorges [product]!</span>")
+			if(isliving(product))
+				product.visible_message(SPAN_NOTICE("The pod disgorges [product]!"))
 				if(istype(product,/mob/living/simple_animal/mushroom)) // Gross.
 					var/mob/living/simple_animal/mushroom/mush = product
 					mush.seed = src

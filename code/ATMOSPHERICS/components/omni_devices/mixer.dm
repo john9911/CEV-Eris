@@ -52,7 +52,7 @@
 /obj/machinery/atmospherics/omni/mixer/Destroy()
 	inputs.Cut()
 	output = null
-	..()
+	. = ..()
 
 /obj/machinery/atmospherics/omni/mixer/sort_ports()
 	for(var/datum/omni_port/P in ports)
@@ -97,7 +97,7 @@
 
 	return 0
 
-/obj/machinery/atmospherics/omni/mixer/process()
+/obj/machinery/atmospherics/omni/mixer/Process()
 	if(!..())
 		return 0
 
@@ -189,7 +189,7 @@
 	if(configuring && !use_power)
 		switch(href_list["command"])
 			if("set_flow_rate")
-				var/new_flow_rate = input(usr,"Enter new flow rate limit (0-[max_flow_rate]L/s)","Flow Rate Control",set_flow_rate) as num
+				var/new_flow_rate = input(usr, "Enter new flow rate limit (0-[max_flow_rate]L/s)", "Flow Rate Control", set_flow_rate) as num
 				set_flow_rate = between(0, new_flow_rate, max_flow_rate)
 			if("switch_mode")
 				switch_mode(dir_flag(href_list["dir"]), href_list["mode"])
@@ -265,7 +265,7 @@
 	if(non_locked < 1)
 		return
 
-	var/new_con = (input(usr,"Enter a new concentration (0-[round(remain_con * 100, 0.5)])%","Concentration control", min(remain_con, old_con)*100) as num) / 100
+	var/new_con = (input(usr, "Enter a new concentration (0-[round(remain_con * 100, 0.5)])%", "Concentration control", min(remain_con, old_con)*100) as num) / 100
 
 	//cap it between 0 and the max remaining concentration
 	new_con = between(0, new_con, remain_con)

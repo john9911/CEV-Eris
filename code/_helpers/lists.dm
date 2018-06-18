@@ -31,10 +31,10 @@
 		return "[output][and_text][input[index]]"
 
 //Returns list element or null. Should prevent "index out of bounds" error.
-proc/listgetindex(var/list/list,index)
+proc/listgetindex(var/list/list, index)
 	if(istype(list) && list.len)
 		if(isnum(index))
-			if(InRange(index,1,list.len))
+			if(InRange(index, 1, list.len))
 				return list[index]
 		else if(index in list)
 			return list[index]
@@ -162,6 +162,21 @@ proc/listclearnulls(list/list)
 			output += L[i]
 	return output
 
+/proc/reverseRange(list/L, start=1, end=0)
+	if(L.len)
+		start = start % L.len
+		end = end % (L.len+1)
+		if(start <= 0)
+			start += L.len
+		if(end <= 0)
+			end += L.len + 1
+
+		--end
+		while(start < end)
+			L.Swap(start++,end--)
+
+	return L
+
 //Randomize: Return the list in a random order
 /proc/shuffle(var/list/L)
 	if(!L)
@@ -170,7 +185,7 @@ proc/listclearnulls(list/list)
 	L = L.Copy()
 
 	for(var/i=1; i<L.len; i++)
-		L.Swap(i, rand(i,L.len))
+		L.Swap(i, rand(i, L.len))
 	return L
 
 //Return a list with no duplicate entries
@@ -184,7 +199,7 @@ proc/listclearnulls(list/list)
 	if(isnull(L) || L.len < 2)
 		return L
 	var/middle = L.len / 2 + 1
-	return mergeKey(sortKey(L.Copy(0,middle)), sortKey(L.Copy(middle)), order)
+	return mergeKey(sortKey(L.Copy(0, middle)), sortKey(L.Copy(middle)), order)
 
 //Mergsort: does the actual sorting and returns the results back to sortAtom
 /proc/mergeKey(var/list/client/L, var/list/client/R, var/order = 1)
@@ -208,7 +223,7 @@ proc/listclearnulls(list/list)
 	if(isnull(L) || L.len < 2)
 		return L
 	var/middle = L.len / 2 + 1
-	return mergeAtoms(sortAtom(L.Copy(0,middle)), sortAtom(L.Copy(middle)), order)
+	return mergeAtoms(sortAtom(L.Copy(0, middle)), sortAtom(L.Copy(middle)), order)
 
 //Mergsort: does the actual sorting and returns the results back to sortAtom
 /proc/mergeAtoms(var/list/atom/L, var/list/atom/R, var/order = 1)
@@ -265,13 +280,18 @@ proc/listclearnulls(list/list)
 
 
 
+/proc/filter_list(var/list/L, var/type)
+	. = list()
+	for(var/entry in L)
+		if(istype(entry, type))
+			. += entry
 
 //Mergesort: any value in a list
 /proc/sortList(var/list/L)
 	if(L.len < 2)
 		return L
-	var/middle = L.len / 2 + 1 // Copy is first,second-1
-	return mergeLists(sortList(L.Copy(0,middle)), sortList(L.Copy(middle))) //second parameter null = to end of list
+	var/middle = L.len / 2 + 1 // Copy is first, second-1
+	return mergeLists(sortList(L.Copy(0, middle)), sortList(L.Copy(middle))) //second parameter null = to end of list
 
 //Mergsorge: uses sortList() but uses the var's name specifically. This should probably be using mergeAtom() instead
 /proc/sortNames(var/list/L)
@@ -324,8 +344,8 @@ proc/listclearnulls(list/list)
 /proc/sortAssoc(var/list/L)
 	if(L.len < 2)
 		return L
-	var/middle = L.len / 2 + 1 // Copy is first,second-1
-	return mergeAssoc(sortAssoc(L.Copy(0,middle)), sortAssoc(L.Copy(middle))) //second parameter null = to end of list
+	var/middle = L.len / 2 + 1 // Copy is first, second-1
+	return mergeAssoc(sortAssoc(L.Copy(0, middle)), sortAssoc(L.Copy(middle))) //second parameter null = to end of list
 
 /proc/mergeAssoc(var/list/L, var/list/R)
 	var/Li=1
@@ -342,16 +362,16 @@ proc/listclearnulls(list/list)
 	return (result + R.Copy(Ri, 0))
 
 // Macros to test for bits in a bitfield. Note, that this is for use with indexes, not bit-masks!
-#define BITTEST(bitfield,index)  ((bitfield)  &   (1 << (index)))
-#define BITSET(bitfield,index)   (bitfield)  |=  (1 << (index))
-#define BITRESET(bitfield,index) (bitfield)  &= ~(1 << (index))
-#define BITFLIP(bitfield,index)  (bitfield)  ^=  (1 << (index))
+#define BITTEST(bitfield, index)  ((bitfield)  &   (1 << (index)))
+#define BITSET(bitfield, index)   (bitfield)  |=  (1 << (index))
+#define BITRESET(bitfield, index) (bitfield)  &= ~(1 << (index))
+#define BITFLIP(bitfield, index)  (bitfield)  ^=  (1 << (index))
 
 //Converts a bitfield to a list of numbers (or words if a wordlist is provided)
 /proc/bitfield2list(bitfield = 0, list/wordlist)
 	var/list/r = list()
 	if(istype(wordlist,/list))
-		var/max = min(wordlist.len,16)
+		var/max = min(wordlist.len, 16)
 		var/bit = 1
 		for(var/i=1, i<=max, i++)
 			if(bitfield & bit)
@@ -413,8 +433,8 @@ proc/listclearnulls(list/list)
 /proc/dd_sortedObjectList(var/list/L, var/cache=list())
 	if(L.len < 2)
 		return L
-	var/middle = L.len / 2 + 1 // Copy is first,second-1
-	return dd_mergeObjectList(dd_sortedObjectList(L.Copy(0,middle), cache), dd_sortedObjectList(L.Copy(middle), cache), cache) //second parameter null = to end of list
+	var/middle = L.len / 2 + 1 // Copy is first, second-1
+	return dd_mergeObjectList(dd_sortedObjectList(L.Copy(0, middle), cache), dd_sortedObjectList(L.Copy(middle), cache), cache) //second parameter null = to end of list
 
 /proc/dd_mergeObjectList(var/list/L, var/list/R, var/list/cache)
 	var/Li=1
@@ -609,4 +629,56 @@ proc/dd_sortedTextList(list/incoming)
 		L += new path()
 	return L
 
+//Move a single element from position fromIndex within a list, to position toIndex
+//All elements in the range [1,toIndex) before the move will be before the pivot afterwards
+//All elements in the range [toIndex, L.len+1) before the move will be after the pivot afterwards
+//In other words, it's as if the range [fromIndex,toIndex) have been rotated using a <<< operation common to other languages.
+//fromIndex and toIndex must be in the range [1,L.len+1]
+//This will preserve associations ~Carnie
+/proc/moveElement(list/L, fromIndex, toIndex)
+	if(fromIndex == toIndex || fromIndex+1 == toIndex)	//no need to move
+		return
+	if(fromIndex > toIndex)
+		++fromIndex	//since a null will be inserted before fromIndex, the index needs to be nudged right by one
+
+	L.Insert(toIndex, null)
+	L.Swap(fromIndex, toIndex)
+	L.Cut(fromIndex, fromIndex+1)
+
+
+//Move elements [fromIndex,fromIndex+len) to [toIndex-len, toIndex)
+//Same as moveElement but for ranges of elements
+//This will preserve associations ~Carnie
+/proc/moveRange(list/L, fromIndex, toIndex, len=1)
+	var/distance = abs(toIndex - fromIndex)
+	if(len >= distance)	//there are more elements to be moved than the distance to be moved. Therefore the same result can be achieved (with fewer operations) by moving elements between where we are and where we are going. The result being, our range we are moving is shifted left or right by dist elements
+		if(fromIndex <= toIndex)
+			return	//no need to move
+		fromIndex += len	//we want to shift left instead of right
+
+		for(var/i=0, i<distance, ++i)
+			L.Insert(fromIndex, null)
+			L.Swap(fromIndex, toIndex)
+			L.Cut(toIndex, toIndex+1)
+	else
+		if(fromIndex > toIndex)
+			fromIndex += len
+
+		for(var/i=0, i<len, ++i)
+			L.Insert(toIndex, null)
+			L.Swap(fromIndex, toIndex)
+			L.Cut(fromIndex, fromIndex+1)
+
 #define listequal(A, B) (A.len == B.len && !length(A^B))
+
+//Picks from the list, with some safeties, and returns the "default" arg if it fails
+#define DEFAULTPICK(L, default) ((istype(L, /list) && L:len) ? pick(L) : default)
+
+#define LAZYINITLIST(L) if (!L) L = list()
+
+#define UNSETEMPTY(L) if (L && !L.len) L = null
+#define LAZYREMOVE(L, I) if(L) { L -= I; if(!L.len) { L = null; } }
+#define LAZYADD(L, I) if(!L) { L = list(); } L += I;
+#define LAZYACCESS(L, I) (L ? (isnum(I) ? (I > 0 && I <= L.len ? L[I] : null) : L[I]) : null)
+#define LAZYLEN(L) length(L)
+#define LAZYCLEARLIST(L) if(L) L.Cut()

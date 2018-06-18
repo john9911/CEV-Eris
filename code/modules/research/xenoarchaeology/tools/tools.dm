@@ -8,7 +8,8 @@
 	icon = 'icons/obj/device.dmi'
 	icon_state = "locator"
 	item_state = "locator"
-	w_class = 2
+	matter = list(MATERIAL_PLASTIC = 1, MATERIAL_GLASS = 1)
+	w_class = ITEM_SIZE_SMALL
 
 /obj/item/device/gps/attack_self(var/mob/user as mob)
 	var/turf/T = get_turf(src)
@@ -19,7 +20,7 @@
 	desc = "A coiled metallic tape used to check dimensions and lengths."
 	icon = 'icons/obj/xenoarchaeology.dmi'
 	icon_state = "measuring"
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 
 //todo: dig site tape
 
@@ -29,7 +30,7 @@
 	icon = 'icons/obj/mining.dmi'
 	icon_state = "satchel"
 	slot_flags = SLOT_BELT | SLOT_POCKET
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 	max_storage_space = 100
-	max_w_class = 3
+	max_w_class = ITEM_SIZE_NORMAL
 	can_hold = list(/obj/item/weapon/fossil)

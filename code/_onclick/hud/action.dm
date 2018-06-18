@@ -30,6 +30,7 @@
 /datum/action/Destroy()
 	if(owner)
 		Remove(owner)
+	. = ..()
 
 /datum/action/proc/Grant(mob/living/T)
 	if(owner)
@@ -71,7 +72,7 @@
 				Deactivate()
 		if(AB_GENERIC)
 			if(target && procname)
-				call(target,procname)(usr)
+				call(target, procname)(usr)
 	return
 
 /datum/action/proc/Activate()
@@ -80,7 +81,7 @@
 /datum/action/proc/Deactivate()
 	return
 
-/datum/action/proc/Process()
+/datum/action/Process()
 	return
 
 /datum/action/proc/CheckRemoval(mob/living/user) // 1 if action is no longer valid for this mob and should be removed
@@ -116,7 +117,7 @@
 	var/datum/action/owner
 	screen_loc = "WEST,NORTH"
 
-/obj/screen/movable/action_button/Click(location,control,params)
+/obj/screen/movable/action_button/Click(location, control, params)
 	var/list/modifiers = params2list(params)
 	if(modifiers["shift"])
 		moved = 0
@@ -138,15 +139,15 @@
 		var/obj/item/I = owner.target
 		img = image(I.icon, src , I.icon_state)
 	else if(owner.button_icon && owner.button_icon_state)
-		img = image(owner.button_icon,src,owner.button_icon_state)
+		img = image(owner.button_icon, src, owner.button_icon_state)
 	img.pixel_x = 0
 	img.pixel_y = 0
 	overlays += img
 
 	if(!owner.IsAvailable())
-		color = rgb(128,0,0,128)
+		color = rgb(128, 0, 0, 128)
 	else
-		color = rgb(255,255,255,255)
+		color = rgb(255, 255, 255, 255)
 
 //Hide/Show Action Buttons ... Button
 /obj/screen/movable/action_button/hide_toggle
@@ -177,7 +178,7 @@
 
 /obj/screen/movable/action_button/hide_toggle/UpdateIcon()
 	overlays.Cut()
-	var/image/img = image(icon,src,hidden?"show":"hide")
+	var/image/img = image(icon, src, hidden?"show":"hide")
 	overlays += img
 	return
 
@@ -198,14 +199,14 @@
 	var/coord_row_offset = AB_NORTH_OFFSET
 	return "WEST[coord_col]:[coord_col_offset],NORTH[coord_row]:[coord_row_offset]"
 
-/datum/hud/proc/SetButtonCoords(var/obj/screen/button,var/number)
+/datum/hud/proc/SetButtonCoords(var/obj/screen/button, var/number)
 	var/row = round((number-1)/AB_MAX_COLUMNS)
 	var/col = ((number - 1)%(AB_MAX_COLUMNS)) + 1
 	var/x_offset = 32*(col-1) + AB_WEST_OFFSET + 2*col
 	var/y_offset = -32*(row+1) + AB_NORTH_OFFSET
 
 	var/matrix/M = matrix()
-	M.Translate(x_offset,y_offset)
+	M.Translate(x_offset, y_offset)
 	button.transform = M
 
 //Presets for item actions

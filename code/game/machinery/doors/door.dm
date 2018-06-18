@@ -39,12 +39,15 @@
 	// turf animation
 	var/atom/movable/overlay/c_animation = null
 
+/obj/machinery/door/can_prevent_fall()
+	return density
+
 /obj/machinery/door/attack_generic(var/mob/user, var/damage)
 	if(damage >= 10)
-		visible_message("<span class='danger'>\The [user] smashes into \the [src]!</span>")
+		visible_message(SPAN_DANGER("\The [user] smashes into \the [src]!"))
 		take_damage(damage)
 	else
-		visible_message("<span class='notice'>\The [user] bonks \the [src] harmlessly.</span>")
+		visible_message(SPAN_NOTICE("\The [user] bonks \the [src] harmlessly."))
 	attack_animation(user)
 
 /obj/machinery/door/New()
@@ -74,10 +77,10 @@
 /obj/machinery/door/Destroy()
 	density = 0
 	update_nearby_tiles()
-	..()
-	return
 
-/obj/machinery/door/process()
+	return ..()
+
+/obj/machinery/door/Process()
 	if(close_door_at && world.time >= close_door_at)
 		if(autoclose)
 			close_door_at = next_close_time()
@@ -164,7 +167,7 @@
 	if (damage > 90)
 		destroy_hits--
 		if (destroy_hits <= 0)
-			visible_message("<span class='danger'>\The [src.name] disintegrates!</span>")
+			visible_message(SPAN_DANGER("\The [src.name] disintegrates!"))
 			switch (Proj.damage_type)
 				if(BRUTE)
 					new /obj/item/stack/material/steel(src.loc, 2)
@@ -182,7 +185,7 @@
 /obj/machinery/door/hitby(AM as mob|obj, var/speed=5)
 
 	..()
-	visible_message("<span class='danger'>[src.name] was hit by [AM].</span>")
+	visible_message(SPAN_DANGER("[src.name] was hit by [AM]."))
 	var/tforce = 0
 	if(ismob(AM))
 		tforce = 15 * (speed/5)
@@ -196,7 +199,12 @@
 	return src.attack_hand(user)
 
 /obj/machinery/door/attack_hand(mob/user as mob)
-	return src.attackby(user, user)
+	if(src.allowed(user) && operable())
+		if(src.density)
+			open()
+		else
+			close()
+		return
 
 /obj/machinery/door/attack_tk(mob/user as mob)
 	if(requiresID() && !allowed(null))
@@ -206,15 +214,40 @@
 /obj/machinery/door/attackby(obj/item/I as obj, mob/user as mob)
 	src.add_fingerprint(user)
 
+	if(repairing)
+		var/tool_type = I.get_tool_type(user, list(QUALITY_PRYING, QUALITY_WELDING))
+		switch(tool_type)
+
+			if(QUALITY_WELDING)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+					user << SPAN_NOTICE("You finish repairing the damage to \the [src].")
+					health = between(health, health + repairing.amount*DOOR_REPAIR_AMOUNT, maxhealth)
+					update_icon()
+					qdel(repairing)
+					repairing = null
+					return
+				return
+
+			if(QUALITY_PRYING)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PHY))
+					user << SPAN_NOTICE("You remove \the [repairing].")
+					repairing.loc = user.loc
+					repairing = null
+					return
+				return
+
+			if(ABORT_CHECK)
+				return
+
 	if(istype(I, /obj/item/stack/material) && I.get_material_name() == src.get_material_name())
 		if(stat & BROKEN)
-			user << "<span class='notice'>It looks like \the [src] is pretty busted. It's going to need more than just patching up now.</span>"
+			user << SPAN_NOTICE("It looks like \the [src] is pretty busted. It's going to need more than just patching up now.")
 			return
 		if(health >= maxhealth)
-			user << "<span class='notice'>Nothing to fix!</span>"
+			user << SPAN_NOTICE("Nothing to fix!")
 			return
 		if(!density)
-			user << "<span class='warning'>\The [src] must be closed before you can repair it.</span>"
+			user << SPAN_WARNING("\The [src] must be closed before you can repair it.")
 			return
 
 		//figure out how much metal we need
@@ -226,7 +259,7 @@
 		if (repairing)
 			transfer = stack.transfer_to(repairing, amount_needed - repairing.amount)
 			if (!transfer)
-				user << "<span class='warning'>You must weld or remove \the [repairing] from \the [src] before you can add anything else.</span>"
+				user << SPAN_WARNING("You must weld or remove \the [repairing] from \the [src] before you can add anything else.")
 		else
 			repairing = stack.split(amount_needed)
 			if (repairing)
@@ -234,32 +267,8 @@
 				transfer = repairing.amount
 
 		if (transfer)
-			user << "<span class='notice'>You fit [transfer] [stack.singular_name]\s to damaged and broken parts on \the [src].</span>"
+			user << SPAN_NOTICE("You fit [transfer] [stack.singular_name]\s to damaged and broken parts on \the [src].")
 
-		return
-
-	if(repairing && istype(I, /obj/item/weapon/weldingtool))
-		if(!density)
-			user << "<span class='warning'>\The [src] must be closed before you can repair it.</span>"
-			return
-
-		var/obj/item/weapon/weldingtool/welder = I
-		if(welder.remove_fuel(0,user))
-			user << "<span class='notice'>You start to fix dents and weld \the [repairing] into place.</span>"
-			playsound(src, 'sound/items/Welder.ogg', 100, 1)
-			if(do_after(user, 5 * repairing.amount, src) && welder && welder.isOn())
-				user << "<span class='notice'>You finish repairing the damage to \the [src].</span>"
-				health = between(health, health + repairing.amount*DOOR_REPAIR_AMOUNT, maxhealth)
-				update_icon()
-				qdel(repairing)
-				repairing = null
-		return
-
-	if(repairing && istype(I, /obj/item/weapon/crowbar))
-		user << "<span class='notice'>You remove \the [repairing].</span>"
-		playsound(src.loc, 'sound/items/Crowbar.ogg', 100, 1)
-		repairing.loc = user.loc
-		repairing = null
 		return
 
 	//psa to whoever coded this, there are plenty of objects that need to call attack() on doors without bludgeoning them.
@@ -269,9 +278,9 @@
 		if(W.damtype == BRUTE || W.damtype == BURN)
 			user.do_attack_animation(src)
 			if(W.force < min_force)
-				user.visible_message("<span class='danger'>\The [user] hits \the [src] with \the [W] with no visible effect.</span>")
+				user.visible_message(SPAN_DANGER("\The [user] hits \the [src] with \the [W] with no visible effect."))
 			else
-				user.visible_message("<span class='danger'>\The [user] forcefully strikes \the [src] with \the [W]!</span>")
+				user.visible_message(SPAN_DANGER("\The [user] forcefully strikes \the [src] with \the [W]!"))
 				playsound(src.loc, hitsound, 100, 1)
 				take_damage(W.force)
 		return
@@ -279,13 +288,6 @@
 	if(src.operating > 0 || isrobot(user))	return //borgs can't attack doors open because it conflicts with their AI-like interaction with them.
 
 	if(src.operating) return
-
-	if(src.allowed(user) && operable())
-		if(src.density)
-			open()
-		else
-			close()
-		return
 
 	if(src.density)
 		do_animate("deny")
@@ -354,7 +356,7 @@
 		icon_state = "door1"
 	else
 		icon_state = "door0"
-	return
+	update_openspace()
 
 
 /obj/machinery/door/proc/do_animate(animation)
@@ -384,9 +386,13 @@
 		return
 	operating = 1
 
+	set_opacity(0)
+	if(istype(src, /obj/machinery/door/airlock/multi_tile/metal))
+		f5.set_opacity(0)
+		f6.set_opacity(0)
+
 	do_animate("opening")
 	icon_state = "door0"
-	set_opacity(0)
 	sleep(3)
 	src.density = 0
 	update_nearby_tiles()
@@ -394,10 +400,6 @@
 	src.layer = open_layer
 	explosion_resistance = 0
 	update_icon()
-	set_opacity(0)
-	if(istype(src, /obj/machinery/door/airlock/multi_tile/metal))
-		f5.set_opacity(0)
-		f6.set_opacity(0)
 	update_nearby_tiles()
 	operating = 0
 
@@ -410,6 +412,7 @@
 	return world.time + (normalspeed ? 150 : 5)
 
 /obj/machinery/door/proc/close(var/forced = 0)
+	set waitfor = FALSE
 	if(!can_close(forced))
 		return
 	operating = 1
@@ -418,17 +421,19 @@
 	do_animate("closing")
 	sleep(3)
 	src.density = 1
-	explosion_resistance = initial(explosion_resistance)
-	src.layer = closed_layer
 	update_nearby_tiles()
 	sleep(7)
+	src.layer = closed_layer
+	explosion_resistance = initial(explosion_resistance)
 	update_icon()
+	update_nearby_tiles()
+
 	if(visible && !glass)
 		set_opacity(1)	//caaaaarn!
 	if(istype(src, /obj/machinery/door/airlock/multi_tile/metal))
 		f5.set_opacity(1)
 		f6.set_opacity(1)
-	update_nearby_tiles()
+
 	operating = 0
 
 	//I shall not add a check every x ticks if a door has closed over some fire.
@@ -446,12 +451,12 @@
 	return ..(M)
 
 /obj/machinery/door/update_nearby_tiles(need_rebuild)
-	if(!air_master)
+	if(!SSair)
 		return 0
 
 	for(var/turf/simulated/turf in locs)
 		update_heat_protection(turf)
-		air_master.mark_for_update(turf)
+		SSair.mark_for_update(turf)
 
 	return 1
 

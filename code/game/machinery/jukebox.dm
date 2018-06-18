@@ -24,21 +24,13 @@ datum/track/New(var/title_name, var/audio)
 
 	var/datum/track/current_track
 	var/list/datum/track/tracks = list(
-		new/datum/track("Beyond", 'sound/ambience/ambispace.ogg'),
-		new/datum/track("Clouds of Fire", 'sound/music/clouds.s3m'),
-		new/datum/track("D`Bert", 'sound/music/title2.ogg'),
-		new/datum/track("D`Fort", 'sound/ambience/song_game.ogg'),
-		new/datum/track("Floating", 'sound/music/main.ogg'),
-		new/datum/track("Endless Space", 'sound/music/space.ogg'),
 		new/datum/track("Part A", 'sound/misc/TestLoop1.ogg'),
-		new/datum/track("Scratch", 'sound/music/title1.ogg'),
-		new/datum/track("Trai`Tor", 'sound/music/traitor.ogg'),
 	)
 
 
 /obj/machinery/media/jukebox/Destroy()
 	StopPlaying()
-	..()
+	. = ..()
 
 /obj/machinery/media/jukebox/power_change()
 	if(!powered(power_channel) || !anchored)
@@ -66,11 +58,11 @@ datum/track/New(var/title_name, var/audio)
 			overlays += "[state_base]-running"
 
 /obj/machinery/media/jukebox/Topic(href, href_list)
-	if(..() || !(Adjacent(usr) || istype(usr, /mob/living/silicon)))
+	if(..() || !(Adjacent(usr) || issilicon(usr)))
 		return
 
 	if(!anchored)
-		usr << "<span class='warning'>You must secure \the [src] first.</span>"
+		usr << SPAN_WARNING("You must secure \the [src] first.")
 		return
 
 	if(stat & (NOPOWER|BROKEN))
@@ -89,7 +81,7 @@ datum/track/New(var/title_name, var/audio)
 		if(emagged)
 			playsound(src.loc, 'sound/items/AirHorn.ogg', 100, 1)
 			for(var/mob/living/carbon/M in ohearers(6, src))
-				if(istype(M, /mob/living/carbon/human))
+				if(ishuman(M))
 					var/mob/living/carbon/human/H = M
 					if(istype(H.l_ear, /obj/item/clothing/ears/earmuffs) || istype(H.r_ear, /obj/item/clothing/ears/earmuffs))
 						continue
@@ -151,7 +143,7 @@ datum/track/New(var/title_name, var/audio)
 
 /obj/machinery/media/jukebox/proc/explode()
 	walk_to(src,0)
-	src.visible_message("<span class='danger'>\the [src] blows apart!</span>", 1)
+	src.visible_message(SPAN_DANGER("\the [src] blows apart!"), 1)
 
 	explosion(src.loc, 0, 0, 1, rand(1,2), 1)
 
@@ -165,7 +157,7 @@ datum/track/New(var/title_name, var/audio)
 /obj/machinery/media/jukebox/attackby(obj/item/W as obj, mob/user as mob)
 	src.add_fingerprint(user)
 
-	if(istype(W, /obj/item/weapon/wrench))
+	if(istype(W, /obj/item/weapon/tool/wrench))
 		if(playing)
 			StopPlaying()
 		user.visible_message("<span class='warning'>[user] has [anchored ? "un" : ""]secured \the [src].</span>", "<span class='notice'>You [anchored ? "un" : ""]secure \the [src].</span>")
@@ -180,7 +172,7 @@ datum/track/New(var/title_name, var/audio)
 	if(!emagged)
 		emagged = 1
 		StopPlaying()
-		visible_message("<span class='danger'>\The [src] makes a fizzling sound.</span>")
+		visible_message(SPAN_DANGER("\The [src] makes a fizzling sound."))
 		update_icon()
 		return 1
 

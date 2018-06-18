@@ -10,17 +10,16 @@
 	slot_flags = SLOT_BELT|SLOT_BACK
 
 	projectile_type = /obj/item/projectile/temp
-	cell_type = /obj/item/weapon/cell/high
 
 
 /obj/item/weapon/gun/energy/temperature/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
 
 /obj/item/weapon/gun/energy/temperature/Destroy()
-	processing_objects.Remove(src)
-	..()
+	STOP_PROCESSING(SSobj, src)
+	. = ..()
 
 
 /obj/item/weapon/gun/energy/temperature/attack_self(mob/living/user as mob)
@@ -54,13 +53,13 @@
 			src.current_temperature = min(500, src.current_temperature+amount)
 		else
 			src.current_temperature = max(0, src.current_temperature+amount)
-	if (istype(src.loc, /mob))
-		attack_self(src.loc)
+	if (ismob(loc))
+		attack_self(loc)
 	src.add_fingerprint(usr)
 	return
 
 
-/obj/item/weapon/gun/energy/temperature/process()
+/obj/item/weapon/gun/energy/temperature/Process()
 	switch(temperature)
 		if(0 to 100) charge_cost = 1000
 		if(100 to 250) charge_cost = 500

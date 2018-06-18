@@ -4,6 +4,7 @@
 #define PLANTS_PER_TICK 500 // Cap on number of plant segments processed.
 #define PLANT_TICK_TIME 75  // Number of ticks between the plant processor cycling.
 
+ADMIN_VERB_ADD(/client/proc/show_plant_genes, R_DEBUG, FALSE)
 // Debug for testing seed genes.
 /client/proc/show_plant_genes()
 	set category = "Debug"
@@ -40,7 +41,7 @@ var/global/datum/controller/plants/plant_controller // Set in New().
 		qdel(plant_controller)
 	plant_controller = src
 	setup()
-	process()
+	Process()
 
 // Predefined/roundstart varieties use a string key to make it
 // easier to grab the new variety when mutating. Post-roundstart
@@ -119,7 +120,7 @@ var/global/datum/controller/plants/plant_controller // Set in New().
 		seed.set_trait(TRAIT_HIGHKPA_TOLERANCE,200)
 	return seed
 
-/datum/controller/plants/proc/process()
+/datum/controller/plants/Process()
 	processing = 1
 	spawn(0)
 		set background = 1
@@ -138,7 +139,7 @@ var/global/datum/controller/plants/plant_controller // Set in New().
 						plant_queue -= plant
 						if(!istype(plant))
 							continue
-						plant.process()
+						plant.Process()
 						processed++
 						sleep(1) // Stagger processing out so previous tick can resolve (overlapping plant segments etc)
 				sleep(max(1,(plant_tick_time-processed)))

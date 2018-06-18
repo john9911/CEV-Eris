@@ -48,11 +48,11 @@
 			amount *= TABLE_BRITTLE_MATERIAL_MULTIPLIER
 	health -= amount
 	if(health <= 0)
-		visible_message("<span class='warning'>\The [src] breaks down!</span>")
+		visible_message(SPAN_WARNING("\The [src] breaks down!"))
 		return break_to_parts() // if we break and form shards, return them to the caller to do !FUN! things with
 
-/obj/structure/table/initialize()
-	..()
+/obj/structure/table/Initialize()
+	. = ..()
 
 	// One table per turf.
 	for(var/obj/structure/table/T in loc)
@@ -76,77 +76,98 @@
 	update_connections(1) // Update tables around us to ignore us (material=null forces no connections)
 	for(var/obj/structure/table/T in oview(src, 1))
 		T.update_icon()
-	..()
+	. = ..()
 
 /obj/structure/table/examine(mob/user)
 	. = ..()
 	if(health < maxhealth)
 		switch(health / maxhealth)
 			if(0.0 to 0.5)
-				user << "<span class='warning'>It looks severely damaged!</span>"
+				user << SPAN_WARNING("It looks severely damaged!")
 			if(0.25 to 0.5)
-				user << "<span class='warning'>It looks damaged!</span>"
+				user << SPAN_WARNING("It looks damaged!")
 			if(0.5 to 1.0)
-				user << "<span class='notice'>It has a few scrapes and dents.</span>"
+				user << SPAN_NOTICE("It has a few scrapes and dents.")
 
-/obj/structure/table/attackby(obj/item/weapon/W, mob/user)
+/obj/structure/table/attackby(obj/item/I, mob/user)
 
-	if(reinforced && istype(W, /obj/item/weapon/screwdriver))
-		remove_reinforced(W, user)
-		if(!reinforced)
-			update_desc()
-			update_icon()
-			update_material()
-		return 1
+	var/list/usable_qualities = list()
+	if(reinforced)
+		usable_qualities.Add(QUALITY_SCREW_DRIVING)
+	if(carpeted)
+		usable_qualities.Add(QUALITY_PRYING)
+	if(health < maxhealth)
+		usable_qualities.Add(QUALITY_WELDING)
+	if(!reinforced && !carpeted)
+		usable_qualities.Add(QUALITY_BOLT_TURNING)
 
-	if(carpeted && istype(W, /obj/item/weapon/crowbar))
-		user.visible_message("<span class='notice'>\The [user] removes the carpet from \the [src].</span>",
-		                              "<span class='notice'>You remove the carpet from \the [src].</span>")
-		new /obj/item/stack/tile/carpet(loc)
-		carpeted = 0
-		update_icon()
-		return 1
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
 
-	if(!carpeted && material && istype(W, /obj/item/stack/tile/carpet))
-		var/obj/item/stack/tile/carpet/C = W
+		if(QUALITY_SCREW_DRIVING)
+			if(reinforced)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+					remove_reinforced(I, user)
+					if(!reinforced)
+						update_desc()
+						update_icon()
+						update_material()
+			return
+
+		if(QUALITY_PRYING)
+			if(carpeted)
+				if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+					user.visible_message(
+						SPAN_NOTICE("\The [user] removes the carpet from \the [src]."),
+						SPAN_NOTICE("You remove the carpet from \the [src].")
+					)
+					new /obj/item/stack/tile/carpet(loc)
+					carpeted = 0
+					update_icon()
+			return
+
+		if(QUALITY_WELDING)
+			if(health < maxhealth)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+					user.visible_message(SPAN_NOTICE("\The [user] repairs some damage to \the [src]."),SPAN_NOTICE("You repair some damage to \the [src]."))
+					health = min(health+(maxhealth/5), maxhealth)//max(health+(maxhealth/5), maxhealth) // 20% repair per application
+			return
+
+		if(QUALITY_BOLT_TURNING)
+			if(!reinforced && !carpeted)
+				if(material)
+					if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+						remove_material(I, user)
+						if(!material)
+							update_connections(1)
+							update_icon()
+							for(var/obj/structure/table/T in oview(src, 1))
+								T.update_icon()
+							update_desc()
+							update_material()
+							return
+				if(!material)
+					if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+						user.visible_message(SPAN_NOTICE("\The [user] dismantles \the [src]."),SPAN_NOTICE("You dismantle \the [src]."))
+						new /obj/item/stack/material/steel(src.loc, 2)
+						qdel(src)
+			return
+
+	if(!carpeted && material && istype(I, /obj/item/stack/tile/carpet))
+		var/obj/item/stack/tile/carpet/C = I
 		if(C.use(1))
-			user.visible_message("<span class='notice'>\The [user] adds \the [C] to \the [src].</span>",
-			                              "<span class='notice'>You add \the [C] to \the [src].</span>")
+			user.visible_message(
+				SPAN_NOTICE("\The [user] adds \the [C] to \the [src]."),
+				SPAN_NOTICE("You add \the [C] to \the [src].")
+			)
 			carpeted = 1
 			update_icon()
 			return 1
 		else
-			user << "<span class='warning'>You don't have enough carpet!</span>"
+			user << SPAN_WARNING("You don't have enough carpet!")
 
-	if(!reinforced && !carpeted && material && istype(W, /obj/item/weapon/wrench))
-		remove_material(W, user)
-		if(!material)
-			update_connections(1)
-			update_icon()
-			for(var/obj/structure/table/T in oview(src, 1))
-				T.update_icon()
-			update_desc()
-			update_material()
-		return 1
-
-	if(!carpeted && !reinforced && !material && istype(W, /obj/item/weapon/wrench))
-		dismantle(W, user)
-		return 1
-
-	if(health < maxhealth && istype(W, /obj/item/weapon/weldingtool))
-		var/obj/item/weapon/weldingtool/F = W
-		if(F.welding)
-			user << "<span class='notice'>You begin reparing damage to \the [src].</span>"
-			playsound(src.loc, 'sound/items/Welder.ogg', 50, 1)
-			if(!do_after(user, 20, src) || !F.remove_fuel(1, user))
-				return
-			user.visible_message("<span class='notice'>\The [user] repairs some damage to \the [src].</span>",
-			                              "<span class='notice'>You repair some damage to \the [src].</span>")
-			health = min(health+(maxhealth/5), maxhealth)//max(health+(maxhealth/5), maxhealth) // 20% repair per application
-			return 1
-
-	if(!material && can_plate && istype(W, /obj/item/stack/material))
-		material = common_material_add(W, user, "plat")
+	if(!material && can_plate && istype(I, /obj/item/stack/material))
+		material = common_material_add(I, user, "plat")
 		if(material)
 			update_connections(1)
 			update_icon()
@@ -164,19 +185,19 @@
 
 /obj/structure/table/proc/reinforce_table(obj/item/stack/material/S, mob/user)
 	if(reinforced)
-		user << "<span class='warning'>\The [src] is already reinforced!</span>"
+		user << SPAN_WARNING("\The [src] is already reinforced!")
 		return
 
 	if(!can_reinforce)
-		user << "<span class='warning'>\The [src] cannot be reinforced!</span>"
+		user << SPAN_WARNING("\The [src] cannot be reinforced!")
 		return
 
 	if(!material)
-		user << "<span class='warning'>Plate \the [src] before reinforcing it!</span>"
+		user << SPAN_WARNING("Plate \the [src] before reinforcing it!")
 		return
 
 	if(flipped)
-		user << "<span class='warning'>Put \the [src] back in place before reinforcing it!</span>"
+		user << SPAN_WARNING("Put \the [src] back in place before reinforcing it!")
 		return
 
 	reinforced = common_material_add(S, user, "reinforc")
@@ -201,62 +222,36 @@
 /obj/structure/table/proc/common_material_add(obj/item/stack/material/S, mob/user, verb) // Verb is actually verb without 'e' or 'ing', which is added. Works for 'plate'/'plating' and 'reinforce'/'reinforcing'.
 	var/material/M = S.get_material()
 	if(!istype(M))
-		user << "<span class='warning'>You cannot [verb]e \the [src] with \the [S].</span>"
+		user << SPAN_WARNING("You cannot [verb]e \the [src] with \the [S].")
 		return null
 	if (src.flipped && istype(M, /material/glass))
-		user << "<span class='warning'>You cannot [verb]e \the [src] with \the [S] when [src] flipped!.</span>"
+		user << SPAN_WARNING("You cannot [verb]e \the [src] with \the [S] when [src] flipped!.")
 		return null
 	if(manipulating) return M
 	manipulating = 1
-	user << "<span class='notice'>You begin [verb]ing \the [src] with [M.display_name].</span>"
+	user << SPAN_NOTICE("You begin [verb]ing \the [src] with [M.display_name].")
 	if(!do_after(user, 20, src) || !S.use(1))
 		manipulating = 0
 		return null
-	user.visible_message("<span class='notice'>\The [user] [verb]es \the [src] with [M.display_name].</span>", "<span class='notice'>You finish [verb]ing \the [src].</span>")
+	user.visible_message(SPAN_NOTICE("\The [user] [verb]es \the [src] with [M.display_name]."), SPAN_NOTICE("You finish [verb]ing \the [src]."))
 	manipulating = 0
 	return M
 
 // Returns the material to set the table to.
 /obj/structure/table/proc/common_material_remove(mob/user, material/M, delay, what, type_holding, sound)
 	if(!M.stack_type)
-		user << "<span class='warning'>You are unable to remove the [what] from this table!</span>"
+		user << SPAN_WARNING("You are unable to remove the [what] from this table!")
 		return M
-
-	if(manipulating) return M
-	manipulating = 1
-	user.visible_message("<span class='notice'>\The [user] begins removing the [type_holding] holding \the [src]'s [M.display_name] [what] in place.</span>",
-	                              "<span class='notice'>You begin removing the [type_holding] holding \the [src]'s [M.display_name] [what] in place.</span>")
-	if(sound)
-		playsound(src.loc, sound, 50, 1)
-	if(!do_after(user, 40, src))
-		manipulating = 0
-		return M
-	user.visible_message("<span class='notice'>\The [user] removes the [M.display_name] [what] from \the [src].</span>",
-	                              "<span class='notice'>You remove the [M.display_name] [what] from \the [src].</span>")
+	user.visible_message(SPAN_NOTICE("\The [user] removes the [M.display_name] [what] from \the [src]."),
+	                              SPAN_NOTICE("You remove the [M.display_name] [what] from \the [src]."))
 	new M.stack_type(src.loc)
-	manipulating = 0
 	return null
 
-/obj/structure/table/proc/remove_reinforced(obj/item/weapon/screwdriver/S, mob/user)
-	reinforced = common_material_remove(user, reinforced, 40, "reinforcements", "screws", 'sound/items/Screwdriver.ogg')
+/obj/structure/table/proc/remove_reinforced(obj/item/I, mob/user)
+	reinforced = common_material_remove(user, reinforced, 40, "reinforcements", "screws")
 
-/obj/structure/table/proc/remove_material(obj/item/weapon/wrench/W, mob/user)
-	material = common_material_remove(user, material, 20, "plating", "bolts", 'sound/items/Ratchet.ogg')
-
-/obj/structure/table/proc/dismantle(obj/item/weapon/wrench/W, mob/user)
-	if(manipulating) return
-	manipulating = 1
-	user.visible_message("<span class='notice'>\The [user] begins dismantling \the [src].</span>",
-	                              "<span class='notice'>You begin dismantling \the [src].</span>")
-	playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-	if(!do_after(user, 20, src))
-		manipulating = 0
-		return
-	user.visible_message("<span class='notice'>\The [user] dismantles \the [src].</span>",
-	                              "<span class='notice'>You dismantle \the [src].</span>")
-	new /obj/item/stack/material/steel(src.loc)
-	qdel(src)
-	return
+/obj/structure/table/proc/remove_material(obj/item/I, mob/user)
+	material = common_material_remove(user, material, 20, "plating", "bolts")
 
 // Returns a list of /obj/item/weapon/material/shard objects that were created as a result of this table's breakage.
 // Used for !fun! things such as embedding shards in the faces of tableslammed people.
@@ -286,7 +281,7 @@
 	if(full_return || prob(20))
 		new /obj/item/stack/material/steel(src.loc)
 	else
-		var/material/M = get_material_by_name(DEFAULT_WALL_MATERIAL)
+		var/material/M = get_material_by_name(MATERIAL_STEEL)
 		S = M.place_shard(loc)
 		if(S) shards += S
 	qdel(src)

@@ -9,6 +9,7 @@
 	name = "mining drill head"
 	desc = "An enormous drill."
 	icon_state = "mining_drill"
+	circuit = /obj/item/weapon/circuitboard/miningdrill
 	var/braces_needed = 2
 	var/list/supports = list()
 	var/supported = 0
@@ -17,10 +18,10 @@
 
 	var/ore_types = list(
 		"iron" = /obj/item/weapon/ore/iron,
-		"uranium" = /obj/item/weapon/ore/uranium,
-		"gold" = /obj/item/weapon/ore/gold,
-		"silver" = /obj/item/weapon/ore/silver,
-		"diamond" = /obj/item/weapon/ore/diamond,
+		MATERIAL_URANIUM = /obj/item/weapon/ore/uranium,
+		MATERIAL_GOLD = /obj/item/weapon/ore/gold,
+		MATERIAL_SILVER = /obj/item/weapon/ore/silver,
+		MATERIAL_DIAMOND = /obj/item/weapon/ore/diamond,
 		"plasma" = /obj/item/weapon/ore/plasma,
 		"osmium" = /obj/item/weapon/ore/osmium,
 		"hydrogen" = /obj/item/weapon/ore/hydrogen,
@@ -32,26 +33,14 @@
 	var/harvest_speed
 	var/capacity
 	var/charge_use
-	var/obj/item/weapon/cell/cell = null
+	var/obj/item/weapon/cell/large/cell = null
 
 	//Flags
 	var/need_update_field = 0
 	var/need_player_check = 0
 
-/obj/machinery/mining/drill/New()
 
-	..()
-
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/miningdrill(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/stock_parts/micro_laser(src)
-	component_parts += new /obj/item/weapon/cell/high(src)
-
-	RefreshParts()
-
-/obj/machinery/mining/drill/process()
+/obj/machinery/mining/drill/Process()
 
 	if(need_player_check)
 		return
@@ -140,25 +129,26 @@
 /obj/machinery/mining/drill/attack_ai(var/mob/user as mob)
 	return src.attack_hand(user)
 
-/obj/machinery/mining/drill/attackby(obj/item/O as obj, mob/user as mob)
+/obj/machinery/mining/drill/attackby(obj/item/I, mob/user as mob)
+
 	if(!active)
-		if(default_deconstruction_screwdriver(user, O))
+		if(default_deconstruction(I, user))
 			return
-		if(default_deconstruction_crowbar(user, O))
+
+		if(default_part_replacement(I, user))
 			return
-		if(default_part_replacement(user, O))
-			return
+
 	if(!panel_open || active) return ..()
 
-	if(istype(O, /obj/item/weapon/cell))
+	if(istype(I, /obj/item/weapon/cell/large))
 		if(cell)
 			user << "The drill already has a cell installed."
 		else
 			user.drop_item()
-			O.loc = src
-			cell = O
-			component_parts += O
-			user << "You install \the [O]."
+			I.loc = src
+			cell = I
+			component_parts += I
+			user << "You install \the [I]."
 		return
 	..()
 
@@ -182,14 +172,14 @@
 		if(use_cell_power())
 			active = !active
 			if(active)
-				visible_message("<span class='notice'>\The [src] lurches downwards, grinding noisily.</span>")
+				visible_message(SPAN_NOTICE("\The [src] lurches downwards, grinding noisily."))
 				need_update_field = 1
 			else
-				visible_message("<span class='notice'>\The [src] shudders to a grinding halt.</span>")
+				visible_message(SPAN_NOTICE("\The [src] shudders to a grinding halt."))
 		else
-			user << "<span class='notice'>The drill is unpowered.</span>"
+			user << SPAN_NOTICE("The drill is unpowered.")
 	else
-		user << "<span class='notice'>Turning on a piece of industrial machinery without sufficient bracing or wires exposed is a bad idea.</span>"
+		user << SPAN_NOTICE("Turning on a piece of industrial machinery without sufficient bracing or wires exposed is a bad idea.")
 
 	update_icon()
 
@@ -217,7 +207,7 @@
 			capacity = 200 * P.rating
 		if(istype(P, /obj/item/weapon/stock_parts/capacitor))
 			charge_use -= 10 * P.rating
-	cell = locate(/obj/item/weapon/cell) in component_parts
+	cell = locate(/obj/item/weapon/cell/large) in component_parts
 
 /obj/machinery/mining/drill/proc/check_supports()
 
@@ -238,7 +228,7 @@
 /obj/machinery/mining/drill/proc/system_error(var/error)
 
 	if(error)
-		src.visible_message("<span class='notice'>\The [src] flashes a '[error]' warning.</span>")
+		src.visible_message(SPAN_NOTICE("\The [src] flashes a '[error]' warning."))
 	need_player_check = 1
 	active = 0
 	update_icon()
@@ -281,47 +271,57 @@
 	if(B)
 		for(var/obj/item/weapon/ore/O in contents)
 			O.loc = B
-		usr << "<span class='notice'>You unload the drill's storage cache into the ore box.</span>"
+		usr << SPAN_NOTICE("You unload the drill's storage cache into the ore box.")
 	else
-		usr << "<span class='notice'>You must move an ore box up to the drill before you can unload it.</span>"
+		usr << SPAN_NOTICE("You must move an ore box up to the drill before you can unload it.")
 
 
 /obj/machinery/mining/brace
 	name = "mining drill brace"
 	desc = "A machinery brace for an industrial drill. It looks easily two feet thick."
 	icon_state = "mining_brace"
+	circuit = /obj/item/weapon/circuitboard/miningdrillbrace
 	var/obj/machinery/mining/drill/connected
 
-/obj/machinery/mining/brace/New()
-	..()
-
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/miningdrillbrace(src)
-
-/obj/machinery/mining/brace/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/machinery/mining/brace/attackby(var/obj/item/I, mob/user as mob)
 	if(connected && connected.active)
-		user << "<span class='notice'>You can't work with the brace of a running drill!</span>"
+		user << SPAN_NOTICE("You can't work with the brace of a running drill!")
 		return
 
-	if(default_deconstruction_screwdriver(user, W))
-		return
-	if(default_deconstruction_crowbar(user, W))
-		return
+	var/tool_type = I.get_tool_type(user, list(QUALITY_PRYING, QUALITY_SCREW_DRIVING, QUALITY_BOLT_TURNING))
+	switch(tool_type)
 
-	if(istype(W,/obj/item/weapon/wrench))
+		if(QUALITY_PRYING)
+			if(!panel_open)
+				user << SPAN_NOTICE("You cant get to the components of \the [src], remove the cover.")
+				return
+			if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+				user << SPAN_NOTICE("You remove the components of \the [src] with [I].")
+				dismantle()
+				return
 
-		if(istype(get_turf(src), /turf/space))
-			user << "<span class='notice'>You can't anchor something to empty space. Idiot.</span>"
+		if(QUALITY_SCREW_DRIVING)
+			var/used_sound = panel_open ? 'sound/machines/Custom_screwdriveropen.ogg' :  'sound/machines/Custom_screwdriverclose.ogg'
+			if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD, instant_finish_tier = 30, forced_sound = used_sound))
+				panel_open = !panel_open
+				user << SPAN_NOTICE("You [panel_open ? "open" : "close"] the maintenance hatch of \the [src] with [I].")
+				update_icon()
+				return
+
+		if(QUALITY_BOLT_TURNING)
+			if(istype(get_turf(src), /turf/space))
+				user << SPAN_NOTICE("You can't anchor something to empty space. Idiot.")
+				return
+			if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+				user << SPAN_NOTICE("You [anchored ? "un" : ""]anchor the brace with [I].")
+				anchored = !anchored
+				if(anchored)
+					connect()
+				else
+					disconnect()
+
+		if(ABORT_CHECK)
 			return
-
-		playsound(src.loc, 'sound/items/Ratchet.ogg', 100, 1)
-		user << "<span class='notice'>You [anchored ? "un" : ""]anchor the brace.</span>"
-
-		anchored = !anchored
-		if(anchored)
-			connect()
-		else
-			disconnect()
 
 /obj/machinery/mining/brace/proc/connect()
 

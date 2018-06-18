@@ -194,7 +194,7 @@
 						if("number")
 							master.buildmode.valueholder = input(usr,"Enter variable value:" ,"Value", 123) as num
 						if("mob-reference")
-							master.buildmode.valueholder = input(usr,"Enter variable value:" ,"Value") as mob in mob_list
+							master.buildmode.valueholder = input(usr,"Enter variable value:" ,"Value") as mob in SSmobs.mob_list
 						if("obj-reference")
 							master.buildmode.valueholder = input(usr,"Enter variable value:" ,"Value") as obj in world
 						if("turf-reference")
@@ -214,6 +214,10 @@
 		if(1)
 			if(istype(object,/turf) && pa.Find("left") && !pa.Find("alt") && !pa.Find("ctrl") )
 				if(istype(object,/turf/space))
+					var/turf/T = object
+					T.ChangeTurf(/turf/simulated/floor)
+					return
+				if(istype(object,/turf/simulated/open))
 					var/turf/T = object
 					T.ChangeTurf(/turf/simulated/floor)
 					return
@@ -238,7 +242,7 @@
 					var/turf/T = object
 					T.ChangeTurf(/turf/simulated/wall)
 					return
-				else if(istype(object,/obj))
+				else if(isobj(object))
 					qdel(object)
 					return
 			else if(istype(object,/turf) && pa.Find("alt") && pa.Find("left"))

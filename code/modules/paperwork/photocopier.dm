@@ -30,7 +30,7 @@
 			dat += "<a href='byond://?src=\ref[src];add=1'>+</a><BR><BR>"
 	else if(toner)
 		dat += "Please insert something to copy.<BR><BR>"
-	if(istype(user,/mob/living/silicon))
+	if(issilicon(user))
 		dat += "<a href='byond://?src=\ref[src];aipic=1'>Print photo from database</a><BR><BR>"
 	dat += "Current toner level: [toner]"
 	if(!toner)
@@ -58,7 +58,7 @@
 				var/obj/item/weapon/paper_bundle/B = bundlecopy(copyitem)
 				sleep(15*B.pages.len)
 			else
-				usr << "<span class='warning'>\The [copyitem] can't be copied by \the [src].</span>"
+				usr << SPAN_WARNING("\The [copyitem] can't be copied by \the [src].")
 				break
 
 			use_power(active_power_usage)
@@ -67,7 +67,7 @@
 		if(copyitem)
 			copyitem.loc = usr.loc
 			usr.put_in_hands(copyitem)
-			usr << "<span class='notice'>You take \the [copyitem] out of \the [src].</span>"
+			usr << SPAN_NOTICE("You take \the [copyitem] out of \the [src].")
 			copyitem = null
 			updateUsrDialog()
 	else if(href_list["min"])
@@ -79,8 +79,10 @@
 			copies++
 			updateUsrDialog()
 	else if(href_list["aipic"])
-		if(!istype(usr,/mob/living/silicon)) return
-		if(stat & (BROKEN|NOPOWER)) return
+		if(!issilicon(usr))
+			return
+		if(stat & (BROKEN|NOPOWER))
+			return
 
 		if(toner >= 5)
 			var/mob/living/silicon/tempAI = usr
@@ -101,31 +103,31 @@
 			sleep(15)
 		updateUsrDialog()
 
-/obj/machinery/photocopier/attackby(obj/item/O as obj, mob/user as mob)
-	if(istype(O, /obj/item/weapon/paper) || istype(O, /obj/item/weapon/photo) || istype(O, /obj/item/weapon/paper_bundle))
+/obj/machinery/photocopier/attackby(obj/item/I, mob/user)
+	if(istype(I, /obj/item/weapon/paper) || istype(I, /obj/item/weapon/photo) || istype(I, /obj/item/weapon/paper_bundle))
 		if(!copyitem)
 			user.drop_item()
-			copyitem = O
-			O.loc = src
-			user << "<span class='notice'>You insert \the [O] into \the [src].</span>"
+			copyitem = I
+			I.loc = src
+			user << SPAN_NOTICE("You insert \the [I] into \the [src].")
 			flick(insert_anim, src)
 			updateUsrDialog()
 		else
-			user << "<span class='notice'>There is already something in \the [src].</span>"
-	else if(istype(O, /obj/item/device/toner))
+			user << SPAN_NOTICE("There is already something in \the [src].")
+	else if(istype(I, /obj/item/device/toner))
 		if(toner <= 10) //allow replacing when low toner is affecting the print darkness
 			user.drop_item()
-			user << "<span class='notice'>You insert the toner cartridge into \the [src].</span>"
-			var/obj/item/device/toner/T = O
+			user << SPAN_NOTICE("You insert the toner cartridge into \the [src].")
+			var/obj/item/device/toner/T = I
 			toner += T.toner_amount
-			qdel(O)
+			qdel(I)
 			updateUsrDialog()
 		else
-			user << "<span class='notice'>This cartridge is not yet ready for replacement! Use up the rest of the toner.</span>"
-	else if(istype(O, /obj/item/weapon/wrench))
-		playsound(loc, 'sound/items/Ratchet.ogg', 50, 1)
-		anchored = !anchored
-		user << "<span class='notice'>You [anchored ? "wrench" : "unwrench"] \the [src].</span>"
+			user << SPAN_NOTICE("This cartridge is not yet ready for replacement! Use up the rest of the toner.")
+	if(QUALITY_BOLT_TURNING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_BOLT_TURNING, FAILCHANCE_EASY,  required_stat = STAT_PRD))
+			anchored = !anchored
+			user << "<span class='notice'>You [anchored ? "wrench" : "unwrench"] \the [src].</span>"
 	return
 
 /obj/machinery/photocopier/ex_act(severity)
@@ -179,7 +181,7 @@
 	c.updateinfolinks()
 	toner--
 	if(toner == 0)
-		visible_message("<span class='notice'>A red light on \the [src] flashes, indicating that it is out of toner.</span>")
+		visible_message(SPAN_NOTICE("A red light on \the [src] flashes, indicating that it is out of toner."))
 	return c
 
 
@@ -200,7 +202,7 @@
 	toner -= 5	//photos use a lot of ink!
 	if(toner < 0)
 		toner = 0
-		visible_message("<span class='notice'>A red light on \the [src] flashes, indicating that it is out of toner.</span>")
+		visible_message(SPAN_NOTICE("A red light on \the [src] flashes, indicating that it is out of toner."))
 
 	return p
 
@@ -210,7 +212,7 @@
 	for(var/obj/item/weapon/W in bundle.pages)
 		if(toner <= 0 && need_toner)
 			toner = 0
-			visible_message("<span class='notice'>A red light on \the [src] flashes, indicating that it is out of toner.</span>")
+			visible_message(SPAN_NOTICE("A red light on \the [src] flashes, indicating that it is out of toner."))
 			break
 
 		if(istype(W, /obj/item/weapon/paper))

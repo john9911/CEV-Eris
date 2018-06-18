@@ -37,7 +37,7 @@
 	if (stat & NOPOWER)
 		icon_state = "drone_fab_nopower"
 
-/obj/machinery/drone_fabricator/process()
+/obj/machinery/drone_fabricator/Process()
 
 	if(ticker.current_state < GAME_STATE_PLAYING)
 		return
@@ -94,15 +94,15 @@
 /proc/try_drone_spawn(var/mob/user, var/obj/machinery/drone_fabricator/fabricator)
 
 	if(ticker.current_state < GAME_STATE_PLAYING)
-		user << "<span class='danger'>The game hasn't started yet!</span>"
+		user << SPAN_DANGER("The game hasn't started yet!")
 		return
 
 	if(!(config.allow_drone_spawn))
-		user << "<span class='danger'>That verb is not currently permitted.</span>"
+		user << SPAN_DANGER("That verb is not currently permitted.")
 		return
 
 	if(jobban_isbanned(user,"Cyborg"))
-		user << "<span class='danger'>You are banned from playing synthetics and cannot spawn as a drone.</span>"
+		user << SPAN_DANGER("You are banned from playing synthetics and cannot spawn as a drone.")
 		return
 
 	if(!user.MayRespawn(1, DRONE_SPAWN_DELAY))
@@ -111,13 +111,13 @@
 	if(!fabricator)
 
 		var/list/all_fabricators = list()
-		for(var/obj/machinery/drone_fabricator/DF in machines)
+		for(var/obj/machinery/drone_fabricator/DF in SSmachines.machinery)
 			if((DF.stat & NOPOWER) || !DF.produce_drones || DF.drone_progress < 100)
 				continue
 			all_fabricators[DF.fabricator_tag] = DF
 
 		if(!all_fabricators.len)
-			user << "<span class='danger'>There are no available drone spawn points, sorry.</span>"
+			user << SPAN_DANGER("There are no available drone spawn points, sorry.")
 			return
 
 		var/choice = input(user,"Which fabricator do you wish to use?") as null|anything in all_fabricators

@@ -77,18 +77,18 @@
 		// Probabilities have been tweaked to kill in ~2-3 minutes, giving 5-10 messages.
 		// Probably needs more balancing, but it's better than LOL U GIBBED NOW, especially now that viruses can potentially have no signs up until Gibbingtons.
 		mob.adjustBruteLoss(10*multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
 			var/obj/item/organ/external/O = pick(H.organs)
 			if(prob(25))
-				mob << "<span class='warning'>Your [O.name] feels as if it might burst!</span>"
+				mob << SPAN_WARNING("Your [O.name] feels as if it might burst!")
 			if(prob(10))
 				spawn(50)
 					if(O)
 						O.droplimb(0,DROPLIMB_BLUNT)
 		else
 			if(prob(75))
-				mob << "<span class='warning'>Your whole body feels like it might fall apart!</span>"
+				mob << SPAN_WARNING("Your whole body feels like it might fall apart!")
 			if(prob(10))
 				mob.adjustBruteLoss(25*multiplier)
 
@@ -112,7 +112,7 @@
 	stage = 4
 	badness = 3
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob,/mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/h = mob
 			h.monkeyize()
 
@@ -137,20 +137,20 @@
 	stage = 4
 	badness = 2
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
-			var/organ = pick(list("r_arm","l_arm","r_leg","r_leg"))
+			var/organ = pick(list(BP_R_ARM,BP_L_ARM,BP_R_LEG,BP_R_LEG))
 			var/obj/item/organ/external/E = H.organs_by_name[organ]
 			if (!(E.status & ORGAN_DEAD))
 				E.status |= ORGAN_DEAD
-				H << "<span class='notice'>You can't feel your [E.name] anymore...</span>"
+				H << SPAN_NOTICE("You can't feel your [E.name] anymore...")
 				for (var/obj/item/organ/external/C in E.children)
 					C.status |= ORGAN_DEAD
 			H.update_body(1)
 		mob.adjustToxLoss(15*multiplier)
 
 	deactivate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
 			for (var/obj/item/organ/external/E in H.organs)
 				E.status &= ~ORGAN_DEAD
@@ -163,7 +163,7 @@
 	stage = 4
 	badness = 2
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
 			for (var/obj/item/organ/external/E in H.organs)
 				if (E.status & ORGAN_BROKEN && prob(30))
@@ -172,9 +172,9 @@
 		mob.apply_damages(heal_amt,heal_amt,heal_amt,heal_amt)
 
 	deactivate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
-			H << "<span class='notice'>You suddenly feel hurt and old...</span>"
+			H << SPAN_NOTICE("You suddenly feel hurt and old...")
 			H.age += 8
 		var/backlash_amt = 5*multiplier
 		mob.apply_damages(backlash_amt,backlash_amt,backlash_amt,backlash_amt)
@@ -184,13 +184,13 @@
 	stage = 4
 	badness = 2
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
 			for (var/obj/item/organ/external/E in H.organs)
 				E.min_broken_damage = max(5, E.min_broken_damage - 30)
 
 	deactivate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
 			for (var/obj/item/organ/external/E in H.organs)
 				E.min_broken_damage = initial(E.min_broken_damage)
@@ -222,9 +222,9 @@
 	name = "Lazy Mind Syndrome"
 	stage = 3
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
-			var/obj/item/organ/brain/B = H.internal_organs_by_name["brain"]
+			var/obj/item/organ/internal/brain/B = H.internal_organs_by_name[O_BRAIN]
 			if (B && B.damage < B.min_broken_damage)
 				B.take_damage(5)
 		else
@@ -252,7 +252,7 @@
 	name = "Topographical Cretinism"
 	stage = 3
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		mob << "<span class='notice'>You have trouble telling right and left apart all of a sudden.</span>"
+		mob << SPAN_NOTICE("You have trouble telling right and left apart all of a sudden.")
 		mob.confused += 10
 
 /datum/disease2/effect/mutation
@@ -340,10 +340,10 @@
 	name = "Hair Loss"
 	stage = 2
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		if(istype(mob, /mob/living/carbon/human))
+		if(ishuman(mob))
 			var/mob/living/carbon/human/H = mob
 			if(H.species.name == "Human" && !(H.h_style == "Bald") && !(H.h_style == "Balding Hair"))
-				H << "<span class='danger'>Your hair starts to fall out in clumps...</span>"
+				H << SPAN_DANGER("Your hair starts to fall out in clumps...")
 				spawn(50)
 					H.h_style = "Balding Hair"
 					H.update_hair()
@@ -352,7 +352,7 @@
 	name = "Adrenaline Extra"
 	stage = 2
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		mob << "<span class='notice'>You feel a rush of energy inside you!</span>"
+		mob << SPAN_NOTICE("You feel a rush of energy inside you!")
 		if (mob.reagents.get_reagent_amount("hyperzine") < 10)
 			mob.reagents.add_reagent("hyperzine", 4)
 		if (prob(30))
@@ -365,7 +365,7 @@
 	stage = 1
 	activate(var/mob/living/carbon/mob,var/multiplier)
 		if (prob(30))
-			mob << "<span class='warning'>You feel like you are about to sneeze!</span>"
+			mob << SPAN_WARNING("You feel like you are about to sneeze!")
 		sleep(5)
 		mob.say("*sneeze")
 		for(var/mob/living/carbon/M in get_step(mob,mob.dir))
@@ -378,7 +378,7 @@
 	name = "Flemmingtons"
 	stage = 1
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		mob << "<span class='warning'>Mucous runs down the back of your throat.</span>"
+		mob << SPAN_WARNING("Mucous runs down the back of your throat.")
 
 /datum/disease2/effect/drool
 	name = "Saliva Effect"
@@ -398,4 +398,4 @@
 	name = "Headache"
 	stage = 1
 	activate(var/mob/living/carbon/mob,var/multiplier)
-		mob << "<span class='warning'>Your head hurts a bit.</span>"
+		mob << SPAN_WARNING("Your head hurts a bit.")

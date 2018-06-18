@@ -4,9 +4,9 @@
 	name = "airlock electronics"
 	icon = 'icons/obj/doors/door_assembly.dmi'
 	icon_state = "door_electronics"
-	w_class = 2.0 //It should be tiny! -Agouri
+	w_class = ITEM_SIZE_SMALL //It should be tiny! -Agouri
 
-	matter = list(DEFAULT_WALL_MATERIAL = 50,"glass" = 50)
+	matter = list(MATERIAL_PLASTIC = 2, MATERIAL_GLASS = 3)
 
 	req_access = list(access_engine)
 
@@ -17,7 +17,7 @@
 	var/locked = 1
 
 	attack_self(mob/user as mob)
-		if (!ishuman(user) && !istype(user,/mob/living/silicon/robot))
+		if (!ishuman(user) && !isrobot(user))
 			return ..(user)
 
 		var/t1 = text("<B>Access control</B><br>\n")
@@ -55,14 +55,14 @@
 
 	Topic(href, href_list)
 		..()
-		if (usr.stat || usr.restrained() || (!ishuman(usr) && !istype(usr,/mob/living/silicon)))
+		if (usr.stat || usr.restrained() || (!ishuman(usr) && !issilicon(usr)))
 			return
 		if (href_list["close"])
 			usr << browse(null, "window=airlock")
 			return
 
 		if (href_list["login"])
-			if(istype(usr,/mob/living/silicon))
+			if(issilicon(usr))
 				src.locked = 0
 				src.last_configurator = usr.name
 			else

@@ -12,6 +12,7 @@
 	// Icon/appearance vars.
 	var/icobase = 'icons/mob/human_races/r_human.dmi'    // Normal icon set.
 	var/deform = 'icons/mob/human_races/r_def_human.dmi' // Mutated icon set.
+	var/faceicobase = 'icons/mob/human_face.dmi'
 
 	// Damage overlay and masks.
 	var/damage_overlays = 'icons/mob/human_races/masks/dam_human.dmi'
@@ -39,13 +40,13 @@
 	var/max_age = 70
 
 	// Language/culture vars.
-	var/default_language = "Galactic Common" // Default language is used when 'say' is used without modifiers.
-	var/language = "Galactic Common"         // Default racial language, if any.
+	var/default_language = LANGUAGE_COMMON   // Default language is used when 'say' is used without modifiers.
+	var/language = LANGUAGE_COMMON           // Default racial language, if any.
 	var/list/secondary_langs = list()        // The names of secondary languages that are available to this species.
 	var/list/speech_sounds                   // A list of sounds to potentially play when speaking.
 	var/list/speech_chance                   // The likelihood of a speech sound playing.
 	var/num_alternate_languages = 0          // How many secondary languages are available to select at character creation
-	var/name_language = "Galactic Common"    // The language to use when determining names for this species, or null to use the first name/last name generator
+	var/name_language = LANGUAGE_COMMON      // The language to use when determining names for this species, or null to use the first name/last name generator
 
 	// Combat vars.
 	var/total_health = 100                   // Point at which the mob will enter crit.
@@ -122,6 +123,7 @@
 	var/appearance_flags = 0      // Appearance/display related features.
 	var/spawn_flags = 0           // Flags that specify who can spawn as this species
 	var/slowdown = 0              // Passive movement speed malus (or boost, if negative)
+	var/silent_steps = 0          // Stops step noises
 	var/primitive_form            // Lesser form, if any (ie. monkey for humans)
 	var/greater_form              // Greater form, if any, ie. human for monkeys.
 	var/holder_type
@@ -129,28 +131,28 @@
 	var/rarity_value = 1          // Relative rarity/collector value for this species.
 	                              // Determines the organs that the species spawns with and
 	var/list/has_organ = list(    // which required-organ checks are conducted.
-		"heart" =    /obj/item/organ/heart,
-		"lungs" =    /obj/item/organ/lungs,
-		"liver" =    /obj/item/organ/liver,
-		"kidneys" =  /obj/item/organ/kidneys,
-		"brain" =    /obj/item/organ/brain,
-		"appendix" = /obj/item/organ/appendix,
-		"eyes" =     /obj/item/organ/eyes
+		O_HEART =    /obj/item/organ/internal/heart,
+		O_LUNGS =    /obj/item/organ/internal/lungs,
+		O_LIVER =    /obj/item/organ/internal/liver,
+		O_KIDNEYS =  /obj/item/organ/internal/kidneys,
+		O_BRAIN =    /obj/item/organ/internal/brain,
+		O_APPENDIX = /obj/item/organ/internal/appendix,
+		O_EYES =     /obj/item/organ/internal/eyes
 		)
 	var/vision_organ              // If set, this organ is required for vision. Defaults to "eyes" if the species has them.
 
 	var/list/has_limbs = list(
-		"chest" =  list("path" = /obj/item/organ/external/chest),
-		"groin" =  list("path" = /obj/item/organ/external/groin),
-		"head" =   list("path" = /obj/item/organ/external/head),
-		"l_arm" =  list("path" = /obj/item/organ/external/arm),
-		"r_arm" =  list("path" = /obj/item/organ/external/arm/right),
-		"l_leg" =  list("path" = /obj/item/organ/external/leg),
-		"r_leg" =  list("path" = /obj/item/organ/external/leg/right),
-		"l_hand" = list("path" = /obj/item/organ/external/hand),
-		"r_hand" = list("path" = /obj/item/organ/external/hand/right),
-		"l_foot" = list("path" = /obj/item/organ/external/foot),
-		"r_foot" = list("path" = /obj/item/organ/external/foot/right)
+		BP_CHEST =  new /datum/organ_description/chest,
+		BP_GROIN =  new /datum/organ_description/groin,
+		BP_HEAD =   new /datum/organ_description/head,
+		BP_L_ARM =  new /datum/organ_description/arm/left,
+		BP_R_ARM =  new /datum/organ_description/arm/right,
+		BP_L_LEG =  new /datum/organ_description/leg/left,
+		BP_R_LEG =  new /datum/organ_description/leg/right,
+		BP_L_HAND = new /datum/organ_description/hand/left,
+		BP_R_HAND = new /datum/organ_description/hand/right,
+		BP_L_FOOT = new /datum/organ_description/foot/left,
+		BP_R_FOOT = new /datum/organ_description/foot/right
 		)
 
 	// Misc
@@ -173,8 +175,8 @@
 		hud = new()
 
 	//If the species has eyes, they are the default vision organ
-	if(!vision_organ && has_organ["eyes"])
-		vision_organ = "eyes"
+	if(!vision_organ && has_organ[O_EYES])
+		vision_organ = O_EYES
 
 	unarmed_attacks = list()
 	for(var/u_type in unarmed_types)
@@ -185,6 +187,13 @@
 
 /datum/species/proc/get_bodytype()
 	return name
+
+/datum/species/proc/get_body_build(var/gender, var/prefered)
+	for(var/BBT in typesof(/datum/body_build))
+		var/datum/body_build/BB = new BBT
+		if((!prefered || BB.name == prefered) && (gender in genders))
+			return BB
+
 
 /datum/species/proc/get_environment_discomfort(var/mob/living/carbon/human/H, var/msg_type)
 
@@ -202,10 +211,10 @@
 	switch(msg_type)
 		if("cold")
 			if(!covered)
-				H << "<span class='danger'>[pick(cold_discomfort_strings)]</span>"
+				H << SPAN_DANGER("[pick(cold_discomfort_strings)]")
 		if("heat")
 			if(covered)
-				H << "<span class='danger'>[pick(heat_discomfort_strings)]</span>"
+				H << SPAN_DANGER("[pick(heat_discomfort_strings)]")
 
 /datum/species/proc/sanitize_name(var/name)
 	return sanitizeName(name)
@@ -224,35 +233,8 @@
 		return "unknown"
 	return species_language.get_random_name(gender)
 
-/datum/species/proc/create_organs(var/mob/living/carbon/human/H) //Handles creation of mob organs.
-
-	for(var/obj/item/organ/organ in H.contents)
-		if((organ in H.organs) || (organ in H.internal_organs))
-			qdel(organ)
-
-	if(H.organs)                  H.organs.Cut()
-	if(H.internal_organs)         H.internal_organs.Cut()
-	if(H.organs_by_name)          H.organs_by_name.Cut()
-	if(H.internal_organs_by_name) H.internal_organs_by_name.Cut()
-
-	H.organs = list()
-	H.internal_organs = list()
-	H.organs_by_name = list()
-	H.internal_organs_by_name = list()
-
-	for(var/limb_type in has_limbs)
-		var/list/organ_data = has_limbs[limb_type]
-		var/limb_path = organ_data["path"]
-		var/obj/item/organ/O = new limb_path(H)
-		organ_data["descriptor"] = O.name
-
-	for(var/organ_tag in has_organ)
-		var/organ_type = has_organ[organ_tag]
-		var/obj/item/organ/O = new organ_type(H,1)
-		if(organ_tag != O.organ_tag)
-			warning("[O.type] has a default organ tag \"[O.organ_tag]\" that differs from the species' organ tag \"[organ_tag]\". Updating organ_tag to match.")
-			O.organ_tag = organ_tag
-		H.internal_organs_by_name[organ_tag] = O
+/datum/species/proc/organs_spawned(var/mob/living/carbon/human/H)
+	return
 
 /datum/species/proc/hug(var/mob/living/carbon/human/H,var/mob/living/target)
 
@@ -263,8 +245,8 @@
 		if(FEMALE)
 			t_him = "her"
 
-	H.visible_message("<span class='notice'>[H] hugs [target] to make [t_him] feel better!</span>", \
-					"<span class='notice'>You hug [target] to make [t_him] feel better!</span>")
+	H.visible_message(SPAN_NOTICE("[H] hugs [target] to make [t_him] feel better!"), \
+					SPAN_NOTICE("You hug [target] to make [t_him] feel better!"))
 
 /datum/species/proc/remove_inherent_verbs(var/mob/living/carbon/human/H)
 	if(inherent_verbs)
@@ -340,12 +322,6 @@
 
 	if(!H.druggy)
 		H.see_in_dark = (H.sight == SEE_TURFS|SEE_MOBS|SEE_OBJS) ? 8 : min(darksight + H.equipment_darkness_modifier, 8)
-		if(H.seer)
-			var/obj/effect/rune/R = locate() in H.loc
-			if(R && R.word1 == cultwords["see"] && R.word2 == cultwords["hell"] && R.word3 == cultwords["join"])
-				H.see_invisible = SEE_INVISIBLE_CULT
-		if(H.see_invisible != SEE_INVISIBLE_CULT && H.equipment_see_invis)
-			H.see_invisible = min(H.see_invisible, H.equipment_see_invis)
 
 	if(H.equipment_tint_total >= TINT_BLIND)
 		H.eye_blind = max(H.eye_blind, 1)

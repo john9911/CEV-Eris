@@ -11,7 +11,7 @@ var/list/floor_light_cache = list()
 	idle_power_usage = 2
 	active_power_usage = 20
 	power_channel = LIGHT
-	matter = list(DEFAULT_WALL_MATERIAL = 2500, "glass" = 2750)
+	matter = list(MATERIAL_STEEL = 2, MATERIAL_GLASS = 3)
 
 	var/on
 	var/damaged
@@ -22,32 +22,47 @@ var/list/floor_light_cache = list()
 /obj/machinery/floor_light/prebuilt
 	anchored = 1
 
-/obj/machinery/floor_light/attackby(var/obj/item/W, var/mob/user)
-	if(istype(W, /obj/item/weapon/screwdriver))
-		anchored = !anchored
-		visible_message("<span class='notice'>\The [user] has [anchored ? "attached" : "detached"] \the [src].</span>")
-	else if(istype(W, /obj/item/weapon/weldingtool) && (damaged || (stat & BROKEN)))
-		var/obj/item/weapon/weldingtool/WT = W
-		if(!WT.remove_fuel(0, user))
-			user << "<span class='warning'>\The [src] must be on to complete this task.</span>"
+/obj/machinery/floor_light/attackby(var/obj/item/I, var/mob/user)
+
+	var/list/usable_qualities = list(QUALITY_PULSING, QUALITY_SCREW_DRIVING)
+	if((damaged || (stat & BROKEN)))
+		usable_qualities.Add(QUALITY_WELDING)
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_PULSING)
+			if(on)
+				user << SPAN_WARNING("\The [src] must be turn off to change a color.")
+				return
+			if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+				var/new_light_colour = input("Please select color.", "Color", rgb(255,255,255)) as color|null
+				default_light_colour = new_light_colour
+				update_brightness()
+				return
 			return
-		playsound(src.loc, 'sound/items/Welder.ogg', 50, 1)
-		if(!do_after(user, 20, src))
+
+		if(QUALITY_WELDING)
+			if((damaged || (stat & BROKEN)))
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+					visible_message(SPAN_NOTICE("\The [user] has repaired \the [src]."))
+					stat &= ~BROKEN
+					damaged = null
+					update_brightness()
+					return
 			return
-		if(!src || !WT.isOn())
+
+		if(QUALITY_SCREW_DRIVING)
+			if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+				anchored = !anchored
+				visible_message("<span class='notice'>\The [user] has [anchored ? "attached" : "detached"] \the [src].</span>")
+				return
 			return
-		visible_message("<span class='notice'>\The [user] has repaired \the [src].</span>")
-		stat &= ~BROKEN
-		damaged = null
-		update_brightness()
-	else if (istype(W, /obj/item/device/multitool))
-		if(on)
-			user << "<span class='warning'>\The [src] must be turn off to change a color.</span>"
+
+		if(ABORT_CHECK)
 			return
-		var/new_light_colour = input("Please select color.", "Color", rgb(255,255,255)) as color|null
-		default_light_colour = new_light_colour
-		update_brightness()
-	else if(W.force && user.a_intent == "hurt")
+
+	if(I.force && user.a_intent == "hurt")
 		attack_hand(user)
 	return
 
@@ -55,11 +70,11 @@ var/list/floor_light_cache = list()
 
 	if(user.a_intent == I_HURT && !issmall(user))
 		if(!isnull(damaged) && !(stat & BROKEN))
-			visible_message("<span class='danger'>\The [user] smashes \the [src]!</span>")
+			visible_message(SPAN_DANGER("\The [user] smashes \the [src]!"))
 			playsound(src, "shatter", 70, 1)
 			stat |= BROKEN
 		else
-			visible_message("<span class='danger'>\The [user] attacks \the [src]!</span>")
+			visible_message(SPAN_DANGER("\The [user] attacks \the [src]!"))
 			playsound(src.loc, 'sound/effects/Glasshit.ogg', 75, 1)
 			if(isnull(damaged)) damaged = 0
 		update_brightness()
@@ -67,15 +82,15 @@ var/list/floor_light_cache = list()
 	else
 
 		if(!anchored)
-			user << "<span class='warning'>\The [src] must be screwed down first.</span>"
+			user << SPAN_WARNING("\The [src] must be screwed down first.")
 			return
 
 		if(stat & BROKEN)
-			user << "<span class='warning'>\The [src] is too damaged to be functional.</span>"
+			user << SPAN_WARNING("\The [src] is too damaged to be functional.")
 			return
 
 		if(stat & NOPOWER)
-			user << "<span class='warning'>\The [src] is unpowered.</span>"
+			user << SPAN_WARNING("\The [src] is unpowered.")
 			return
 
 		on = !on
@@ -84,7 +99,7 @@ var/list/floor_light_cache = list()
 		update_brightness()
 		return
 
-/obj/machinery/floor_light/process()
+/obj/machinery/floor_light/Process()
 	..()
 	var/need_update
 	if((!anchored || broken()) && on)
@@ -157,11 +172,8 @@ var/list/floor_light_cache = list()
 	var/area/A = get_area(src)
 	if(A)
 		on = 0
-	..()
+	. = ..()
 
-/obj/machinery/floor_light/cultify()
-	default_light_colour = "#FF0000"
-	update_brightness()
 //techlight neon
 /obj/machinery/floor_light/neon
 	name = "techlight neon"
@@ -170,18 +182,18 @@ var/list/floor_light_cache = list()
 /obj/machinery/floor_light/neon/attack_hand(var/mob/user)
 	if(user.a_intent == I_HURT && !issmall(user))
 		if(!isnull(damaged) && !(stat & BROKEN))
-			visible_message("<span class='danger'>\The [user] smashes \the [src]!</span>")
+			visible_message(SPAN_DANGER("\The [user] smashes \the [src]!"))
 			playsound(src, "shatter", 70, 1)
 			stat |= BROKEN
 		else
-			visible_message("<span class='danger'>\The [user] attacks \the [src]!</span>")
+			visible_message(SPAN_DANGER("\The [user] attacks \the [src]!"))
 			playsound(src.loc, 'sound/effects/Glasshit.ogg', 75, 1)
 			if(isnull(damaged)) damaged = 0
 		update_brightness()
 		return
 	return
 
-/obj/machinery/floor_light/neon/process()
+/obj/machinery/floor_light/neon/Process()
 	if(!(use_power || idle_power_usage || active_power_usage))
 		return PROCESS_KILL
 	var/need_update

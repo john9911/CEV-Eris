@@ -18,10 +18,11 @@
 	..()
 	beaker = new /obj/item/weapon/reagent_containers/glass/beaker/large(src)
 
-/obj/machinery/sleeper/initialize()
+/obj/machinery/sleeper/Initialize()
+	. = ..()
 	update_icon()
 
-/obj/machinery/sleeper/process()
+/obj/machinery/sleeper/Process()
 	if(stat & (NOPOWER|BROKEN))
 		return
 
@@ -98,7 +99,7 @@
 		return 1
 
 	if(usr == occupant)
-		usr << "<span class='warning'>You can't reach the controls from the inside.</span>"
+		usr << SPAN_WARNING("You can't reach the controls from the inside.")
 		return
 
 	add_fingerprint(usr)
@@ -128,10 +129,13 @@
 			beaker = I
 			user.drop_item()
 			I.loc = src
-			user.visible_message("<span class='notice'>\The [user] adds \a [I] to \the [src].</span>", "<span class='notice'>You add \a [I] to \the [src].</span>")
+			user.visible_message(SPAN_NOTICE("\The [user] adds \a [I] to \the [src]."), SPAN_NOTICE("You add \a [I] to \the [src]."))
 		else
-			user << "<span class='warning'>\The [src] has a beaker already.</span>"
+			user << SPAN_WARNING("\The [src] has a beaker already.")
 		return
+
+/obj/machinery/sleeper/affect_grab(var/mob/user, var/mob/target)
+	go_in(target, user)
 
 /obj/machinery/sleeper/MouseDrop_T(var/mob/target, var/mob/user)
 	if(user.stat || user.lying || !Adjacent(user) || !target.Adjacent(user)|| !ishuman(target))
@@ -166,7 +170,7 @@
 	if(stat & (BROKEN|NOPOWER))
 		return
 	if(occupant)
-		user << "<span class='warning'>\The [src] is already occupied.</span>"
+		user << SPAN_WARNING("\The [src] is already occupied.")
 		return
 
 	if(M == user)
@@ -176,7 +180,7 @@
 
 	if(do_after(user, 20, src))
 		if(occupant)
-			user << "<span class='warning'>\The [src] is already occupied.</span>"
+			user << SPAN_WARNING("\The [src] is already occupied.")
 			return
 		M.stop_pulling()
 		if(M.client)

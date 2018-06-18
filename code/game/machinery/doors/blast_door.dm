@@ -31,12 +31,12 @@
 	var/_wifi_id
 	var/datum/wifi/receiver/button/door/wifi_receiver
 
-/obj/machinery/door/blast/initialize()
-	..()
+/obj/machinery/door/blast/Initialize()
+	. = ..()
 	if(_wifi_id)
 		wifi_receiver = new(_wifi_id, src)
 
-/obj/machinery/door/airlock/Destroy()
+/obj/machinery/door/blast/Destroy()
 	qdel(wifi_receiver)
 	wifi_receiver = null
 	return ..()
@@ -103,32 +103,35 @@
 // Parameters: 2 (C - Item this object was clicked with, user - Mob which clicked this object)
 // Description: If we are clicked with crowbar or wielded fire axe, try to manually open the door.
 // This only works on broken doors or doors without power. Also allows repair with Plasteel.
-/obj/machinery/door/blast/attackby(obj/item/weapon/C as obj, mob/user as mob)
+/obj/machinery/door/blast/attackby(obj/item/I, mob/user)
 	src.add_fingerprint(user)
-	if(istype(C, /obj/item/weapon/crowbar) || (istype(C, /obj/item/weapon/material/twohanded/fireaxe) && C:wielded == 1))
-		if(((stat & NOPOWER) || (stat & BROKEN)) && !( src.operating ))
-			force_toggle()
-		else
-			usr << "<span class='notice'>[src]'s motors resist your effort.</span>"
+	if(QUALITY_PRYING in I.tool_qualities)
+		if(I.use_tool(user, src, WORKTIME_LONG, QUALITY_PRYING, FAILCHANCE_VERY_EASY,  required_stat = STAT_PHY))
+			if(((stat & NOPOWER) || (stat & BROKEN)) && !( src.operating ))
+				force_toggle()
+			else
+				usr << SPAN_NOTICE("[src]'s motors resist your effort.")
 		return
-	if(istype(C, /obj/item/stack/material) && C.get_material_name() == "plasteel")
+	if(istype(I, /obj/item/stack/material) && I.get_material_name() == "plasteel")
 		var/amt = Ceiling((maxhealth - health)/150)
 		if(!amt)
-			usr << "<span class='notice'>\The [src] is already fully repaired.</span>"
+			usr << SPAN_NOTICE("\The [src] is already fully repaired.")
 			return
-		var/obj/item/stack/P = C
+		var/obj/item/stack/P = I
 		if(P.amount < amt)
-			usr << "<span class='warning'>You don't have enough sheets to repair this! You need at least [amt] sheets.</span>"
+			usr << SPAN_WARNING("You don't have enough sheets to repair this! You need at least [amt] sheets.")
 			return
-		usr << "<span class='notice'>You begin repairing [src]...</span>"
+		usr << SPAN_NOTICE("You begin repairing [src]...")
 		if(do_after(usr, 30, src))
 			if(P.use(amt))
-				usr << "<span class='notice'>You have repaired \the [src]</span>"
+				usr << SPAN_NOTICE("You have repaired \the [src]")
 				src.repair()
 			else
-				usr << "<span class='warning'>You don't have enough sheets to repair this! You need at least [amt] sheets.</span>"
+				usr << SPAN_WARNING("You don't have enough sheets to repair this! You need at least [amt] sheets.")
 
-
+/obj/machinery/door/blast/attack_hand(mob/user as mob)
+	usr << SPAN_WARNING("You can't [density ? "open" : "close"] [src] by your own hands only.")
+	return
 
 // Proc: open()
 // Parameters: None
@@ -169,16 +172,16 @@
 
 // SUBTYPE: Regular
 // Your classical blast door, found almost everywhere.
-obj/machinery/door/blast/regular
+/obj/machinery/door/blast/regular
 	icon_state_open = "pdoor0"
 	icon_state_opening = "pdoorc0"
 	icon_state_closed = "pdoor1"
 	icon_state_closing = "pdoorc1"
 	icon_state = "pdoor1"
-	maxhealth = 600
+	maxhealth = 400
 	block_air_zones = 1
 
-obj/machinery/door/blast/regular/open
+/obj/machinery/door/blast/regular/open
 	icon_state = "pdoor0"
 	density = 0
 	opacity = 0
@@ -191,7 +194,8 @@ obj/machinery/door/blast/regular/open
 	icon_state_closed = "shutter1"
 	icon_state_closing = "shutterc1"
 	icon_state = "shutter1"
-obj/machinery/door/proc/crush()
+
+/obj/machinery/door/proc/crush()
 	for(var/mob/living/L in get_turf(src))
 		if(ishuman(L)) //For humans
 			var/mob/living/carbon/human/H = L

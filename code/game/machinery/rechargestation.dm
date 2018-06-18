@@ -7,8 +7,9 @@
 	anchored = 1
 	use_power = 1
 	idle_power_usage = 50
+	circuit = /obj/item/weapon/circuitboard/recharge_station
 	var/mob/occupant = null
-	var/obj/item/weapon/cell/cell = null
+	var/obj/item/weapon/cell/large/cell = null
 	var/icon_update_tick = 0	// Used to rebuild the overlay only once every 10 ticks
 	var/charging = 0
 
@@ -24,23 +25,12 @@
 /obj/machinery/recharge_station/New()
 	..()
 
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/recharge_station(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new /obj/item/weapon/cell/high(src)
-	component_parts += new /obj/item/stack/cable_coil(src, 5)
-
-	RefreshParts()
-
 	update_icon()
 
 /obj/machinery/recharge_station/proc/has_cell_power()
 	return cell && cell.percent() > 0
 
-/obj/machinery/recharge_station/process()
+/obj/machinery/recharge_station/Process()
 	if(stat & (BROKEN))
 		return
 	if(!cell) // Shouldn't be possible, but sanity check
@@ -105,10 +95,9 @@
 			R.adjustFireLoss(-wire_rate)
 	else if(ishuman(occupant))
 		var/mob/living/carbon/human/H = occupant
-		if(!isnull(H.internal_organs_by_name["cell"]) && H.nutrition < 450)
+		if(!isnull(H.internal_organs_by_name[O_CELL]) && H.nutrition < 450)
 			H.nutrition = min(H.nutrition+10, 450)
 			cell.use(7000/450*10)
-
 
 /obj/machinery/recharge_station/examine(mob/user)
 	..(user)
@@ -133,14 +122,36 @@
 		cell.emp_act(severity)
 	..(severity)
 
-/obj/machinery/recharge_station/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(!occupant)
-		if(default_deconstruction_screwdriver(user, O))
+/obj/machinery/recharge_station/attackby(var/obj/item/I, var/mob/user as mob)
+	if(occupant)
+		user << SPAN_NOTICE("You cant do anything with [src] while someone inside of it.")
+		return
+
+	var/tool_type = I.get_tool_type(user, I, list(QUALITY_PRYING, QUALITY_SCREW_DRIVING))
+	switch(tool_type)
+
+		if(QUALITY_PRYING)
+			if(!panel_open)
+				user << SPAN_NOTICE("You cant get to the components of \the [src], remove the cover.")
+				return
+			if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_HARD, required_stat = STAT_PRD))
+				user << SPAN_NOTICE("You remove the components of \the [src] with [I].")
+				dismantle()
+				return
+
+		if(QUALITY_SCREW_DRIVING)
+			var/used_sound = panel_open ? 'sound/machines/Custom_screwdriveropen.ogg' :  'sound/machines/Custom_screwdriverclose.ogg'
+			if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD, instant_finish_tier = 30, forced_sound = used_sound))
+				panel_open = !panel_open
+				user << SPAN_NOTICE("You [panel_open ? "open" : "close"] the maintenance hatch of \the [src] with [I].")
+				update_icon()
+				return
+
+		if(ABORT_CHECK)
 			return
-		if(default_deconstruction_crowbar(user, O))
-			return
-		if(default_part_replacement(user, O))
-			return
+
+	if(default_part_replacement(I, user))
+		return
 
 	..()
 
@@ -154,7 +165,7 @@
 			cap_rating += P.rating
 		if(istype(P, /obj/item/weapon/stock_parts/manipulator))
 			man_rating += P.rating
-	cell = locate(/obj/item/weapon/cell) in component_parts
+	cell = locate(/obj/item/weapon/cell/large) in component_parts
 
 	charging_power = 40000 + 40000 * cap_rating
 	restore_power_active = 10000 + 15000 * cap_rating
@@ -225,7 +236,7 @@
 			return 1
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
-		if(!isnull(H.internal_organs_by_name["cell"]))
+		if(!isnull(H.internal_organs_by_name[O_CELL]))
 			return 1
 	return 0
 

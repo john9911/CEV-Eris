@@ -14,16 +14,16 @@
 	if(!istype(user))
 		return
 
-	user.visible_message("<span class='danger'>\The [user] has prodded \the [M] with \a [src]!</span>")
+	user.visible_message(SPAN_DANGER("\The [user] has prodded \the [M] with \a [src]!"))
 
 	if(!user.cell || !user.cell.checked_use(1250)) //Slightly more than a baton.
 		return
 
 	playsound(loc, 'sound/weapons/Egloves.ogg', 50, 1, -1)
-	
+
 	M.apply_effect(5, STUTTER)
 	M.stun_effect_act(0, 70, check_zone(hit_zone), src)
-	
+
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
 		H.forcesay(hit_appends)
@@ -51,14 +51,14 @@
 	name = "\proper thermal vision"
 	sight_mode = BORGTHERM
 	icon_state = "thermal"
-	icon = 'icons/obj/clothing/glasses.dmi'
+	icon = 'icons/inventory/eyes/icon.dmi'
 
 
 /obj/item/borg/sight/meson
 	name = "\proper meson vision"
 	sight_mode = BORGMESON
 	icon_state = "meson"
-	icon = 'icons/obj/clothing/glasses.dmi'
+	icon = 'icons/inventory/eyes/icon.dmi'
 
 /obj/item/borg/sight/material
 	name = "\proper material scanner vision"
@@ -72,7 +72,7 @@
 /obj/item/borg/sight/hud/med
 	name = "medical hud"
 	icon_state = "healthhud"
-	icon = 'icons/obj/clothing/glasses.dmi'
+	icon = 'icons/inventory/eyes/icon.dmi'
 
 	New()
 		..()
@@ -83,7 +83,7 @@
 /obj/item/borg/sight/hud/sec
 	name = "security hud"
 	icon_state = "securityhud"
-	icon = 'icons/obj/clothing/glasses.dmi'
+	icon = 'icons/inventory/eyes/icon.dmi'
 
 	New()
 		..()

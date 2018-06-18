@@ -11,11 +11,9 @@ notifications:
 
 env:
     global:
-    - BYOND_MAJOR="511"
-    - BYOND_MINOR="1366"
-    - DM_BUILDFILE="baystation12.dme"
-#    matrix:
-#    - DM_MAPFILE="CEV_Eris-1"
+    - BYOND_MAJOR="512"
+    - BYOND_MINOR="1423"
+    - DM_BUILDFILE="cev_eris.dme"
 
 cache:
   directories:
@@ -33,7 +31,8 @@ before_script:
   - ./install-byond.sh
 
 script:
-  - (! grep 'step_[xy]' _maps/**/*.dmm)
+  - (! grep 'step_[xy]' maps/*.dmm)
+  - (! grep -E "(/obj/machinery/door/firedoor).*\1" maps/*.dmm)
   - source $HOME/BYOND-${BYOND_MAJOR}.${BYOND_MINOR}/byond/bin/byondsetup
 #  - bash dm.sh -M${DM_MAPFILE} ${DM_BUILDFILE}
   - bash dm.sh ${DM_BUILDFILE}

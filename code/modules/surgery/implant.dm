@@ -13,22 +13,22 @@
 		return affected && affected.open == (affected.encased ? 3 : 2) && !(affected.status & ORGAN_BLEEDING)
 
 	proc/get_max_wclass(var/obj/item/organ/external/affected)
-		switch (affected.name)
-			if ("head")
+		switch (affected.organ_tag)
+			if(BP_HEAD)
 				return 1
-			if ("upper body")
+			if(BP_CHEST)
 				return 3
-			if ("lower body")
+			if(BP_GROIN)
 				return 2
 		return 0
 
 	proc/get_cavity(var/obj/item/organ/external/affected)
-		switch (affected.name)
-			if ("head")
+		switch (affected.organ_tag)
+			if(BP_HEAD)
 				return "cranial"
-			if ("upper body")
+			if(BP_CHEST)
 				return "thoracic"
-			if ("lower body")
+			if(BP_GROIN)
 				return "abdominal"
 		return ""
 
@@ -39,11 +39,7 @@
 		affected.createwound(CUT, 20)
 
 /datum/surgery_step/cavity/make_space
-	allowed_tools = list(
-	/obj/item/weapon/surgicaldrill = 100,	\
-	/obj/item/weapon/pen = 75,	\
-	/obj/item/stack/rods = 50
-	)
+	requedQuality = QUALITY_DRILLING
 
 	min_duration = 60
 	max_duration = 80
@@ -68,12 +64,7 @@
 
 /datum/surgery_step/cavity/close_space
 	priority = 2
-	allowed_tools = list(
-	/obj/item/weapon/cautery = 100,			\
-	/obj/item/clothing/mask/smokable/cigarette = 75,	\
-	/obj/item/weapon/flame/lighter = 50,			\
-	/obj/item/weapon/weldingtool = 25
-	)
+	requedQuality = QUALITY_CAUTERIZING
 
 	min_duration = 60
 	max_duration = 80
@@ -106,7 +97,7 @@
 	can_use(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 		if(..())
 			var/obj/item/organ/external/affected = target.get_organ(target_zone)
-			if(istype(user,/mob/living/silicon/robot))
+			if(isrobot(user))
 				return
 			if(affected && affected.cavity)
 				var/total_volume = tool.w_class
@@ -129,13 +120,14 @@
 
 		user.visible_message("\blue [user] puts \the [tool] inside [target]'s [get_cavity(affected)] cavity.", \
 		"\blue You put \the [tool] inside [target]'s [get_cavity(affected)] cavity." )
-		if (tool.w_class > get_max_wclass(affected)/2 && prob(50) && !(affected.status & ORGAN_ROBOT))
+		if (tool.w_class > get_max_wclass(affected)/2 && prob(50) && !(affected.robotic >= ORGAN_ROBOT))
 			user << "\red You tear some blood vessels trying to fit such a big object in this cavity."
 			var/datum/wound/internal_bleeding/I = new (10)
 			affected.wounds += I
 			affected.owner.custom_pain("You feel something rip in your [affected.name]!", 1)
 		user.drop_item()
 		affected.implants += tool
+		target.update_implants()
 		tool.loc = affected
 		affected.cavity = 0
 
@@ -144,17 +136,13 @@
 //////////////////////////////////////////////////////////////////
 
 /datum/surgery_step/cavity/implant_removal
-	allowed_tools = list(
-	/obj/item/weapon/hemostat = 100,	\
-	/obj/item/weapon/wirecutters = 75,	\
-	/obj/item/weapon/material/kitchen/utensil/fork = 20
-	)
+	requedQuality = QUALITY_CLAMPING
 
 	min_duration = 80
 	max_duration = 100
 
 	can_use(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
-		var/obj/item/organ/brain/sponge = target.internal_organs_by_name["brain"]
+		var/obj/item/organ/internal/brain/sponge = target.internal_organs_by_name[O_BRAIN]
 		return ..() && (!sponge || !sponge.damage)
 
 	begin_step(mob/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
@@ -170,12 +158,25 @@
 		var/find_prob = 0
 
 		if (affected.implants.len)
+			var/list/implants = list()
 
-			var/obj/item/obj = pick(affected.implants)
+			for(var/obj/item/I in affected.implants)
+				if(istype(I,/obj/item/weapon/implant))
+					var/obj/item/weapon/implant/IM = I
+					if(IM.is_external())
+						continue
+				implants.Add(I)
+
+			if(!implants.len)
+				user.visible_message("\blue [user] could not find anything inside [target]'s [affected.name], and pulls \the [tool] out.", \
+				"\blue You could not find anything inside [target]'s [affected.name]." )
+				return
+
+			var/obj/item/obj = pick(implants)
 
 			if(istype(obj,/obj/item/weapon/implant))
-				var/obj/item/weapon/implant/imp = obj
-				if (imp.islegal())
+				var/obj/item/weapon/implant/implant = obj
+				if (implant.is_legal)
 					find_prob +=60
 				else
 					find_prob +=40
@@ -186,8 +187,7 @@
 				user.visible_message("\blue [user] takes something out of incision on [target]'s [affected.name] with \the [tool].", \
 				"\blue You take [obj] out of incision on [target]'s [affected.name]s with \the [tool]." )
 				affected.implants -= obj
-
-				BITSET(target.hud_updateflag, IMPLOYAL_HUD)
+				target.update_implants()
 
 				//Handle possessive brain borers.
 				if(istype(obj,/mob/living/simple_animal/borer))
@@ -202,7 +202,7 @@
 					obj.update_icon()
 					if(istype(obj,/obj/item/weapon/implant))
 						var/obj/item/weapon/implant/imp = obj
-						imp.imp_in = null
+						imp.wearer = null
 						imp.implanted = 0
 				playsound(target.loc, 'sound/effects/squelch1.ogg', 50, 1)
 			else
@@ -223,5 +223,4 @@
 				user.visible_message("\red Something beeps inside [target]'s [affected.name]!")
 				playsound(imp.loc, 'sound/items/countdown.ogg', 75, 1, -3)
 				spawn(25)
-					imp.activate()
-
+					imp.malfunction()

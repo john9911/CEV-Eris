@@ -259,10 +259,10 @@
 	if(!istype(M))
 		return
 
-	if(istype(M, /mob/living/carbon))
+	if(iscarbon(M))
 		var/mob/living/carbon/C = M
 		var/cuff = 1
-		if(istype(C, /mob/living/carbon/human))
+		if(ishuman(C))
 			var/mob/living/carbon/human/H = C
 			if(istype(H.back, /obj/item/weapon/rig) && istype(H.gloves,/obj/item/clothing/gloves/rig))
 				cuff = 0
@@ -277,17 +277,17 @@
 			spawn(2)
 				is_attacking = 0
 				update_icons()
-			visible_message("<span class='warning'>[C] was prodded by [src] with a stun baton!</span>")
+			visible_message(SPAN_WARNING("[C] was prodded by [src] with a stun baton!"))
 		else
 			playsound(loc, 'sound/weapons/handcuffs.ogg', 30, 1, -2)
-			visible_message("<span class='warning'>[src] is trying to put handcuffs on [C]!</span>")
+			visible_message(SPAN_WARNING("[src] is trying to put handcuffs on [C]!"))
 			if(do_mob(src, C, 60))
 				if(!C.handcuffed)
 					C.handcuffed = new /obj/item/weapon/handcuffs(C)
 					C.update_inv_handcuffed()
 				if(preparing_arrest_sounds.len)
 					playsound(loc, pick(preparing_arrest_sounds), 50, 0)
-	else if(istype(M, /mob/living/simple_animal))
+	else if(isanimal(M))
 		var/mob/living/simple_animal/S = M
 		S.AdjustStunned(10)
 		S.adjustBruteLoss(15)
@@ -298,10 +298,10 @@
 		spawn(2)
 			is_attacking = 0
 			update_icons()
-		visible_message("<span class='warning'>[M] was beaten by [src] with a stun baton!</span>")
+		visible_message(SPAN_WARNING("[M] was beaten by [src] with a stun baton!"))
 
 /mob/living/bot/secbot/explode()
-	visible_message("<span class='warning'>[src] blows apart!</span>")
+	visible_message(SPAN_WARNING("[src] blows apart!"))
 	var/turf/Tsec = get_turf(src)
 
 	var/obj/item/weapon/secbot_assembly/Sa = new /obj/item/weapon/secbot_assembly(Tsec)
@@ -332,7 +332,7 @@
 		if(threat >= 4)
 			target = M
 			say("Level [threat] infraction alert!")
-			custom_emote(1, "points at [M.name]!")
+			visible_message(SPAN_DANGER("[src] points at [M.name]!"))
 			mode = SECBOT_HUNT
 			break
 	return
@@ -480,7 +480,7 @@
 
 /obj/item/clothing/head/helmet/attackby(var/obj/item/device/assembly/signaler/S, mob/user as mob)
 	..()
-	if(!issignaler(S))
+	if(!is_signaler(S))
 		..()
 		return
 
@@ -507,43 +507,42 @@
 	var/build_step = 0
 	var/created_name = "Securitron"
 
-/obj/item/weapon/secbot_assembly/attackby(var/obj/item/O, var/mob/user)
+/obj/item/weapon/secbot_assembly/attackby(obj/item/I, mob/user)
 	..()
-	if(istype(O, /obj/item/weapon/weldingtool) && !build_step)
-		var/obj/item/weapon/weldingtool/WT = O
-		if(WT.remove_fuel(0, user))
+	if((QUALITY_WELDING in I.tool_qualities) && !build_step)
+		if(QUALITY_WELDING in I.tool_qualities)
 			build_step = 1
 			overlays += image('icons/obj/aibots.dmi', "hs_hole")
 			user << "You weld a hole in \the [src]."
 
-	else if(isprox(O) && (build_step == 1))
+	else if(is_proximity_sensor(I) && (build_step == 1))
 		user.drop_item()
 		build_step = 2
-		user << "You add \the [O] to [src]."
+		user << "You add \the [I] to [src]."
 		playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 		overlays += image('icons/obj/aibots.dmi', "hs_eye")
 		name = "helmet/signaler/prox sensor assembly"
-		qdel(O)
+		qdel(I)
 
-	else if((istype(O, /obj/item/robot_parts/l_arm) || istype(O, /obj/item/robot_parts/r_arm)) && build_step == 2)
+	else if((istype(I, /obj/item/robot_parts/l_arm) || istype(I, /obj/item/robot_parts/r_arm)) && build_step == 2)
 		user.drop_item()
 		build_step = 3
-		user << "You add \the [O] to [src]."
+		user << "You add \the [I] to [src]."
 		playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 		name = "helmet/signaler/prox sensor/robot arm assembly"
 		overlays += image('icons/obj/aibots.dmi', "hs_arm")
-		qdel(O)
+		qdel(I)
 
-	else if(istype(O, /obj/item/weapon/melee/baton) && build_step == 3)
+	else if(istype(I, /obj/item/weapon/melee/baton) && build_step == 3)
 		user.drop_item()
 		user << "You complete the Securitron! Beep boop."
 		playsound(src.loc, 'sound/effects/insert.ogg', 50, 1)
 		var/mob/living/bot/secbot/S = new /mob/living/bot/secbot(get_turf(src))
 		S.name = created_name
-		qdel(O)
+		qdel(I)
 		qdel(src)
 
-	else if(istype(O, /obj/item/weapon/pen))
+	else if(istype(I, /obj/item/weapon/pen))
 		var/t = sanitizeSafe(input(user, "Enter new robot name", name, created_name), MAX_NAME_LEN)
 		if(!t)
 			return

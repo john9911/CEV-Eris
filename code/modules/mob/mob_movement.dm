@@ -79,9 +79,9 @@
 
 /client/verb/swap_hand()
 	set hidden = 1
-	if(istype(mob, /mob/living/carbon))
+	if(iscarbon(mob))
 		mob:swap_hand()
-	if(istype(mob,/mob/living/silicon/robot))
+	if(isrobot(mob))
 		var/mob/living/silicon/robot/R = mob
 		R.cycle_modules()
 	return
@@ -97,7 +97,7 @@
 
 /client/verb/toggle_throw_mode()
 	set hidden = 1
-	if(!istype(mob, /mob/living/carbon))
+	if(!iscarbon(mob))
 		return
 	if (!mob.stat && isturf(mob.loc) && !mob.restrained())
 		mob:toggle_throw_mode()
@@ -203,6 +203,11 @@
 		mob.ghostize()
 		return
 
+	if(isAI(mob))
+		var/mob/living/silicon/ai/AI = mob
+		if(AI.controlled_mech)
+			return AI.controlled_mech.relaymove(mob, direct)
+
 	// handle possible Eye movement
 	if(mob.eyeobj)
 		return mob.EyeMove(n,direct)
@@ -302,8 +307,8 @@
 			else if(istype(mob.buckled, /obj/structure/bed/chair/wheelchair))
 				if(ishuman(mob))
 					var/mob/living/carbon/human/driver = mob
-					var/obj/item/organ/external/l_hand = driver.get_organ("l_hand")
-					var/obj/item/organ/external/r_hand = driver.get_organ("r_hand")
+					var/obj/item/organ/external/l_hand = driver.get_organ(BP_L_HAND)
+					var/obj/item/organ/external/r_hand = driver.get_organ(BP_R_HAND)
 					if((!l_hand || l_hand.is_stump()) && (!r_hand || r_hand.is_stump()))
 						return // No hands to drive your chair? Tough luck!
 				//drunk wheelchair driving
@@ -379,7 +384,7 @@
 		if(1)
 			var/turf/T = get_step(mob, direct)
 			if(mob.check_holy(T))
-				mob << "<span class='warning'>You cannot get past holy grounds while you are in this plane of existence!</span>"
+				mob << SPAN_WARNING("You cannot get past holy grounds while you are in this plane of existence!")
 				return
 			else
 				mob.forceMove(get_step(mob, direct))
@@ -458,7 +463,7 @@
 
 	//Check to see if we slipped
 	if(prob(slip_chance(5)) && !buckled)
-		src << "<span class='warning'>You slipped!</span>"
+		src << SPAN_WARNING("You slipped!")
 		src.inertia_dir = src.last_move
 		step(src, src.inertia_dir)
 		return 0
@@ -495,3 +500,23 @@
 	if(Check_Shoegrip())
 		return 0
 	return prob_slip
+
+/client/verb/moveup()
+	set name = ".moveup"
+	set instant = 1
+	Move(get_step(mob, NORTH), NORTH)
+
+/client/verb/movedown()
+	set name = ".movedown"
+	set instant = 1
+	Move(get_step(mob, SOUTH), SOUTH)
+
+/client/verb/moveright()
+	set name = ".moveright"
+	set instant = 1
+	Move(get_step(mob, EAST), EAST)
+
+/client/verb/moveleft()
+	set name = ".moveleft"
+	set instant = 1
+	Move(get_step(mob, WEST), WEST)

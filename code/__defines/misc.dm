@@ -4,19 +4,17 @@
 
 #define TRANSITIONEDGE 7 // Distance from edge to move to another z-level.
 
-#define SPACE_PLANE     -3
-#define PARALLAX_PLANE  -2
-#define OPENSPACE_PLANE -1
-
 // Invisibility constants.
 #define INVISIBILITY_LIGHTING             20
+#define INVISIBILITY_ANGEL                30
 #define INVISIBILITY_LEVEL_ONE            35
 #define INVISIBILITY_LEVEL_TWO            45
 #define INVISIBILITY_OBSERVER             60
 #define INVISIBILITY_EYE		          61
 
+#define SEE_INVISIBLE_NOLIGHTING          15
 #define SEE_INVISIBLE_LIVING              25
-#define SEE_INVISIBLE_NOLIGHTING 15
+#define SEE_INVISIBLE_ANGEL               30
 #define SEE_INVISIBLE_LEVEL_ONE           35
 #define SEE_INVISIBLE_LEVEL_TWO           45
 #define SEE_INVISIBLE_CULT		          60
@@ -34,12 +32,11 @@
 #define      STATUS_HUD 2 // Alive, dead, diseased, etc.
 #define          ID_HUD 3 // The job asigned to your ID.
 #define      WANTED_HUD 4 // Wanted, released, paroled, security status.
-#define    IMPLOYAL_HUD 5 // Loyality implant.
-#define     IMPCHEM_HUD 6 // Chemical implant.
-#define    IMPTRACK_HUD 7 // Tracking implant.
-#define SPECIALROLE_HUD 8 // AntagHUD image.
-#define  STATUS_HUD_OOC 9 // STATUS_HUD without virus DB check for someone being ill.
-#define 	  LIFE_HUD 10 // STATUS_HUD that only reports dead or alive
+#define     IMPCHEM_HUD 5 // Chemical implant.
+#define    IMPTRACK_HUD 6 // Tracking implant.
+#define SPECIALROLE_HUD 7 // AntagHUD image.
+#define  STATUS_HUD_OOC 8 // STATUS_HUD without virus DB check for someone being ill.
+#define        LIFE_HUD 9 // STATUS_HUD that only reports dead or alive
 
 //some colors
 #define COLOR_WHITE            "#ffffff"
@@ -80,10 +77,10 @@
 //	Shuttles.
 
 // These define the time taken for the shuttle to get to the space station, and the time before it leaves again.
-#define SHUTTLE_PREPTIME                300 // 5 minutes = 300 seconds - after this time, the shuttle departs centcom and cannot be recalled.
-#define SHUTTLE_LEAVETIME               180 // 3 minutes = 180 seconds - the duration for which the shuttle will wait at the station after arriving.
-#define SHUTTLE_TRANSIT_DURATION        300 // 5 minutes = 300 seconds - how long it takes for the shuttle to get to the station.
-#define SHUTTLE_TRANSIT_DURATION_RETURN 120 // 2 minutes = 120 seconds - for some reason it takes less time to come back, go figure.
+
+#define PODS_PREPTIME 	600	//10 mins = 600 sec - hol long pods will wait before launch
+#define PODS_TRANSIT 	120 //2 mins - how long pods takes to get to the centcomm
+#define PODS_LOCKDOWN	90	//1.5 mins - how long pods stay opened, if evacuation will be cancelled
 
 // Shuttle moving status.
 #define SHUTTLE_IDLE      0
@@ -108,6 +105,13 @@
 #define EVENT_LEVEL_MUNDANE  1
 #define EVENT_LEVEL_MODERATE 2
 #define EVENT_LEVEL_MAJOR    3
+#define EVENT_LEVEL_ECONOMY  4
+
+// Cargo-related stuff.
+#define MANIFEST_ERROR_CHANCE		5
+#define MANIFEST_ERROR_NAME			1
+#define MANIFEST_ERROR_CONTENTS		2
+#define MANIFEST_ERROR_ITEM			4
 
 //General-purpose life speed define for plants.
 #define HYDRO_SPEED_MULTIPLIER 1
@@ -140,8 +144,14 @@
 #define WALL_CAN_OPEN 1
 #define WALL_OPENING 2
 
-#define DEFAULT_TABLE_MATERIAL "plastic"
-#define DEFAULT_WALL_MATERIAL "steel"
+#define COIN_STANDARD "Coin"
+#define COIN_GOLD "Gold coin"
+#define COIN_SILVER "Silver coin"
+#define COIN_DIAMOND "Diamond coin"
+#define COIN_IRON "Iron coin"
+#define COIN_PLASMA "Solid plasma coin"
+#define COIN_URANIUM "Uranium coin"
+#define COIN_PLATINUM "Platunum coin"
 
 #define SHARD_SHARD "shard"
 #define SHARD_SHRAPNEL "shrapnel"
@@ -210,3 +220,24 @@
 
 // Default name for announsment system
 #define ANNOUNSER_NAME "CEV Eris System Announcer"
+
+
+#define LIST_OF_CONSONANT list("b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "y", "z", "á", "â", "ã", "ä", "æ", "ç", "é", "ê", "ë", "ì", "í", "ï", "ð", "ñ", "ò", "ô", "õ", "ö", "÷", "ø", "ù")
+
+//Multi-z
+#define FALL_GIB_DAMAGE 999
+
+//Core implants
+#define CORE_GROUP_RITUAL /datum/core_module/group_ritual
+#define CORE_ACTIVATED /datum/core_module/activatable
+
+//Cruciform
+#define CRUCIFORM_COMMON /datum/core_module/cruciform/common
+#define CRUCIFORM_PRIEST /datum/core_module/cruciform/priest
+#define CRUCIFORM_INQUISITOR /datum/core_module/cruciform/inquisitor
+#define CRUCIFORM_CLONING /datum/core_module/cruciform/cloning
+
+#define CRUCIFORM_OBEY /datum/core_module/cruciform/obey
+#define CRUCIFORM_PRIEST_CONVERT /datum/core_module/activatable/cruciform/priest_convert
+#define CRUCIFORM_OBEY_ACTIVATOR /datum/core_module/activatable/cruciform/obey_activator
+

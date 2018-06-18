@@ -41,7 +41,7 @@
 
 	if(href_list["irc_msg"])
 		if(!holder && received_irc_pm < world.time - 6000) //Worse they can do is spam IRC for 10 minutes
-			usr << "<span class='warning'>You are no longer able to use this, it's been more then 10 minutes since an admin on IRC has responded to you</span>"
+			usr << SPAN_WARNING("You are no longer able to use this, it's been more then 10 minutes since an admin on IRC has responded to you")
 			return
 		if(mute_irc)
 			usr << "<span class='warning'You cannot use this as your client has been muted from sending messages to the admins on IRC</span>"
@@ -97,6 +97,7 @@
 	//CONNECT//
 	///////////
 /client/New(TopicData)
+	dir = NORTH
 	TopicData = null							//Prevent calls to client.Topic from connect
 
 	if(!(connection in list("seeker", "web")))					//Invalid connection type.
@@ -174,94 +175,130 @@
 	if(holder)
 		holder.owner = null
 		admins -= src
+	if(dbcon.IsConnected())
+		var/DBQuery/query = dbcon.NewQuery("UPDATE players SET last_seen = Now() WHERE id = [src.id]")
+		if(!query.Execute())
+			world.log << "Failed to update players table for user with id [src.id]. Error message: [query.ErrorMsg()]."
 	directory -= ckey
 	clients -= src
 	return ..()
+/*
+/client/Destroy()
+	..()
+	return QDEL_HINT_HARDDEL_NOW
+*/
+/client/proc/get_registration_date()
+	// Return data:
+	// Success: "2017-07-28"
+	// Fail: null
 
-
-// here because it's similar to below
-
-// Returns null if no DB connection can be established, or -1 if the requested key was not found in the database
-
-/proc/get_player_age(key)
-	establish_db_connection()
-	if(!dbcon.IsConnected())
-		return null
-
-	var/sql_ckey = sql_sanitize_text(ckey(key))
-
-	var/DBQuery/query = dbcon.NewQuery("SELECT datediff(Now(),firstseen) as age FROM erro_player WHERE ckey = '[sql_ckey]'")
-	query.Execute()
-
-	if(query.NextRow())
-		return text2num(query.item[1])
+	var/http[] = world.Export("http://byond.com/members/[src.ckey]?format=text")
+	if(http)
+		var/F = file2text(http["CONTENT"])
+		if(F)
+			var/regex/R = regex("joined = \"(\\d{4})-(\\d{2})-(\\d{2})\"")
+			if(R.Find(F))
+				var/year = R.group[1]
+				var/month = R.group[2]
+				var/day = R.group[3]
+				src.registration_date = "[year]-[month]-[day]"
+				return src.registration_date
+			else
+				world.log << "Failed retrieving registration date for player [src.ckey] from byond site."
 	else
-		return -1
+		world.log << "Failed retrieving registration date for player [src.ckey] from byond site."
+	return null
+
+
+/client/proc/get_country()
+	// Return data:
+	// Success: list("country" = "United States", "country_code" = "US")
+	// Fail: null
+
+	var/address_check[] = world.Export("http://ip-api.com/line/[sql_sanitize_text(src.address)]")
+	/*
+	Response
+		A successful request will return, by default, the following:
+		 1: success
+		 2: COUNTRY
+		 3: COUNTRY CODE
+		 4: REGION CODE
+		 5: REGION NAME
+		 6: CITY
+		 7: ZIP CODE
+		 8: LATITUDE
+		 9: LONGITUDE
+		10: TIME ZONE
+		11: ISP NAME
+		12: ORGANIZATION NAME
+		13: AS NUMBER / NAME
+		14: IP ADDRESS USED FOR QUERY
+
+		A failed request will return, by default, the following:
+
+		1: fail
+		2: ERROR MESSAGE
+		3: IP ADDRESS USED FOR QUERY
+	*/
+	if(address_check)
+		var/list/response = file2list(address_check["CONTENT"])
+		if(response.len && response[1] == "success")
+			src.country = response[2]
+			src.country_code = response[3]
+			return list("country" = src.country, "country_code" = src.country_code)
+
+	world.log << "Failed on retrieving location for player [src.ckey] from byond site."
+	return null
+
+
+/client/proc/register_in_db()
+	registration_date = src.get_registration_date()
+	src.get_country()
+
+	var/DBQuery/query_insert = dbcon.NewQuery("INSERT INTO players (ckey, first_seen, last_seen, registered, ip, cid, rank, byond_version, country) VALUES ('[src.ckey]', Now(), Now(), '[registration_date]', '[sql_sanitize_text(src.address)]', '[sql_sanitize_text(src.computer_id)]', 'player', [src.byond_version], '[src.country_code]')")
+	if(!query_insert.Execute())
+		world.log << "##CRITICAL: Failed to create player record for user [ckey]. Error message: [query_insert.ErrorMsg()]."
+		return
+
+	else
+		var/DBQuery/get_player_id = dbcon.NewQuery("SELECT id FROM players WHERE ckey = '[src.ckey]'")
+		get_player_id.Execute()
+		if(get_player_id.NextRow())
+			src.id = get_player_id.item[1]
 
 
 /client/proc/log_client_to_db()
-
-	if ( IsGuestKey(src.key) )
+	if(IsGuestKey(src.key))
 		return
 
 	establish_db_connection()
 	if(!dbcon.IsConnected())
 		return
 
-	var/sql_ckey = sql_sanitize_text(src.ckey)
-
-	var/DBQuery/query = dbcon.NewQuery("SELECT id, datediff(Now(),firstseen) as age FROM erro_player WHERE ckey = '[sql_ckey]'")
-	query.Execute()
-	var/sql_id = 0
-	player_age = 0	// New players won't have an entry so knowing we have a connection we set this to zero to be updated if their is a record.
-	while(query.NextRow())
-		sql_id = query.item[1]
-		player_age = text2num(query.item[2])
-		break
-
-	var/DBQuery/query_ip = dbcon.NewQuery("SELECT ckey FROM erro_player WHERE ip = '[address]'")
-	query_ip.Execute()
-	related_accounts_ip = ""
-	while(query_ip.NextRow())
-		related_accounts_ip += "[query_ip.item[1]], "
-		break
-
-	var/DBQuery/query_cid = dbcon.NewQuery("SELECT ckey FROM erro_player WHERE computerid = '[computer_id]'")
-	query_cid.Execute()
-	related_accounts_cid = ""
-	while(query_cid.NextRow())
-		related_accounts_cid += "[query_cid.item[1]], "
-		break
-
-	//Just the standard check to see if it's actually a number
-	if(sql_id)
-		if(istext(sql_id))
-			sql_id = text2num(sql_id)
-		if(!isnum(sql_id))
-			return
-
-	var/admin_rank = "Player"
-	if(src.holder)
-		admin_rank = src.holder.rank
-
-	var/sql_ip = sql_sanitize_text(src.address)
-	var/sql_computerid = sql_sanitize_text(src.computer_id)
-	var/sql_admin_rank = sql_sanitize_text(admin_rank)
-
-
-	if(sql_id)
-		//Player already identified previously, we need to just update the 'lastseen', 'ip' and 'computer_id' variables
-		var/DBQuery/query_update = dbcon.NewQuery("UPDATE erro_player SET lastseen = Now(), ip = '[sql_ip]', computerid = '[sql_computerid]', lastadminrank = '[sql_admin_rank]' WHERE id = [sql_id]")
-		query_update.Execute()
+	// check if client already registered in db
+	var/DBQuery/query = dbcon.NewQuery("SELECT id from players WHERE ckey = '[src.ckey]'")
+	if(!query.Execute())
+		world.log << "Failed to get player record for user with ckey '[src.ckey]'. Error message: [query.ErrorMsg()]."
+		// don't know how to properly handle this case so let's just quit
+		return
 	else
-		//New player!! Need to insert all the stuff
-		var/DBQuery/query_insert = dbcon.NewQuery("INSERT INTO erro_player (id, ckey, firstseen, lastseen, ip, computerid, lastadminrank) VALUES (null, '[sql_ckey]', Now(), Now(), '[sql_ip]', '[sql_computerid]', '[sql_admin_rank]')")
-		query_insert.Execute()
+		if(query.NextRow())
+			// client already registered so we fetch all needed data
+			query = dbcon.NewQuery("SELECT id, registered FROM players WHERE id = [query.item[1]]")
+			query.Execute()
+			if(query.NextRow())
+				src.id = query.item[1]
+				src.registration_date = query.item[2]
+				src.get_country()
 
-	//Logging player access
-	var/serverip = "[world.internet_address]:[world.port]"
-	var/DBQuery/query_accesslog = dbcon.NewQuery("INSERT INTO `erro_connection_log`(`id`,`datetime`,`serverip`,`ckey`,`ip`,`computerid`) VALUES(null,Now(),'[serverip]','[sql_ckey]','[sql_ip]','[sql_computerid]');")
-	query_accesslog.Execute()
+				//Player already identified previously, we need to just update the 'lastseen', 'ip' and 'computer_id' variables
+				var/DBQuery/query_update = dbcon.NewQuery("UPDATE players SET last_seen = Now(), ip = '[src.address]', cid = '[src.computer_id]', byond_version = '[src.byond_version]', country = '[src.country_code]' WHERE id = [src.id]")
+
+				if(!query_update.Execute())
+					world.log << "Failed to update players table for user with id [src.id]. Error message: [query_update.ErrorMsg()]."
+					return
+		else
+			src.register_in_db()
 
 
 #undef TOPIC_SPAM_DELAY
@@ -271,12 +308,15 @@
 //checks if a client is afk
 //3000 frames = 5 minutes
 /client/proc/is_afk(duration=3000)
-	if(inactivity > duration)	return inactivity
-	return 0
+	if(inactivity > duration)
+		return inactivity
+	return FALSE
+
 
 /client/proc/inactivity2text()
 	var/seconds = inactivity/10
 	return "[round(seconds / 60)] minute\s, [seconds % 60] second\s"
+
 
 //send resources to the client. It's here in its own proc so we can move it around easiliy if need be
 /client/proc/send_resources()
@@ -293,17 +333,20 @@
 		//Precache the client with all other assets slowly, so as to not block other browse() calls
 		getFilesSlow(src, asset_cache.cache, register_asset = FALSE)
 
-mob/proc/MayRespawn()
-	return 0
 
-client/proc/MayRespawn()
+/mob/proc/MayRespawn()
+	return FALSE
+
+
+/client/proc/MayRespawn()
 	if(mob)
 		return mob.MayRespawn()
 
 	// Something went wrong, client is usually kicked or transfered to a new mob at this point
-	return 0
+	return FALSE
 
-client/verb/character_setup()
+
+/client/verb/character_setup()
 	set name = "Character Setup"
 	set category = "Preferences"
 	if(prefs)

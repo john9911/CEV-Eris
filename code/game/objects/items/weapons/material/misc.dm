@@ -13,21 +13,15 @@
 	desc = "A very sharp axe blade upon a short fibremetal handle. It has a long history of chopping things, but now it is used for chopping wood."
 	icon = 'icons/obj/weapons.dmi'
 	icon_state = "hatchet"
-	force_divisor = 0.2 // 12 with hardness 60 (steel)
+	force_divisor = 0.4 // 24 with hardness 60 (steel)
 	thrown_force_divisor = 0.75 // 15 with weight 20 (steel)
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	sharp = 1
 	edge = 1
 	origin_tech = "materials=2;combat=1"
 	attack_verb = list("chopped", "torn", "cut")
 	applies_material_colour = 0
-
-/obj/item/weapon/material/hatchet/unathiknife
-	name = "duelling knife"
-	desc = "A length of leather-bound wood studded with razor-sharp teeth. How crude."
-	icon = 'icons/obj/weapons.dmi'
-	icon_state = "unathiknife"
-	attack_verb = list("ripped", "torn", "cut")
+	tool_qualities = list(QUALITY_CUTTING = 20)
 
 /obj/item/weapon/material/hatchet/tacknife
 	name = "tactical knife"
@@ -46,7 +40,7 @@
 	item_state = "hoe"
 	force_divisor = 0.25 // 5 with weight 20 (steel)
 	thrown_force_divisor = 0.25 // as above
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	attack_verb = list("slashed", "sliced", "cut", "clawed")
 
 /obj/item/weapon/material/scythe
@@ -59,7 +53,8 @@
 	edge = 1
 	throw_speed = 1
 	throw_range = 3
-	w_class = 4
+	w_class = ITEM_SIZE_LARGE
 	slot_flags = SLOT_BACK
 	origin_tech = "materials=2;combat=2"
 	attack_verb = list("chopped", "sliced", "cut", "reaped")
+	tool_qualities = list(QUALITY_CUTTING = 20)

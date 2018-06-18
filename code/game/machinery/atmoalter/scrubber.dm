@@ -4,7 +4,7 @@
 	icon = 'icons/obj/atmos.dmi'
 	icon_state = "pscrubber:0"
 	density = 1
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 
 	var/on = 0
 	var/volume_rate = 800
@@ -21,7 +21,7 @@
 
 /obj/machinery/portable_atmospherics/powered/scrubber/New()
 	..()
-	cell = new/obj/item/weapon/cell/apc(src)
+	cell = new/obj/item/weapon/cell/medium/high(src)
 
 /obj/machinery/portable_atmospherics/powered/scrubber/emp_act(severity)
 	if(stat & (BROKEN|NOPOWER))
@@ -50,7 +50,7 @@
 
 	return
 
-/obj/machinery/portable_atmospherics/powered/scrubber/process()
+/obj/machinery/portable_atmospherics/powered/scrubber/Process()
 	..()
 
 	var/power_draw = -1
@@ -166,7 +166,7 @@
 	name = "[name] (ID [id])"
 
 /obj/machinery/portable_atmospherics/powered/scrubber/huge/attack_hand(var/mob/user as mob)
-		usr << "<span class='notice'>You can't directly interact with this machine. Use the scrubber control console.</span>"
+		usr << SPAN_NOTICE("You can't directly interact with this machine. Use the scrubber control console.")
 
 /obj/machinery/portable_atmospherics/powered/scrubber/huge/update_icon()
 	src.overlays = 0
@@ -182,7 +182,7 @@
 	if (old_stat != stat)
 		update_icon()
 
-/obj/machinery/portable_atmospherics/powered/scrubber/huge/process()
+/obj/machinery/portable_atmospherics/powered/scrubber/huge/Process()
 	if(!on || (stat & (NOPOWER|BROKEN)))
 		update_use_power(0)
 		last_flow_rate = 0
@@ -205,9 +205,9 @@
 		update_connected_network()
 
 /obj/machinery/portable_atmospherics/powered/scrubber/huge/attackby(var/obj/item/I as obj, var/mob/user as mob)
-	if(istype(I, /obj/item/weapon/wrench))
+	if(QUALITY_BOLT_TURNING in I.tool_qualities)
 		if(on)
-			user << "<span class='warning'>Turn \the [src] off first!</span>"
+			user << SPAN_WARNING("Turn \the [src] off first!")
 			return
 
 		anchored = !anchored
@@ -217,24 +217,24 @@
 		return
 
 	//doesn't use power cells
-	if(istype(I, /obj/item/weapon/cell))
+	if(istype(I, /obj/item/weapon/cell/large))
 		return
-	if (istype(I, /obj/item/weapon/screwdriver))
+	if (istype(I, /obj/item/weapon/tool/screwdriver))
 		return
 
 	//doesn't hold tanks
 	if(istype(I, /obj/item/weapon/tank))
 		return
 
-	..()
+	return
 
 
 /obj/machinery/portable_atmospherics/powered/scrubber/huge/stationary
 	name = "Stationary Air Scrubber"
 
 /obj/machinery/portable_atmospherics/powered/scrubber/huge/stationary/attackby(var/obj/item/I as obj, var/mob/user as mob)
-	if(istype(I, /obj/item/weapon/wrench))
-		user << "<span class='warning'>The bolts are too tight for you to unscrew!</span>"
+	if(QUALITY_BOLT_TURNING in I.tool_qualities)
+		user << SPAN_WARNING("The bolts are too tight for you to unscrew!")
 		return
 
 	..()

@@ -13,20 +13,27 @@
 	icon_state = "bioprinter"
 
 	var/prints_prosthetics
-	var/stored_matter = 200
+	var/stored_matter = 0
+	var/max_matter = 300
 	var/loaded_dna //Blood sample for DNA hashing.
 	var/list/products = list(
-		"heart" =   list(/obj/item/organ/heart,  50),
-		"lungs" =   list(/obj/item/organ/lungs,  40),
-		"kidneys" = list(/obj/item/organ/kidneys,20),
-		"eyes" =    list(/obj/item/organ/eyes,   30),
-		"liver" =   list(/obj/item/organ/liver,  50)
+		O_HEART =   list(/obj/item/organ/internal/heart,  50),
+		O_LUNGS =   list(/obj/item/organ/internal/lungs,  40),
+		O_KIDNEYS = list(/obj/item/organ/internal/kidneys,20),
+		O_EYES =    list(/obj/item/organ/internal/eyes,   30),
+		O_LIVER =   list(/obj/item/organ/internal/liver,  50)
 		)
 
 /obj/machinery/bioprinter/prosthetics
 	name = "prosthetics fabricator"
 	desc = "It's a machine that prints prosthetic organs."
 	prints_prosthetics = 1
+
+/obj/machinery/bioprinter/New()
+	..()
+	if(!(ticker && ticker.current_state == GAME_STATE_PLAYING))
+		stored_matter = 200
+
 
 /obj/machinery/bioprinter/attack_hand(mob/user)
 
@@ -41,7 +48,7 @@
 		var/obj/item/organ/O = new new_organ(get_turf(src))
 
 		if(prints_prosthetics)
-			O.robotic = 2
+			O.robotic = ORGAN_ROBOT
 		else if(loaded_dna)
 			visible_message("<span class='notice'>The printer injects the stored DNA into the biomass.</span>.")
 			O.transplant_data = list()
@@ -53,7 +60,7 @@
 		visible_message("<span class='info'>The bioprinter spits out a new organ.</span>")
 
 	else
-		user << "<span class='warning'>There is not enough matter in the printer.</span>"
+		user << SPAN_WARNING("There is not enough matter in the printer.")
 
 /obj/machinery/bioprinter/attackby(obj/item/weapon/W, mob/user)
 
@@ -73,12 +80,12 @@
 		qdel(W)
 		return
 	// Steel for matter.
-	if(prints_prosthetics && istype(W, /obj/item/stack/material) && W.get_material_name() == DEFAULT_WALL_MATERIAL)
+	if(prints_prosthetics && istype(W, /obj/item/stack/material) && W.get_material_name() == MATERIAL_STEEL)
 		var/obj/item/stack/S = W
 		stored_matter += S.amount * 10
 		user.drop_item()
 		user << "<span class='info'>\The [src] processes \the [W]. Levels of stored matter now: [stored_matter]</span>"
 		qdel(W)
 		return
-	
+
 	return..()

@@ -44,47 +44,86 @@
 			user << "The casing is closed."
 			return
 
-/obj/machinery/light_construct/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/machinery/light_construct/attackby(obj/item/I, mob/user)
+
 	src.add_fingerprint(user)
-	if (istype(W, /obj/item/weapon/wrench))
-		if (src.stage == 1)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			usr << "You begin deconstructing \a [src]."
-			if (!do_after(usr, 30,src))
+
+	var/list/usable_qualities = list()
+	if(stage == 2)
+		usable_qualities.Add(QUALITY_SCREW_DRIVING)
+	if(stage == 2)
+		usable_qualities.Add(QUALITY_WIRE_CUTTING)
+	if(stage == 1)
+		usable_qualities.Add(QUALITY_BOLT_TURNING)
+
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_SCREW_DRIVING)
+			if(stage == 2)
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+					switch(fixture_type)
+						if ("tube")
+							src.icon_state = "tube-empty"
+						if("bulb")
+							src.icon_state = "bulb-empty"
+					src.stage = 3
+					user.visible_message("[user.name] closes [src]'s casing.", \
+						"You close [src]'s casing.", "You hear a noise.")
+
+					switch(fixture_type)
+
+						if("tube")
+							if (!istype(src, /obj/machinery/light_construct/floor))
+								newlight = new /obj/machinery/light/built(src.loc)
+							else
+								newlight = new /obj/machinery/light/floor/built(src.loc)
+						if ("bulb")
+							newlight = new /obj/machinery/light/small/built(src.loc)
+
+					newlight.dir = src.dir
+					src.transfer_fingerprints_to(newlight)
+					qdel(src)
+					return
 				return
-			new /obj/item/stack/material/steel( get_turf(src.loc), sheets_refunded )
-			user.visible_message("[user.name] deconstructs [src].", \
-				"You deconstruct [src].", "You hear a noise.")
-			playsound(src.loc, 'sound/items/Deconstruct.ogg', 75, 1)
-			qdel(src)
-		if (src.stage == 2)
-			usr << "You have to remove the wires first."
+
+		if(QUALITY_WIRE_CUTTING)
+			if(stage == 2)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+					src.stage = 1
+					switch(fixture_type)
+						if ("tube")
+							if (!istype(src, /obj/machinery/light_construct/floor))
+								src.icon_state = "tube-construct-stage1"
+							else
+								src.icon_state = "floortube-construct-stage1"
+						if("bulb")
+							src.icon_state = "bulb-construct-stage1"
+					new /obj/item/stack/cable_coil(get_turf(src.loc), 1, "red")
+					user.visible_message("[user.name] removes the wiring from [src].", \
+						"You remove the wiring from [src].", "You hear a noise.")
+				return
 			return
 
-		if (src.stage == 3)
-			usr << "You have to unscrew the case first."
+		if(QUALITY_BOLT_TURNING)
+			if(stage == 1)
+				if (src.stage == 1)
+					user << "You begin deconstructing \a [src]."
+					if(I.use_tool(user, src, WORKTIME_NORMAL, tool_type, FAILCHANCE_VERY_EASY, required_stat = STAT_PRD))
+						new /obj/item/stack/material/steel( get_turf(src.loc), sheets_refunded )
+						user.visible_message("[user.name] deconstructs [src].", \
+							"You deconstruct [src].", "You hear a noise.")
+						qdel(src)
+						return
+				return
+
+		if(ABORT_CHECK)
 			return
 
-	if(istype(W, /obj/item/weapon/wirecutters))
-		if (src.stage != 2) return
-		src.stage = 1
-		switch(fixture_type)
-			if ("tube")
-				if (!istype(src, /obj/machinery/light_construct/floor)) // TODO Переделать это
-					src.icon_state = "tube-construct-stage1"
-				else
-					src.icon_state = "floortube-construct-stage1"
-			if("bulb")
-				src.icon_state = "bulb-construct-stage1"
-		new /obj/item/stack/cable_coil(get_turf(src.loc), 1, "red")
-		user.visible_message("[user.name] removes the wiring from [src].", \
-			"You remove the wiring from [src].", "You hear a noise.")
-		playsound(src.loc, 'sound/items/Wirecutter.ogg', 100, 1)
-		return
-
-	if(istype(W, /obj/item/stack/cable_coil))
+	if(istype(I, /obj/item/stack/cable_coil))
 		if (src.stage != 1) return
-		var/obj/item/stack/cable_coil/coil = W
+		var/obj/item/stack/cable_coil/coil = I
 		if (coil.use(1))
 			switch(fixture_type)
 				if ("tube")
@@ -99,33 +138,8 @@
 				"You add wires to [src].")
 		return
 
-	if(istype(W, /obj/item/weapon/screwdriver))
-		if (src.stage == 2)
-			switch(fixture_type)
-				if ("tube")
-					src.icon_state = "tube-empty"
-				if("bulb")
-					src.icon_state = "bulb-empty"
-			src.stage = 3
-			user.visible_message("[user.name] closes [src]'s casing.", \
-				"You close [src]'s casing.", "You hear a noise.")
-			playsound(src.loc, 'sound/items/Screwdriver.ogg', 75, 1)
-
-			switch(fixture_type)
-
-				if("tube")
-					if (!istype(src, /obj/machinery/light_construct/floor))
-						newlight = new /obj/machinery/light/built(src.loc)
-					else
-						newlight = new /obj/machinery/light/floor/built(src.loc)
-				if ("bulb")
-					newlight = new /obj/machinery/light/small/built(src.loc)
-
-			newlight.dir = src.dir
-			src.transfer_fingerprints_to(newlight)
-			qdel(src)
-			return
-	..()
+	else
+		..()
 
 /obj/machinery/light_construct/small
 	name = "small light fixture frame"
@@ -244,7 +258,7 @@
 	if(A)
 		on = 0
 //		A.update_lights()
-	..()
+	. = ..()
 
 /obj/machinery/light/update_icon()
 
@@ -337,7 +351,7 @@
 		return
 	if(!(status == LIGHT_OK||status == LIGHT_BURNED))
 		return
-	visible_message("<span class='danger'>[user] smashes the light!</span>")
+	visible_message(SPAN_DANGER("[user] smashes the light!"))
 	attack_animation(user)
 	broken()
 	return 1
@@ -364,24 +378,24 @@
 
 // attack with item - insert light (if right type), otherwise try to break the light
 
-/obj/machinery/light/attackby(obj/item/W, mob/user)
+/obj/machinery/light/attackby(obj/item/I, mob/user)
 
 	//Light replacer code
-	if(istype(W, /obj/item/device/lightreplacer))
-		var/obj/item/device/lightreplacer/LR = W
+	if(istype(I, /obj/item/device/lightreplacer))
+		var/obj/item/device/lightreplacer/LR = I
 		if(isliving(user))
 			var/mob/living/U = user
 			LR.ReplaceLight(src, U)
 			return
 
 	// attempt to insert light
-	if(istype(W, /obj/item/weapon/light))
+	if(istype(I, /obj/item/weapon/light))
 		if(status != LIGHT_EMPTY)
 			user << "There is a [fitting] already inserted."
 			return
 		else
 			src.add_fingerprint(user)
-			var/obj/item/weapon/light/L = W
+			var/obj/item/weapon/light/L = I
 			if(istype(L, light_type))
 				status = L.status
 				user << "You insert the [L.name]."
@@ -412,14 +426,14 @@
 	else if(status != LIGHT_BROKEN && status != LIGHT_EMPTY)
 
 
-		if(prob(1+W.force * 5))
+		if(prob(1+I.force * 5))
 
 			user << "You hit the light, and it smashes!"
 			for(var/mob/M in viewers(src))
 				if(M == user)
 					continue
 				M.show_message("[user.name] smashed the light!", 3, "You hear a tinkle of breaking glass", 2)
-			if(on && (W.flags & CONDUCT))
+			if(on && (I.flags & CONDUCT))
 				//if(!user.mutations & COLD_RESISTANCE)
 				if (prob(12))
 					electrocute_mob(user, get_area(src), src, 0.3)
@@ -430,29 +444,29 @@
 
 	// attempt to stick weapon into light socket
 	else if(status == LIGHT_EMPTY)
-		if(istype(W, /obj/item/weapon/screwdriver)) //If it's a screwdriver open it.
-			playsound(src.loc, 'sound/items/Screwdriver.ogg', 75, 1)
-			user.visible_message("[user.name] opens [src]'s casing.", \
-				"You open [src]'s casing.", "You hear a noise.")
-			var/obj/machinery/light_construct/newlight = null
-			switch(fitting)
-				if("tube")
-					newlight = new /obj/machinery/light_construct(src.loc)
-					newlight.icon_state = "tube-construct-stage2"
+		if(QUALITY_SCREW_DRIVING in I.tool_qualities)
+			if(I.use_tool(user, src, WORKTIME_FAST, QUALITY_SCREW_DRIVING, FAILCHANCE_EASY, required_stat = STAT_PRD))
+				user.visible_message("[user.name] opens [src]'s casing.", \
+					"You open [src]'s casing.", "You hear a noise.")
+				var/obj/machinery/light_construct/newlight = null
+				switch(fitting)
+					if("tube")
+						newlight = new /obj/machinery/light_construct(src.loc)
+						newlight.icon_state = "tube-construct-stage2"
 
-				if("bulb")
-					newlight = new /obj/machinery/light_construct/small(src.loc)
-					newlight.icon_state = "bulb-construct-stage2"
-			newlight.dir = src.dir
-			newlight.stage = 2
-			newlight.fingerprints = src.fingerprints
-			newlight.fingerprintshidden = src.fingerprintshidden
-			newlight.fingerprintslast = src.fingerprintslast
-			qdel(src)
-			return
+					if("bulb")
+						newlight = new /obj/machinery/light_construct/small(src.loc)
+						newlight.icon_state = "bulb-construct-stage2"
+				newlight.dir = src.dir
+				newlight.stage = 2
+				newlight.fingerprints = src.fingerprints
+				newlight.fingerprintshidden = src.fingerprintshidden
+				newlight.fingerprintslast = src.fingerprintslast
+				qdel(src)
+				return
 
-		user << "You stick \the [W] into the light socket!"
-		if(has_power() && (W.flags & CONDUCT))
+		user << "You stick \the [I] into the light socket!"
+		if(has_power() && (I.flags & CONDUCT))
 			var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
 			s.set_up(3, 1, src)
 			s.start()
@@ -497,7 +511,7 @@
 		user << "There is no [fitting] in this light."
 		return
 
-	if(istype(user,/mob/living/carbon/human))
+	if(ishuman(user))
 		var/mob/living/carbon/human/H = user
 		if(H.species.can_shred(H))
 			for(var/mob/M in viewers(src))
@@ -625,7 +639,7 @@
 #define LIGHTING_POWER_FACTOR 20		//20W per unit luminosity
 
 
-/obj/machinery/light/process()
+/obj/machinery/light/Process()
 	if(on)
 		use_power(light_range * LIGHTING_POWER_FACTOR, LIGHT)
 
@@ -660,11 +674,11 @@
 	icon = 'icons/obj/lighting.dmi'
 	force = WEAPON_FORCE_HARMLESS
 	throwforce = WEAPON_FORCE_HARMLESS
-	w_class = 1
+	w_class = ITEM_SIZE_TINY
 	var/status = 0		// LIGHT_OK, LIGHT_BURNED or LIGHT_BROKEN
 	var/base_state
 	var/switchcount = 0	// number of times switched
-	matter = list(DEFAULT_WALL_MATERIAL = 60)
+	matter = list(MATERIAL_STEEL = 1)
 	var/rigged = 0		// true if rigged to explode
 	var/brightness_range = 2 //how much light it gives off
 	var/brightness_power = 1
@@ -676,12 +690,12 @@
 	icon_state = "ltube"
 	base_state = "ltube"
 	item_state = "c_tube"
-	matter = list("glass" = 100)
+	matter = list(MATERIAL_GLASS = 1)
 	brightness_range = 8
 	brightness_power = 3
 
 /obj/item/weapon/light/tube/large
-	w_class = 2
+	w_class = ITEM_SIZE_SMALL
 	name = "large light tube"
 	brightness_range = 15
 	brightness_power = 4
@@ -692,7 +706,7 @@
 	icon_state = "lbulb"
 	base_state = "lbulb"
 	item_state = "contvapour"
-	matter = list("glass" = 100)
+	matter = list(MATERIAL_GLASS = 1)
 	brightness_range = 5
 	brightness_power = 2
 	brightness_color = "#a0a080"
@@ -707,7 +721,7 @@
 	icon_state = "fbulb"
 	base_state = "fbulb"
 	item_state = "egg4"
-	matter = list("glass" = 100)
+	matter = list(MATERIAL_GLASS = 1)
 	brightness_range = 5
 	brightness_power = 2
 

@@ -3,12 +3,12 @@
 	desc = "A window."
 	icon = 'icons/obj/structures.dmi'
 	density = 1
-	w_class = 3
+	w_class = ITEM_SIZE_NORMAL
 
 	layer = 3.2//Just above doors
 	anchored = 1.0
 	flags = ON_BORDER
-	var/maxhealth = 14.0
+	var/maxhealth = 40
 	var/maximal_heat = T0C + 100 		// Maximal heat before this window begins taking damage from fire
 	var/damage_per_fire_tick = 2.0 		// Amount of damage per fire tick. Regular windows are not fireproof so they might as well break quickly.
 	var/health
@@ -20,28 +20,31 @@
 	var/glasstype = null // Set this in subtypes. Null is assumed strange or otherwise impossible to dismantle, such as for shuttle glass.
 	var/silicate = 0 // number of units of silicate
 
+/obj/structure/window/can_prevent_fall()
+	return !is_fulltile()
+
 /obj/structure/window/examine(mob/user)
 	. = ..(user)
 
 	if(health == maxhealth)
-		user << "<span class='notice'>It looks fully intact.</span>"
+		user << SPAN_NOTICE("It looks fully intact.")
 	else
 		var/perc = health / maxhealth
 		if(perc > 0.75)
-			user << "<span class='notice'>It has a few cracks.</span>"
+			user << SPAN_NOTICE("It has a few cracks.")
 		else if(perc > 0.5)
-			user << "<span class='warning'>It looks slightly damaged.</span>"
+			user << SPAN_WARNING("It looks slightly damaged.")
 		else if(perc > 0.25)
-			user << "<span class='warning'>It looks moderately damaged.</span>"
+			user << SPAN_WARNING("It looks moderately damaged.")
 		else
-			user << "<span class='danger'>It looks heavily damaged.</span>"
+			user << SPAN_DANGER("It looks heavily damaged.")
 	if(silicate)
 		if (silicate < 30)
-			user << "<span class='notice'>It has a thin layer of silicate.</span>"
+			user << SPAN_NOTICE("It has a thin layer of silicate.")
 		else if (silicate < 70)
-			user << "<span class='notice'>It is covered in silicate.</span>"
+			user << SPAN_NOTICE("It is covered in silicate.")
 		else
-			user << "<span class='notice'>There is a thick layer of silicate covering it.</span>"
+			user << SPAN_NOTICE("There is a thick layer of silicate covering it.")
 
 /obj/structure/window/proc/take_damage(var/damage = 0,  var/sound_effect = 1)
 	var/initialhealth = health
@@ -150,7 +153,7 @@
 
 /obj/structure/window/hitby(AM as mob|obj)
 	..()
-	visible_message("<span class='danger'>[src] was hit by [AM].</span>")
+	visible_message(SPAN_DANGER("[src] was hit by [AM]."))
 	var/tforce = 0
 	if(ismob(AM))
 		tforce = 40
@@ -164,20 +167,20 @@
 	take_damage(tforce)
 
 /obj/structure/window/attack_tk(mob/user as mob)
-	user.visible_message("<span class='notice'>Something knocks on [src].</span>")
+	user.visible_message(SPAN_NOTICE("Something knocks on [src]."))
 	playsound(loc, 'sound/effects/Glasshit.ogg', 50, 1)
 
 /obj/structure/window/attack_hand(mob/user as mob)
 	user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
 	if(HULK in user.mutations)
 		user.say(pick(";RAAAAAAAARGH!", ";HNNNNNNNNNGGGGGGH!", ";GWAAAAAAAARRRHHH!", "NNNNNNNNGGGGGGGGHH!", ";AAAAAAARRRGH!"))
-		user.visible_message("<span class='danger'>[user] smashes through [src]!</span>")
+		user.visible_message(SPAN_DANGER("[user] smashes through [src]!"))
 		user.do_attack_animation(src)
 		shatter()
 
 	else if (usr.a_intent == I_HURT)
 
-		if (istype(usr,/mob/living/carbon/human))
+		if (ishuman(usr))
 			var/mob/living/carbon/human/H = usr
 			if(H.species.can_shred(H))
 				attack_generic(H,25)
@@ -185,8 +188,8 @@
 
 		playsound(src.loc, 'sound/effects/glassknock.ogg', 80, 1)
 		user.do_attack_animation(src)
-		usr.visible_message("<span class='danger'>\The [usr] bangs against \the [src]!</span>",
-							"<span class='danger'>You bang against \the [src]!</span>",
+		usr.visible_message(SPAN_DANGER("\The [usr] bangs against \the [src]!"),
+							SPAN_DANGER("You bang against \the [src]!"),
 							"You hear a banging sound.")
 	else
 		playsound(src.loc, 'sound/effects/glassknock.ogg', 80, 1)
@@ -202,75 +205,104 @@
 	if(!damage)
 		return
 	if(damage >= 10)
-		visible_message("<span class='danger'>[user] smashes into [src]!</span>")
+		visible_message(SPAN_DANGER("[user] smashes into [src]!"))
 		take_damage(damage)
 	else
-		visible_message("<span class='notice'>\The [user] bonks \the [src] harmlessly.</span>")
+		visible_message(SPAN_NOTICE("\The [user] bonks \the [src] harmlessly."))
 	return 1
 
-/obj/structure/window/attackby(obj/item/W as obj, mob/user as mob)
-	if(!istype(W)) return//I really wish I did not need this
-	if (istype(W, /obj/item/weapon/grab) && get_dist(src,user)<2)
-		var/obj/item/weapon/grab/G = W
-		if(istype(G.affecting,/mob/living))
-			var/mob/living/M = G.affecting
-			var/state = G.state
-			qdel(W)	//gotta delete it here because if window breaks, it won't get deleted
-			switch (state)
-				if(1)
-					M.visible_message("<span class='warning'>[user] slams [M] against \the [src]!</span>")
-					M.apply_damage(7)
-					hit(10)
-				if(2)
-					M.visible_message("<span class='danger'>[user] bashes [M] against \the [src]!</span>")
-					if (prob(50))
-						M.Weaken(1)
-					M.apply_damage(10)
-					hit(25)
-				if(3)
-					M.visible_message("<span class='danger'><big>[user] crushes [M] against \the [src]!</big></span>")
-					M.Weaken(5)
-					M.apply_damage(20)
-					hit(50)
+/obj/structure/window/affect_grab(var/mob/living/user, var/mob/living/target, var/state)
+	switch(state)
+		if(GRAB_PASSIVE)
+			visible_message(SPAN_WARNING("[user] slams [target] against \the [src]!"))
+			target.apply_damage(7)
+			hit(10)
+		if(GRAB_AGGRESSIVE)
+			visible_message(SPAN_DANGER("[user] bashes [target] against \the [src]!"))
+			if(prob(50))
+				target.Weaken(1)
+			target.apply_damage(10)
+			hit(25)
+		if(GRAB_NECK)
+			visible_message(SPAN_DANGER("<big>[user] crushes [target] against \the [src]!</big>"))
+			target.Weaken(5)
+			target.apply_damage(20)
+			hit(50)
+	admin_attack_log(user, target,
+		"Smashed [key_name(target)] against \the [src]",
+		"Smashed against \the [src] by [key_name(user)]",
+		"smashed [key_name(target)] against \the [src]."
+	)
+	return TRUE
+
+
+/obj/structure/window/attackby(obj/item/I, mob/user)
+
+	var/list/usable_qualities = list()
+	if(!anchored && (!state || !reinf))
+		usable_qualities.Add(QUALITY_BOLT_TURNING)
+	if((reinf && state >= 1) || (reinf && state == 0) || (!reinf))
+		usable_qualities.Add(QUALITY_SCREW_DRIVING)
+	if(reinf && state >= 1)
+		usable_qualities.Add(QUALITY_PRYING)
+
+	var/tool_type = I.get_tool_type(user, usable_qualities)
+	switch(tool_type)
+
+		if(QUALITY_BOLT_TURNING)
+			if(!anchored && (!state || !reinf))
+				if(!glasstype)
+					user << SPAN_NOTICE("You're not sure how to dismantle \the [src] properly.")
+					return
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+					visible_message(SPAN_NOTICE("[user] dismantles \the [src]."))
+					if(dir == SOUTHWEST)
+						var/obj/item/stack/material/mats = new glasstype(loc)
+						mats.amount = is_fulltile() ? 4 : 2
+					else
+						new glasstype(loc)
+					qdel(src)
+					return
 			return
 
-	if(W.flags & NOBLUDGEON) return
+		if(QUALITY_PRYING)
+			if(reinf && state <= 1)
+				if(I.use_tool(user, src, WORKTIME_FAST, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+					state = 1 - state
+					user << (state ? SPAN_NOTICE("You have pried the window into the frame.") : SPAN_NOTICE("You have pried the window out of the frame."))
+			return
 
-	if(istype(W, /obj/item/weapon/screwdriver))
-		if(reinf && state >= 1)
-			state = 3 - state
-			update_nearby_icons()
-			playsound(loc, 'sound/items/Screwdriver.ogg', 75, 1)
-			user << (state == 1 ? "<span class='notice'>You have unfastened the window from the frame.</span>" : "<span class='notice'>You have fastened the window to the frame.</span>")
-		else if(reinf && state == 0)
-			set_anchored(!anchored)
-			playsound(loc, 'sound/items/Screwdriver.ogg', 75, 1)
-			user << (anchored ? "<span class='notice'>You have fastened the frame to the floor.</span>" : "<span class='notice'>You have unfastened the frame from the floor.</span>")
-		else if(!reinf)
-			set_anchored(!anchored)
-			playsound(loc, 'sound/items/Screwdriver.ogg', 75, 1)
-			user << (anchored ? "<span class='notice'>You have fastened the window to the floor.</span>" : "<span class='notice'>You have unfastened the window.</span>")
-	else if(istype(W, /obj/item/weapon/crowbar) && reinf && state <= 1)
-		state = 1 - state
-		playsound(loc, 'sound/items/Crowbar.ogg', 75, 1)
-		user << (state ? "<span class='notice'>You have pried the window into the frame.</span>" : "<span class='notice'>You have pried the window out of the frame.</span>")
-	else if(istype(W, /obj/item/weapon/wrench) && !anchored && (!state || !reinf))
-		if(!glasstype)
-			user << "<span class='notice'>You're not sure how to dismantle \the [src] properly.</span>"
-		else
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			visible_message("<span class='notice'>[user] dismantles \the [src].</span>")
-			if(dir == SOUTHWEST)
-				var/obj/item/stack/material/mats = new glasstype(loc)
-				mats.amount = is_fulltile() ? 4 : 2
-			else
-				new glasstype(loc)
-			qdel(src)
+
+		if(QUALITY_SCREW_DRIVING)
+			if(reinf && state >= 1)
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+					state = 3 - state
+					update_nearby_icons()
+					user << (state == 1 ? SPAN_NOTICE("You have unfastened the window from the frame.") : SPAN_NOTICE("You have fastened the window to the frame."))
+					return
+			if(reinf && state == 0)
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_EASY, required_stat = STAT_PRD))
+					set_anchored(!anchored)
+					user << (anchored ? SPAN_NOTICE("You have fastened the frame to the floor.") : SPAN_NOTICE("You have unfastened the frame from the floor."))
+					return
+			if(!reinf)
+				if(I.use_tool(user, src, WORKTIME_NEAR_INSTANT, tool_type, FAILCHANCE_VERY_EASY))
+					set_anchored(!anchored)
+					user << (anchored ? SPAN_NOTICE("You have fastened the window to the floor.") : SPAN_NOTICE("You have unfastened the window."))
+					return
+			return
+
+		if(ABORT_CHECK)
+			return
+
+	if(!istype(I)) return//I really wish I did not need this
+	if(I.flags & NOBLUDGEON) return
+
 	else
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
-		if(W.damtype == BRUTE || W.damtype == BURN)
+		if(I.damtype == BRUTE || I.damtype == BURN)
 			user.do_attack_animation(src)
-			hit(W.force)
+			hit(I.force)
 			if(health <= 7)
 				set_anchored(FALSE)
 				step(src, get_dir(user, src))
@@ -348,8 +380,7 @@
 	for(var/obj/structure/window/W in orange(location, 1))
 		W.update_icon()
 	loc = location
-	..()
-
+	. = ..()
 
 /obj/structure/window/Move()
 	var/ini_dir = dir
@@ -423,7 +454,11 @@
 	glasstype = /obj/item/stack/material/glass
 	maximal_heat = T0C + 100
 	damage_per_fire_tick = 2.0
-	maxhealth = 12.0
+	maxhealth = 60
+
+/obj/structure/window/basic/full
+	dir = SOUTH|EAST
+	icon_state = "fwindow"
 
 /obj/structure/window/plasmabasic
 	name = "plasma window"
@@ -434,32 +469,22 @@
 	glasstype = /obj/item/stack/material/glass/plasmaglass
 	maximal_heat = T0C + 2000
 	damage_per_fire_tick = 1.0
-	maxhealth = 40.0
+	maxhealth = 300
 
-/obj/structure/window/plasmareinforced
-	name = "reinforced borosilicate window"
-	desc = "A borosilicate alloy window, with rods supporting it. It seems to be very strong."
-	basestate = "plasmarwindow"
-	icon_state = "plasmarwindow"
-	shardtype = /obj/item/weapon/material/shard/plasma
-	glasstype = /obj/item/stack/material/glass/plasmarglass
-	reinf = 1
-	maximal_heat = T0C + 9000
-	damage_per_fire_tick = 1.0 // This should last for 80 fire ticks if the window is not damaged at all. The idea is that borosilicate windows have something like ablative layer that protects them for a while.
-	maxhealth = 80.0
-
+/obj/structure/window/plasmabasic/full
+	dir = SOUTH|EAST
+	icon_state = "plasmawindow_mask"
 
 /obj/structure/window/reinforced
 	name = "reinforced window"
 	desc = "It looks rather strong. Might take a few good hits to shatter it."
 	icon_state = "rwindow"
 	basestate = "rwindow"
-	maxhealth = 40.0
+	maxhealth = 200
 	reinf = 1
 	maximal_heat = T0C + 750
 	damage_per_fire_tick = 2.0
 	glasstype = /obj/item/stack/material/glass/reinforced
-
 
 /obj/structure/window/New(Loc, constructed=0)
 	..()
@@ -469,8 +494,23 @@
 		state = 0
 
 /obj/structure/window/reinforced/full
-    dir = 5
-    icon_state = "fwindow"
+	dir = SOUTH|EAST
+	icon_state = "fwindow"
+
+/obj/structure/window/reinforced/plasma
+	name = "reinforced borosilicate window"
+	desc = "A borosilicate alloy window, with rods supporting it. It seems to be very strong."
+	basestate = "plasmarwindow"
+	icon_state = "plasmarwindow"
+	shardtype = /obj/item/weapon/material/shard/plasma
+	glasstype = /obj/item/stack/material/glass/plasmarglass
+	maximal_heat = T0C + 9000
+	damage_per_fire_tick = 1.0 // This should last for 80 fire ticks if the window is not damaged at all. The idea is that borosilicate windows have something like ablative layer that protects them for a while.
+	maxhealth = 600
+
+/obj/structure/window/reinforced/plasma/full
+	dir = SOUTH|EAST
+	icon_state = "plasmarwindow_mask"
 
 /obj/structure/window/reinforced/tinted
 	name = "tinted window"
@@ -484,7 +524,7 @@
 	desc = "It looks rather strong and frosted over. Looks like it might take a few less hits then a normal reinforced window."
 	icon_state = "fwindow"
 	basestate = "fwindow"
-	maxhealth = 30
+	maxhealth = 250
 
 /obj/structure/window/shuttle
 	name = "shuttle window"
@@ -492,7 +532,7 @@
 	icon = 'icons/obj/podwindows.dmi'
 	icon_state = "window"
 	basestate = "window"
-	maxhealth = 40
+	maxhealth = 800
 	reinf = 1
 	basestate = "w"
 	dir = 5

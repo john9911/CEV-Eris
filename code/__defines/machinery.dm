@@ -26,6 +26,11 @@ var/global/defer_powernet_rebuild = 0      // True if net rebuild will be called
 
 #define AI_CAMERA_LUMINOSITY 6
 
+//Frame types
+#define FRAME_DEFAULT 0
+#define FRAME_VERTICAL 1		//For 2-tiles machines
+//#define FRAME_HORIZONTAL 2
+
 // Camera networks
 #define NETWORK_CRESCENT "Crescent"
 #define NETWORK_FIRST_SECTION "First Section"
@@ -48,7 +53,7 @@ var/global/defer_powernet_rebuild = 0      // True if net rebuild will be called
 #define NETWORK_THUNDER "Thunderdome"
 
 // Those networks can only be accessed by pre-existing terminals. AIs and new terminals can't use them.
-var/list/restricted_camera_networks = list(NETWORK_MERCENARY,"Secret")
+var/list/restricted_camera_networks = list(NETWORK_MERCENARY, "Secret")
 
 
 //singularity defines
@@ -82,7 +87,7 @@ var/list/restricted_camera_networks = list(NETWORK_MERCENARY,"Secret")
 // These balance how easy or hard it is to create huge pressure gradients with pumps and filters.
 // Lower values means it takes longer to create large pressures differences.
 // Has no effect on pumping gasses from high pressure to low, only from low to high.
-#define ATMOS_PUMP_EFFICIENCY   2.5
+#define ATMOS_PUMP_EFFICIENCY   10.0 // 10 is maximum value.
 #define ATMOS_FILTER_EFFICIENCY 2.5
 
 // Will not bother pumping or filtering if the gas source as fewer than this amount of moles, to help with performance.
@@ -95,3 +100,25 @@ var/list/restricted_camera_networks = list(NETWORK_MERCENARY,"Secret")
 #define ATMOS_DEFAULT_VOLUME_FILTER 200 // L.
 #define ATMOS_DEFAULT_VOLUME_MIXER  200 // L.
 #define ATMOS_DEFAULT_VOLUME_PIPE   70  // L.
+
+//Disposal pipes
+#define PIPE_TYPE_STRAIGHT 0
+#define PIPE_TYPE_BENT 1
+#define PIPE_TYPE_JUNC 2
+#define PIPE_TYPE_JUNC_FLIP 3
+#define PIPE_TYPE_JUNC_Y 4
+#define PIPE_TYPE_TRUNK 5
+#define PIPE_TYPE_BIN 6
+#define PIPE_TYPE_OUTLET 7
+#define PIPE_TYPE_INTAKE 8
+#define PIPE_TYPE_JUNC_SORT 9
+#define PIPE_TYPE_JUNC_SORT_FLIP 10
+#define PIPE_TYPE_UP 11
+#define PIPE_TYPE_DOWN 12
+#define PIPE_TYPE_TAGGER 13
+#define PIPE_TYPE_TAGGER_PART 14
+
+#define SORT_TYPE_NORMAL 0
+#define SORT_TYPE_WILDCARD 1
+#define SORT_TYPE_UNTAGGED 2
+

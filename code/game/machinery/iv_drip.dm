@@ -66,14 +66,14 @@
 		return ..()
 
 
-/obj/machinery/iv_drip/process()
+/obj/machinery/iv_drip/Process()
 	set background = 1
 
 	if(src.attached)
 
 		if(!(get_dist(src, src.attached) <= 1 && isturf(src.attached.loc)))
 			visible_message("The needle is ripped out of [src.attached], doesn't that hurt?")
-			src.attached:apply_damage(3, BRUTE, pick("r_arm", "l_arm"))
+			src.attached:apply_damage(3, BRUTE, pick(BP_R_ARM, BP_L_ARM))
 			src.attached = null
 			src.update_icon()
 			return
@@ -136,8 +136,8 @@
 	set name = "Toggle Mode"
 	set src in view(1)
 
-	if(!istype(usr, /mob/living))
-		usr << "<span class='warning'>You can't do that.</span>"
+	if(!isliving(usr))
+		usr << SPAN_WARNING("You can't do that.")
 		return
 
 	if(usr.stat)
@@ -154,11 +154,11 @@
 
 	if(beaker)
 		if(beaker.reagents && beaker.reagents.reagent_list.len)
-			usr << "<span class='notice'>Attached is \a [beaker] with [beaker.reagents.total_volume] units of liquid.</span>"
+			usr << SPAN_NOTICE("Attached is \a [beaker] with [beaker.reagents.total_volume] units of liquid.")
 		else
-			usr << "<span class='notice'>Attached is an empty [beaker].</span>"
+			usr << SPAN_NOTICE("Attached is an empty [beaker].")
 	else
-		usr << "<span class='notice'>No chemicals are attached.</span>"
+		usr << SPAN_NOTICE("No chemicals are attached.")
 
 	usr << "<span class='notice'>[attached ? attached : "No one"] is attached.</span>"
 

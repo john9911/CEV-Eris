@@ -11,7 +11,8 @@
 	desc = "Standard superconductive magnetic coil with average capacity and I/O rating."
 	icon = 'icons/obj/stock_parts.dmi'
 	icon_state = "smes_coil"			// Just few icons patched together. If someone wants to make better icon, feel free to do so!
-	w_class = 4.0 						// It's LARGE (backpack size)
+	w_class = ITEM_SIZE_LARGE 						// It's LARGE (backpack size)
+	matter = list(MATERIAL_STEEL = 10, MATERIAL_PLASTIC = 4, MATERIAL_GLASS = 4)
 	var/ChargeCapacity = 5000000
 	var/IOCapacity = 250000
 
@@ -41,37 +42,35 @@
 
 // These are used on individual outposts as backup should power line be cut, or engineering outpost lost power.
 // 1M Charge, 150K I/O
-/obj/machinery/power/smes/buildable/outpost_substation/New()
-	..(0)
+/obj/machinery/power/smes/buildable/outpost_substation/PopulateSmesComponents()
 	component_parts += new /obj/item/weapon/smes_coil/weak(src)
-	recalc_coils()
+
+
 
 // This one is pre-installed on engineering shuttle. Allows rapid charging/discharging for easier transport of power to outpost
 // 11M Charge, 2.5M I/O
-/obj/machinery/power/smes/buildable/power_shuttle/New()
-	..(0)
+/obj/machinery/power/smes/buildable/power_shuttle/PopulateSmesComponents()
 	component_parts += new /obj/item/weapon/smes_coil/super_io(src)
 	component_parts += new /obj/item/weapon/smes_coil/super_io(src)
 	component_parts += new /obj/item/weapon/smes_coil(src)
-	recalc_coils()
-
-
-
-
-
 
 // END SMES SUBTYPES
+
+
+
 
 // SMES itself
 /obj/machinery/power/smes/buildable
 	var/max_coils = 6 			//30M capacity, 1.5MW input/output when fully upgraded /w default coils
 	var/cur_coils = 1 			// Current amount of installed coils
+	var/init_coils = 1		// Amount of coils for map placed SMES
 	var/safeties_enabled = 1 	// If 0 modifications can be done without discharging the SMES, at risk of critical failure.
 	var/failing = 0 			// If 1 critical failure has occured and SMES explosion is imminent.
 	var/datum/wires/smes/wires
 	var/grounding = 1			// Cut to quickly discharge, at cost of "minor" electrical issues in output powernet.
 	var/RCon = 1				// Cut to disable AI and remote control.
 	var/RCon_tag = "NO_TAG"		// RCON tag, change to show it on SMES Remote control console.
+	circuit = /obj/item/weapon/circuitboard/smes
 	charge = 0
 	should_be_mapped = 1
 
@@ -86,7 +85,7 @@
 // Parameters: None
 // Description: Uses parent process, but if grounding wire is cut causes sparks to fly around.
 // This also causes the SMES to quickly discharge, and has small chance of damaging output APCs.
-/obj/machinery/power/smes/buildable/process()
+/obj/machinery/power/smes/buildable/Process()
 	if(!grounding && (Percentage() > 5))
 		var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
 		s.set_up(5, 1, src)
@@ -104,27 +103,30 @@
 	if(RCon)
 		..()
 	else // RCON wire cut
-		usr << "<span class='warning'>Connection error: Destination Unreachable.</span>"
+		usr << SPAN_WARNING("Connection error: Destination Unreachable.")
 
 	// Cyborgs standing next to the SMES can play with the wiring.
-	if(istype(usr, /mob/living/silicon/robot) && Adjacent(usr) && open_hatch)
+	if(isrobot(usr) && Adjacent(usr) && open_hatch)
 		wires.Interact(usr)
 
 // Proc: New()
 // Parameters: None
-// Description: Adds standard components for this SMES, and forces recalculation of properties.
-/obj/machinery/power/smes/buildable/New(var/install_coils = 1)
-	component_parts = list()
-	component_parts += new /obj/item/stack/cable_coil(src,30)
-	component_parts += new /obj/item/weapon/circuitboard/smes(src)
+// Description: Set wires with requed type
+/obj/machinery/power/smes/buildable/New()
+	..()
 	src.wires = new /datum/wires/smes(src)
 
-	// Allows for mapped-in SMESs with larger capacity/IO
-	if(install_coils)
-		for(var/i = 1, i <= cur_coils, i++)
-			component_parts += new /obj/item/weapon/smes_coil(src)
-		recalc_coils()
-	..()
+// Proc: initialize()
+// Parameters: None
+// Description: Adds standard components for this SMES, and forces recalculation of properties.
+/obj/machinery/power/smes/buildable/Initialize()
+	PopulateSmesComponents()
+	RefreshParts()
+	. = ..()
+
+/obj/machinery/power/smes/buildable/proc/PopulateSmesComponents() // Okay Smes! Your Initialize weren't disigned to properly work with parent calls, here is your crutch.
+	for(var/i = 1 to init_coils)
+		component_parts += new /obj/item/weapon/smes_coil(src)
 
 // Proc: attack_hand()
 // Parameters: None
@@ -134,22 +136,21 @@
 	if(open_hatch)
 		wires.Interact(usr)
 
-// Proc: recalc_coils()
+// Proc: RefreshParts()
 // Parameters: None
 // Description: Updates properties (IO, capacity, etc.) of this SMES by checking internal components.
-/obj/machinery/power/smes/buildable/proc/recalc_coils()
-	if ((cur_coils <= max_coils) && (cur_coils >= 1))
-		capacity = 0
-		input_level_max = 0
-		output_level_max = 0
-		for(var/obj/item/weapon/smes_coil/C in component_parts)
-			capacity += C.ChargeCapacity
-			input_level_max += C.IOCapacity
-			output_level_max += C.IOCapacity
-		charge = between(0, charge, capacity)
-		return 1
-	else
-		return 0
+/obj/machinery/power/smes/buildable/RefreshParts()
+	cur_coils = 0
+	capacity = 0
+	input_level_max = 0
+	output_level_max = 0
+	for(var/obj/item/weapon/smes_coil/C in component_parts)
+		cur_coils ++
+		capacity += C.ChargeCapacity
+		input_level_max += C.IOCapacity
+		output_level_max += C.IOCapacity
+	charge = between(0, charge, capacity)
+	return 1
 
 // Proc: total_system_failure()
 // Parameters: 2 (intensity - how strong the failure is, user - person which caused the failure)
@@ -169,7 +170,7 @@
 		return
 
 	var/mob/living/carbon/human/h_user = null
-	if (!istype(user, /mob/living/carbon/human))
+	if (!ishuman(user))
 		return
 	else
 		h_user = user
@@ -305,7 +306,7 @@
 /obj/machinery/power/smes/buildable/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
 	// No more disassembling of overloaded SMESs. You broke it, now enjoy the consequences.
 	if (failing)
-		user << "<span class='warning'>The [src]'s screen is flashing with alerts. It seems to be overloaded! Touching it now is probably not a good idea.</span>"
+		user << SPAN_WARNING("The [src]'s screen is flashing with alerts. It seems to be overloaded! Touching it now is probably not a good idea.")
 		return
 	// If parent returned 1:
 	// - Hatch is open, so we can modify the SMES
@@ -313,19 +314,19 @@
 	if (..())
 
 		// Multitool - change RCON tag
-		if(istype(W, /obj/item/device/multitool))
+		if(istype(W, /obj/item/weapon/tool/multitool))
 			var/newtag = input(user, "Enter new RCON tag. Use \"NO_TAG\" to disable RCON or leave empty to cancel.", "SMES RCON system") as text
 			if(newtag)
 				RCon_tag = newtag
-				user << "<span class='notice'>You changed the RCON tag to: [newtag]</span>"
+				user << SPAN_NOTICE("You changed the RCON tag to: [newtag]")
 			return
 		// Charged above 1% and safeties are enabled.
 		if((charge > (capacity/100)) && safeties_enabled)
-			user << "<span class='warning'>Safety circuit of [src] is preventing modifications while it's charged!</span>"
+			user << SPAN_WARNING("Safety circuit of [src] is preventing modifications while it's charged!")
 			return
 
 		if (output_attempt || input_attempt)
-			user << "<span class='warning'>Turn off the [src] first!</span>"
+			user << SPAN_WARNING("Turn off the [src] first!")
 			return
 
 		// Probability of failure if safety circuit is disabled (in %)
@@ -336,20 +337,20 @@
 			failure_probability = 0
 
 		// Crowbar - Disassemble the SMES.
-		if(istype(W, /obj/item/weapon/crowbar))
+		if(istype(W, /obj/item/weapon/tool/crowbar))
 			if (terminal)
-				user << "<span class='warning'>You have to disassemble the terminal first!</span>"
+				user << SPAN_WARNING("You have to disassemble the terminal first!")
 				return
 
 			playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
-			user << "<span class='warning'>You begin to disassemble the [src]!</span>"
+			user << SPAN_WARNING("You begin to disassemble the [src]!")
 			if (do_after(usr, 100 * cur_coils, src)) // More coils = takes longer to disassemble. It's complex so largest one with 5 coils will take 50s
 
 				if (failure_probability && prob(failure_probability))
 					total_system_failure(failure_probability, user)
 					return
 
-				usr << "\red You have disassembled the SMES cell!"
+				usr << SPAN_WARNING("You have disassembled the SMES cell!")
 				var/obj/machinery/constructable_frame/machine_frame/M = new /obj/machinery/constructable_frame/machine_frame(src.loc)
 				M.state = 2
 				M.icon_state = "box_1"
@@ -369,10 +370,9 @@
 
 				usr << "You install the coil into the SMES unit!"
 				user.drop_item()
-				cur_coils ++
 				component_parts += W
 				W.loc = src
-				recalc_coils()
+				RefreshParts()
 			else
 				usr << "\red You can't insert more coils to this SMES unit!"
 
